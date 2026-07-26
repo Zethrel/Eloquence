@@ -10,28 +10,77 @@
 -- before the single-word table, so multi-word idioms win over their parts.
 local ADDON, E = ...
 
--- English trigger -> attested Darnassian. Applied at strength 3 only, because a
--- whole message peppered with untranslated Darnassian gets hard to read fast.
+-- English trigger -> canon Darnassian, applied at strength 3 only: a whole
+-- message peppered with untranslated Darnassian becomes unreadable fast.
+--
+-- Every entry below is attested Darnassian. Deliberately left out:
+--   * proper nouns that are already the English word (weapon and artefact names
+--     like Ellemayne "Reaver", Shalla'tor "Shadow Render", Al'anath "Frostsoul",
+--     Elun'dris "the Eye of Elune") -- nobody types "reaver" meaning the sword;
+--   * bare grammatical fragments (Aria "we face", Bessae "from the", Finel
+--     "the last") which cannot be substituted safely mid-sentence;
+--   * Belore, whose "sun" reading is Thalassian rather than Darnassian.
+--
+-- Longer phrases are listed before shorter ones they contain, since the first
+-- matching rule wins: "good fortune to your family" must precede "good fortune
+-- to you".
 local GLOSSARY_PHRASES = {
-	{ "%f[%a]prepare to fight%f[%A]", "Bandu thoribas" },
-	{ "%f[%a]prepare yourself%f[%A]", "Bandu thoribas" },
-	{ "%f[%a]it shall be done%f[%A]", "Ash karath" },
-	{ "%f[%a]let our enemies beware%f[%A]", "Tor ilisar'thera'nal" },
-	{ "%f[%a]let balance be restored%f[%A]", "Andu-falah-dor" },
-	{ "%f[%a]good fortune to you%f[%A]", "Ishnu-alah" },
+	-- Greetings, farewells and courtesies
 	{ "%f[%a]good fortune to your family%f[%A]", "Ishnu-dal-dieb" },
+	{ "%f[%a]good fortune to you%f[%A]", "Ishnu-alah" },
 	{ "%f[%a]may your troubles be diminished%f[%A]", "Ande'thoras-ethil" },
 	{ "%f[%a]elune be with you%f[%A]", "Elune-adore" },
-	{ "%f[%a]night elf%f[%A]", "kaldorei" },
+	{ "%f[%a]thank you%f[%A]", "Shaha lor'ma" },
+	{ "%f[%a]who goes there%f[%A]", "Fandu-dath-belore?" },
+	{ "%f[%a]who's there%f[%A]", "Fandu-dath-belore?" },
+
+	-- War cries and declarations
+	{ "%f[%a]prepare to fight%f[%A]", "Bandu thoribas" },
+	{ "%f[%a]prepare yourself%f[%A]", "Bandu thoribas" },
+	{ "%f[%a]let our enemies beware%f[%A]", "Tor ilisar'thera'nal" },
+	{ "%f[%a]let balance be restored%f[%A]", "Andu-falah-dor" },
+	{ "%f[%a]let my will be known%f[%A]", "Anu'dorini Talah" },
+	{ "%f[%a]it shall be done%f[%A]", "Ash karath" },
+	{ "%f[%a]do it%f[%A]", "Ash karath" },
+
+	-- Sayings
+	{ "%f[%a]the truth is a guiding light%f[%A]", "Shanna melor'ne adala fal" },
+	{ "%f[%a]finding beauty in imperfection%f[%A]", "Alara'shinu" },
+	{ "%f[%a]heavy are our hearts%f[%A]", "Shu dallas na" },
+	{ "%f[%a]our hearts are heavy%f[%A]", "Shu dallas na" },
+	{ "%f[%a]those who remain hidden%f[%A]", "Shen'dralar" },
+
+	-- Peoples
 	{ "%f[%a]night elves%f[%A]", "kaldorei" },
+	{ "%f[%a]night elf%f[%A]", "kaldorei" },
 	{ "%f[%a]high elves%f[%A]", "quel'dorei" },
-	{ "%f[%a]blood elves%f[%A]", "sin'dorei" },
-	{ "%f[%a]world tree%f[%A]", "Nordrassil" },
+	{ "%f[%a]high elf%f[%A]", "quel'dorei" },
+
+	-- The World Trees, by their meanings
+	{ "%f[%a]crown of the heavens%f[%A]", "Nordrassil" },
+	{ "%f[%a]crown of the earth%f[%A]", "Teldrassil" },
+	{ "%f[%a]crown of harmony%f[%A]", "Amirdrassil" },
+	{ "%f[%a]crown of the snow%f[%A]", "Andrassil" },
+	{ "%f[%a]broken crown%f[%A]", "Vordrassil" },
+	{ "%f[%a]glory of azshara%f[%A]", "Zin-Azshari" },
+	{ "%f[%a]seat of the sky%f[%A]", "Lathar'Lazal" },
 }
 
 local GLOSSARY_WORDS = {
+	-- Titles and kin
 	["teacher"] = "shan'do", ["mentor"] = "shan'do", ["master"] = "shan'do",
 	["student"] = "thero'shan", ["apprentice"] = "thero'shan",
+	["father"] = "an'da", ["dad"] = "an'da", ["papa"] = "an'da",
+	["mother"] = "min'da", ["mom"] = "min'da", ["mum"] = "min'da", ["mama"] = "min'da",
+	["aunt"] = "shal'nar",
+	["thanks"] = "shaha lor'ma",
+	-- Xaxas: chaos, fury, elemental rage; and the name they give Deathwing.
+	["chaos"] = "xaxas", ["fury"] = "xaxas", ["catastrophe"] = "xaxas",
+	["deathwing"] = "Xaxas",
+	["oblivion"] = "denalore", ["devastation"] = "denalore",
+	["sea"] = "lura", ["ocean"] = "lura",
+	-- A warrior armed only with words.
+	["diplomat"] = "t'lara", ["orator"] = "t'lara",
 	["druid"] = "shan'do of the wild",
 }
 

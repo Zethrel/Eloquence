@@ -14,6 +14,7 @@ Core\Util.lua
 Core\Engine.lua
 Core\Race.lua
 
+# Base dialects
 Dialects\Human.lua
 Dialects\Dwarf.lua
 Dialects\Gnome.lua
@@ -27,6 +28,17 @@ Dialects\Scourge.lua
 Dialects\BloodElf.lua
 Dialects\Goblin.lua
 Dialects\Pandaren.lua
+Dialects\ZandalariTroll.lua
+Dialects\Nightborne.lua
+Dialects\VoidElf.lua
+Dialects\KulTiran.lua
+Dialects\Vulpera.lua
+Dialects\Dracthyr.lua
+Dialects\EarthenDwarf.lua
+Dialects\Haranir.lua
+
+# Cultural variants -- must load last, they read the dialects above
+Dialects\Variants.lua
 
 Modules\SpellBook.lua
 Modules\Decompression.lua

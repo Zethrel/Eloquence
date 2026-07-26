@@ -94,17 +94,22 @@ local function Compile(rules, strength)
 		end
 	end
 
+	-- Strength-gated phrases are tried before the base ones, highest level
+	-- first, so a heavy setting can override a rule the base set defines. This
+	-- matches how wordsAt already behaves (a later assignment wins), and is what
+	-- lets the Darnassian glossary replace "thank you" with "Shaha lor'ma" at
+	-- strength 3 while leaving the plain English idiom in place below that.
 	local raw = {}
-	if rules.phrases then
-		for _, p in ipairs(rules.phrases) do raw[#raw + 1] = p end
-	end
 	if rules.phrasesAt then
-		for level = 1, strength do
+		for level = strength, 1, -1 do
 			local extra = rules.phrasesAt[level]
 			if extra then
 				for _, p in ipairs(extra) do raw[#raw + 1] = p end
 			end
 		end
+	end
+	if rules.phrases then
+		for _, p in ipairs(rules.phrases) do raw[#raw + 1] = p end
 	end
 
 	-- Clause-final rules are ordered first, so they are evaluated while the
@@ -226,7 +231,13 @@ local function ApplyFlavor(flavor, text, ctx)
 		-- "...that wull wirk, laddie!" rather than "...wirk! laddie".
 		local body, tail = text:match("^(.-)([%p%s]*)$")
 		if body == "" then body, tail = text, "" end
-		text = body .. ", " .. Pick(flavor.suffix, ctx.rng) .. tail
+		local suffix = Pick(flavor.suffix, ctx.rng)
+		-- Skip it when the sentence already ends on those words, which otherwise
+		-- produces "...work, friend, friend".
+		local lowerBody, lowerSuffix = lower(body), lower(suffix)
+		if sub(lowerBody, -#lowerSuffix) ~= lowerSuffix then
+			text = body .. ", " .. suffix .. tail
+		end
 	end
 	return text
 end
@@ -294,4 +305,53 @@ function Engine.Extend(base, additions)
 		for k, v in pairs(additions) do t[k] = v end
 	end
 	return t
+end
+
+-- Build a dialect from an existing one. Several races are genuine cultural
+-- variants rather than separate languages -- Mag'har are orcs who never drank
+-- the blood, Highmountain are tauren of the peaks -- so their dialects are the
+-- parent's with a layer on top rather than a wholesale copy.
+--
+-- The result is a fresh table, so it gets its own compilation cache. The
+-- variant's own phrases are placed ahead of the parent's, letting it override an
+-- inherited idiom.
+function Engine.Derive(parent, overrides)
+	local derived = {
+		name = overrides.name,
+		desc = overrides.desc,
+		words = Engine.Extend(parent.words or {}, overrides.words),
+		post = overrides.post or parent.post,
+		flavor = overrides.flavor or parent.flavor,
+		wordsAt = {},
+		phrases = {},
+		phrasesAt = {},
+	}
+
+	for level = 1, 3 do
+		local fromParent = parent.wordsAt and parent.wordsAt[level]
+		local fromOverride = overrides.wordsAt and overrides.wordsAt[level]
+		if fromParent or fromOverride then
+			derived.wordsAt[level] = Engine.Extend(fromParent or {}, fromOverride)
+		end
+	end
+
+	for _, entry in ipairs(overrides.phrases or {}) do
+		derived.phrases[#derived.phrases + 1] = entry
+	end
+	for _, entry in ipairs(parent.phrases or {}) do
+		derived.phrases[#derived.phrases + 1] = entry
+	end
+
+	for level = 1, 3 do
+		local merged = {}
+		for _, entry in ipairs((overrides.phrasesAt and overrides.phrasesAt[level]) or {}) do
+			merged[#merged + 1] = entry
+		end
+		for _, entry in ipairs((parent.phrasesAt and parent.phrasesAt[level]) or {}) do
+			merged[#merged + 1] = entry
+		end
+		if #merged > 0 then derived.phrasesAt[level] = merged end
+	end
+
+	return derived
 end

@@ -21,7 +21,7 @@ describe are all taken from the original addon's own documentation:
 
 | Original feature | Status here |
 | --- | --- |
-| Dialectician — accent per speaker race | Implemented, 13 dialects |
+| Dialectician — accent per speaker race | Implemented, 26 dialects |
 | The Spell Book — spelling, grammar, repetition, ALL-CAPS | Implemented |
 | Decompression Engine — expand MMO/Warcraft acronyms | Implemented |
 | Mouthwash — profanity to euphemism | Implemented |
@@ -124,30 +124,86 @@ off and turn on "Also apply a dialect to my own messages" instead.
 
 ## Dialects
 
+Every playable race has its own dialect — 26 in all, covering the full modern
+roster rather than just the classic thirteen.
+
 | Race | Dialect | Flavour |
 | --- | --- | --- |
+| Human | Common | Deliberately the lightest touch. *"King's honor, friend."* |
 | Dwarf | Dwarven | Broad Scots. *"Ah'm no' shuir if that wull wirk, laddie."* |
-| Troll | Trollish | Jamaican patois with Zandali. *"Tas'dingo, mon!"* |
-| Orc | Orcish | Blunt and martial. *"Lok'tar! Zug zug."* |
-| Night Elf | Darnassian | Formal, unhurried, some Darnassian. *"Ishnu'alah."* |
+| Night Elf | Darnassian | Formal, unhurried, canon Darnassian. *"Ishnu-alah."* |
 | Gnome | Gnomish | Over-precise technical vocabulary meeting folksy cliches. |
 | Draenei | Draenei | Ancient and courteous, blessings of the Light. *"Aka'Magosh."* |
-| Tauren | Taurahe | Unhurried and reverent. *"Winds be at your back."* |
+| Worgen | Gilnean | Clipped aristocratic English, with a growl when riled. |
+| Void Elf | Ren'dorei | Elven composure, with Void whispers leaking through. |
+| Lightforged Draenei | Lightforged | Draenei courtesy welded onto a crusade. |
+| Dark Iron Dwarf | Dark Iron | Dwarven Scots gone sour. Coal, grudges, the Molten Core. |
+| Kul Tiran | Kul Tiran | A seafaring West Country burr. *"Fair winds to ye."* |
+| Mechagnome | Mechagnome | Gnomish jargon turned inward, describing its own chassis. |
+| Orc | Orcish | Blunt and martial. *"Lok'tar! Zug zug."* |
 | Forsaken | Forsaken | A dry hiss that thickens when they are agitated. |
+| Tauren | Taurahe | Unhurried and reverent. *"Winds be at your back."* |
+| Troll (Darkspear) | Trollish | Thick Jamaican patois. *"Tas'dingo, mon!"* |
 | Blood Elf | Thalassian | Elegant, clipped, condescending. *"Anar'alah."* |
 | Goblin | Goblin | Fast-talking and transactional. Everything is a deal. |
-| Worgen | Gilnean | Clipped aristocratic English, with a growl when riled. |
+| Nightborne | Shal'dorei | Aloof and exacting. Ten thousand years of Suramar. |
+| Highmountain Tauren | Highmountain | Taurahe reverence, aimed at the peaks. |
+| Mag'har Orc | Mag'har | Orcish, uncorrupted. The clan and the old ways. |
+| Zandalari Troll | Zandali | Formal, proud, imperial. **Not** the Darkspear patois. |
+| Vulpera | Vulpera | Warm and quick, forever thinking of the caravan. |
 | Pandaren | Pandaren | Calm and patient, fond of proverbs. |
-| Human | Common | Deliberately the lightest touch. *"King's honor, friend."* |
+| Dracthyr | Dracthyr | Precise and refined. Flights, wings and Aspects. |
+| Earthen | Earthen | Titan-forged precision. Literal, measured. **No Scots.** |
+| Haranir | Haranir | Soft and melodic. Roots, dreams, and what is kept. |
 
-Allied races inherit their parent culture's speech — Void Elves speak Thalassian,
-Earthen speak Dwarven, Zandalari speak Trollish, Kul Tirans speak Common, and so
-on. `Eloquence/Core/Race.lua` holds that mapping.
+### Where the accents come from
 
-Two dialects do something more than word substitution. The **Forsaken** hiss and
-the **Worgen** growl both scale with how agitated the message looks — exclamation
-marks and shouting — so a calm Forsaken barely sibilates while an angry one is
-hard to miss.
+The dialects follow how Blizzard actually voices each race, and two of those
+details are easy to get wrong:
+
+- **Zandalari are not Darkspear.** Before Battle for Azeroth they reused the
+  jungle troll voice set and sounded Jamaican; since BfA they are voiced with
+  Xhosa-accented English. **Haranir share that voice work** — a soft, melodic
+  delivery on the same South African base.
+- **Earthen deliberately lack the dwarven Scots.** Dwarves are earthen who
+  succumbed to the Curse of Flesh; those who did not still sound titan-forged.
+
+For Zandali and Haranir the addon **does not respell speech phonetically.** That
+accent lives in the vocal delivery — on the page these characters speak formal,
+dignified English — so the dialects render their *register* and vocabulary
+instead. Respelling a real-world accent as broken English would be both wrong
+about how they talk and a caricature. Regional British respelling is kept for
+Dwarven, Dark Iron and Kul Tiran, since that is the convention the original addon
+established with its Scots.
+
+Only genuine token spelling variants are aliased now (`Earthen` →
+`EarthenDwarf`); see `Eloquence/Core/Race.lua`.
+
+Five races are cultural variants rather than separate languages — Dark Iron,
+Mag'har, Lightforged, Mechagnome and Highmountain — and are built with
+`Engine.Derive` as their parent's dialect plus a layer, so shared vocabulary
+lives in one place.
+
+Three dialects do more than substitute words, and all three scale with how
+agitated the message looks (exclamation marks and shouting): the **Forsaken**
+hiss, the **Worgen** growl, and the **Void Elf** whispers, which surface between
+sentences in a dim violet so they read as intrusions rather than speech.
+
+### Darnassian
+
+The Night Elf dialect carries a glossary of canon Darnassian, applied at
+strength 3 only — a message peppered with untranslated Darnassian becomes
+unreadable fast. `Shaha lor'ma` for "thank you", `Fandu-dath-belore?` for "who
+goes there", `an'da` and `min'da` for father and mother, `Xaxas` for chaos or
+Deathwing, `Ishnu-alah`, `Bandu thoribas`, `Tor ilisar'thera'nal`, the World
+Trees by their meanings, and so on.
+
+Deliberately excluded: proper nouns that are already the English word (weapon
+names like *Ellemayne* "Reaver" — nobody types "reaver" meaning the sword), bare
+grammatical fragments that cannot be substituted safely mid-sentence (*Aria* "we
+face", *Bessae* "from the"), and *Belore*, whose "sun" reading is Thalassian
+rather than Darnassian. `Dialects/NightElf.lua` documents that split at the top;
+keep it if you extend the glossary.
 
 ---
 
@@ -229,7 +285,7 @@ headlessly against a stubbed client. No game required:
 lua Tests/run.lua
 ```
 
-Currently 936 assertions covering case preservation, escape-sequence integrity,
+Currently 1344 assertions covering case preservation, escape-sequence integrity,
 determinism, message splitting, each dialect at every strength, each filter,
 race resolution and aliasing, the chat filter round trip, outgoing splitting, the
 slash commands, and a hostile-input pass that throws malformed escape sequences

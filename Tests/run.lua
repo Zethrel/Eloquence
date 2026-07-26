@@ -282,6 +282,55 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Dialect: Void elf whispers")
+--------------------------------------------------------------------------------
+
+do
+	-- The whispers should surface far more often when the speaker is agitated.
+	local function whisperCount(text, runs)
+		local hits = 0
+		for i = 1, runs do
+			-- Vary the seed by appending an invisible-ish differentiator.
+			local sample = text .. string.rep(" ", i)
+			if dialectOnly("VoidElf", sample, 3):find("cff9a70c8", 1, true) then
+				hits = hits + 1
+			end
+		end
+		return hits
+	end
+	local calm = whisperCount("it is quiet today and all is well here", 40)
+	local frantic = whisperCount("THEY ARE COMING! RUN! GET OUT NOW!", 40)
+	check("an agitated void elf whispers more than a calm one", frantic > calm,
+		string.format("calm=%d frantic=%d", calm, frantic))
+	check("a calm void elf sometimes stays silent", calm < 40, tostring(calm))
+end
+
+--------------------------------------------------------------------------------
+section("Dialect: register bugs stay fixed")
+--------------------------------------------------------------------------------
+
+do
+	-- Negation must not break a verb mapping. Mid-clause the idiom correctly
+	-- stays literal, so what matters is that it stays *grammatical*.
+	local earthen = dialectOnly("EarthenDwarf", "I do not know if that will work")
+	excludes("Earthen negation stays grammatical", earthen, "do not have recorded")
+	contains("and reads as plain English", earthen, "I do not know if")
+	-- Standing alone, it does resolve to the Earthen idiom.
+	contains("the clause-final form still fires",
+		dialectOnly("EarthenDwarf", "I do not know."), "no record of that")
+
+	-- Verb vs noun, the same trap Goblin fell into.
+	contains("Kul Tiran leaves the verb 'work' alone",
+		dialectOnly("KulTiran", "I reckon that will work"), "will work")
+
+	-- A flavour suffix must not echo the word already ending the sentence.
+	for i = 1, 30 do
+		local result = dialectOnly("Vulpera", "that will work, friend" .. string.rep(" ", i))
+		excludes("Vulpera does not append a duplicate 'friend'", result, "friend, friend")
+	end
+end
+
+--------------------------------------------------------------------------------
 section("Dialect: formal races expand contractions")
 --------------------------------------------------------------------------------
 
@@ -376,6 +425,24 @@ do
 	contains("shan'do for teacher", dialectOnly("NightElf", "my teacher taught me", 3), "shan'do")
 	contains("thero'shan for student", dialectOnly("NightElf", "I am your student", 3), "thero'shan")
 	contains("kaldorei for night elves", dialectOnly("NightElf", "the night elves are here", 3), "kaldorei")
+
+	-- A strength-gated phrase must beat the base rule it overlaps with.
+	contains("the glossary overrides the plain idiom at strength 3",
+		dialectOnly("NightElf", "thank you for the help", 3), "Shaha lor'ma")
+	contains("while strength 2 keeps the English idiom",
+		dialectOnly("NightElf", "thank you for the help", 2), "you have my gratitude")
+
+	-- Longer glossary phrases must win over the shorter ones they contain.
+	contains("good fortune to your family resolves whole",
+		dialectOnly("NightElf", "good fortune to your family", 3), "Ishnu-dal-dieb")
+	contains("and the shorter greeting still works",
+		dialectOnly("NightElf", "good fortune to you", 3), "Ishnu-alah")
+
+	contains("Xaxas for chaos", dialectOnly("NightElf", "this is chaos", 3), "xaxas")
+	contains("Xaxas names Deathwing", dialectOnly("NightElf", "Deathwing is coming", 3), "Xaxas")
+	contains("an'da for father", dialectOnly("NightElf", "my father waits", 3), "an'da")
+	contains("Fandu-dath-belore for who goes there",
+		dialectOnly("NightElf", "who goes there", 3), "Fandu-dath-belore")
 end
 
 --------------------------------------------------------------------------------
@@ -544,12 +611,72 @@ section("Race resolution")
 do
 	_G._guidRaces["Player-1-VOID"] = { race = "VoidElf", class = "Mage", name = "Sylwen" }
 	eq("resolves race from a GUID", E.Race.Resolve("Player-1-VOID", "Sylwen"), "VoidElf")
-	eq("allied races alias onto their parent", E.Race.Canonical("VoidElf"), "BloodElf")
-	eq("Earthen speak Dwarven", E.Race.Canonical("EarthenDwarf"), "Dwarf")
-	check("a void elf gets the Thalassian dialect",
-		E.Race.DialectFor("VoidElf") == E.DIALECTS["BloodElf"])
 	eq("creature GUIDs resolve to nothing", E.Race.Resolve("Creature-0-1-2-3-4-5", "Kobold"), nil)
 	eq("an unknown GUID resolves to nothing", E.Race.Resolve("Player-1-NOBODY", "Nobody"), nil)
+
+	-- Every playable race speaks for itself now; only token spelling variants
+	-- are aliased.
+	eq("void elves have their own dialect", E.Race.Canonical("VoidElf"), "VoidElf")
+	eq("the Earthen spelling variant is aliased", E.Race.Canonical("Earthen"), "EarthenDwarf")
+	check("a void elf gets Ren'dorei, not Thalassian",
+		E.Race.DialectFor("VoidElf") == E.DIALECTS["VoidElf"])
+end
+
+do
+	-- Regression guards for two mistakes that were in the first cut.
+	check("Zandalari do NOT get the Darkspear patois",
+		E.Race.DialectFor("ZandalariTroll") ~= E.DIALECTS["Troll"])
+	eq("Zandalari get Zandali", E.DIALECTS["ZandalariTroll"].name, "Zandali")
+	excludes("and Zandali does not respell 'the' as 'de'",
+		dialectOnly("ZandalariTroll", "the other one is nothing"), "de other")
+	contains("Darkspear still do get the patois",
+		dialectOnly("Troll", "the other one is nothing"), "de udda")
+
+	check("Earthen do NOT get the dwarven Scots",
+		E.Race.DialectFor("EarthenDwarf") ~= E.DIALECTS["Dwarf"])
+	excludes("and Earthen speech has no Scots in it",
+		dialectOnly("EarthenDwarf", "I do not know if that will work, friend"), "wirk")
+	contains("Dwarves still do get the Scots",
+		dialectOnly("Dwarf", "I do not know if that will work, friend"), "wirk")
+end
+
+do
+	-- Every race the client can report should have something to say. If Blizzard
+	-- adds one, this is the test that will notice.
+	local PLAYABLE = {
+		"Human", "Dwarf", "NightElf", "Gnome", "Draenei", "Worgen", "Pandaren",
+		"Orc", "Scourge", "Tauren", "Troll", "BloodElf", "Goblin",
+		"VoidElf", "LightforgedDraenei", "DarkIronDwarf", "KulTiran", "Mechagnome",
+		"Nightborne", "HighmountainTauren", "MagharOrc", "ZandalariTroll", "Vulpera",
+		"Dracthyr", "EarthenDwarf", "Haranir",
+	}
+	for _, race in ipairs(PLAYABLE) do
+		local dialect = E.Race.DialectFor(race)
+		check(race .. " has a dialect", dialect ~= nil)
+		if dialect then
+			check(race .. " dialect is named", type(dialect.name) == "string" and dialect.name ~= "")
+			check(race .. " dialect is described", type(dialect.desc) == "string" and dialect.desc ~= "")
+		end
+	end
+
+	-- Derived variants must not share their parent's table, or they would share
+	-- its compilation cache too.
+	check("derived variants are distinct tables",
+		E.DIALECTS["DarkIronDwarf"] ~= E.DIALECTS["Dwarf"]
+		and E.DIALECTS["MagharOrc"] ~= E.DIALECTS["Orc"]
+		and E.DIALECTS["Mechagnome"] ~= E.DIALECTS["Gnome"]
+		and E.DIALECTS["HighmountainTauren"] ~= E.DIALECTS["Tauren"]
+		and E.DIALECTS["LightforgedDraenei"] ~= E.DIALECTS["Draenei"])
+
+	-- ...but they must inherit the parent's vocabulary.
+	contains("Dark Iron inherit the dwarven Scots",
+		dialectOnly("DarkIronDwarf", "I do not know if that will work"), "wirk")
+	contains("and add their own layer",
+		dialectOnly("DarkIronDwarf", "the fire is hot"), "the Flame")
+	contains("Highmountain inherit Taurahe formality",
+		dialectOnly("HighmountainTauren", "I don't think so"), "do not")
+	contains("and add their own layer",
+		dialectOnly("HighmountainTauren", "my home is the mountain"), "Highmountain")
 end
 
 do
@@ -690,7 +817,9 @@ do
 	handler("race Troll on")
 	eq("/elo race Troll on unmutes them", E.db.dialect.races["Troll"], nil)
 	handler("race zandalaritroll off")
-	eq("allied race names work too", E.db.dialect.races["Troll"], false)
+	eq("allied races are muted in their own right", E.db.dialect.races["ZandalariTroll"], false)
+	eq("and muting them leaves the Darkspear alone", E.db.dialect.races["Troll"], nil)
+	handler("race zandalaritroll on")
 
 	handler("off")
 	eq("/elo off disables the addon", E.db.enabled, false)

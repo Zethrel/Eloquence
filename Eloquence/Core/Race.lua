@@ -12,23 +12,15 @@ local ADDON, E = ...
 local Race = {}
 E.Race = Race
 
--- Allied races (and other later additions) inherit the speech of their parent
--- culture. Void Elves really are exiled Blood Elves, Earthen really are
--- dwarves, and so on.
+-- Every playable race now has a dialect of its own, so this table is only for
+-- token spelling variants and for anything Blizzard adds that we have not
+-- written a dialect for yet.
+--
+-- It deliberately no longer maps allied races onto their parents. Doing that was
+-- wrong in several places: Zandalari are Xhosa-voiced rather than Darkspear
+-- Jamaican, and the earthen pointedly do not have the dwarven Scots accent.
 local ALIAS = {
-	VoidElf            = "BloodElf",
-	Nightborne         = "NightElf",
-	LightforgedDraenei = "Draenei",
-	HighmountainTauren = "Tauren",
-	ZandalariTroll     = "Troll",
-	DarkIronDwarf      = "Dwarf",
-	EarthenDwarf       = "Dwarf",
-	Earthen            = "Dwarf",
-	MagharOrc          = "Orc",
-	Mechagnome         = "Gnome",
-	KulTiran           = "Human",
-	Vulpera            = "Goblin",
-	Dracthyr           = "Draenei", -- formal, non-human cadence; an approximation
+	Earthen = "EarthenDwarf",  -- seen both ways depending on API path
 }
 Race.ALIAS = ALIAS
 
