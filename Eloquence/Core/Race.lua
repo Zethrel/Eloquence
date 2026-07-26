@@ -12,6 +12,28 @@ local ADDON, E = ...
 local Race = {}
 E.Race = Race
 
+-- VERIFIED RACE TOKENS
+--
+-- These are the englishRace strings UnitRace actually returns, confirmed against
+-- a live client with /dump select(2, UnitRace("player")), with race IDs:
+--
+--   Nightborne          27      MagharOrc           36
+--   HighmountainTauren  28      Mechagnome          37
+--   VoidElf             29      Dracthyr            52
+--   LightforgedDraenei  30      EarthenDwarf        85
+--   ZandalariTroll      31      Harronir            86
+--   KulTiran            32
+--   DarkIronDwarf       34
+--   Vulpera             35
+--
+-- The thirteen classic races (Human, Dwarf, NightElf, Gnome, Draenei, Worgen,
+-- Pandaren, Orc, Scourge, Tauren, Troll, BloodElf, Goblin) use their long-stable
+-- tokens. Note Scourge, not Undead or Forsaken.
+--
+-- Do not "tidy" these into prettier spellings. Harronir in particular has two Rs
+-- in the client but is widely written "Haranir" everywhere else, and getting it
+-- wrong silently disables the dialect rather than raising an error.
+
 -- Every playable race now has a dialect of its own, so this table is only for
 -- token spelling variants and for anything Blizzard adds that we have not
 -- written a dialect for yet.
@@ -20,7 +42,9 @@ E.Race = Race
 -- wrong in several places: Zandalari are Xhosa-voiced rather than Darkspear
 -- Jamaican, and the earthen pointedly do not have the dwarven Scots accent.
 local ALIAS = {
-	Earthen = "EarthenDwarf",  -- seen both ways depending on API path
+	-- Defensive: both earthen (IDs 84 and 85) are expected to report
+	-- "EarthenDwarf", but only 85 has been seen directly.
+	Earthen = "EarthenDwarf",
 	-- The client reports "Harronir" (race ID 86). Much community writing spells
 	-- it "Haranir", so accept that too.
 	Haranir = "Harronir",

@@ -657,6 +657,10 @@ end
 do
 	-- Every race the client can report should have something to say. If Blizzard
 	-- adds one, this is the test that will notice.
+	--
+	-- The allied-race and later tokens here were confirmed against a live client
+	-- (see the table at the top of Core/Race.lua); the classic thirteen use their
+	-- long-stable tokens.
 	local PLAYABLE = {
 		"Human", "Dwarf", "NightElf", "Gnome", "Draenei", "Worgen", "Pandaren",
 		"Orc", "Scourge", "Tauren", "Troll", "BloodElf", "Goblin",
@@ -672,6 +676,20 @@ do
 			check(race .. " dialect is described", type(dialect.desc) == "string" and dialect.desc ~= "")
 		end
 	end
+
+	-- ...and the reverse: nothing should be registered that the roster above does
+	-- not account for, so a new dialect cannot quietly skip the checks here.
+	local expected = {}
+	for _, race in ipairs(PLAYABLE) do expected[race] = true end
+	local unaccounted, total = {}, 0
+	for race in pairs(E.DIALECTS) do
+		total = total + 1
+		if not expected[race] then unaccounted[#unaccounted + 1] = race end
+	end
+	table.sort(unaccounted)
+	check("no dialect is missing from the roster list", #unaccounted == 0,
+		"unaccounted for: " .. table.concat(unaccounted, ", "))
+	eq("one dialect per playable race", total, #PLAYABLE)
 
 	-- Derived variants must not share their parent's table, or they would share
 	-- its compilation cache too.
