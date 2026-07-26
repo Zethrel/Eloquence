@@ -89,28 +89,32 @@ function stub.install(env)
 	return env
 end
 
+-- The load order, which must match Eloquence.toc exactly. Tests/run.lua asserts
+-- that it does: a file that exists and loads here but is missing from the TOC
+-- would pass every test and then not load in the game at all.
+stub.FILES = {
+	"Core/Init.lua", "Core/Util.lua", "Core/Engine.lua", "Core/Race.lua",
+	"Dialects/Human.lua", "Dialects/Dwarf.lua", "Dialects/Gnome.lua",
+	"Dialects/NightElf.lua", "Dialects/Draenei.lua", "Dialects/Worgen.lua",
+	"Dialects/Orc.lua", "Dialects/Troll.lua", "Dialects/Tauren.lua",
+	"Dialects/Scourge.lua", "Dialects/BloodElf.lua", "Dialects/Goblin.lua",
+	"Dialects/Pandaren.lua", "Dialects/ZandalariTroll.lua",
+	"Dialects/Nightborne.lua", "Dialects/VoidElf.lua", "Dialects/KulTiran.lua",
+	"Dialects/Vulpera.lua", "Dialects/Dracthyr.lua", "Dialects/EarthenDwarf.lua",
+	"Dialects/Harronir.lua",
+	"Dialects/Variants.lua",
+	"Modules/SpellBook.lua", "Modules/Decompression.lua", "Modules/Mouthwash.lua",
+	"Modules/FantasyWriter.lua", "Modules/Dialectician.lua",
+	"Core/Pipeline.lua", "Core/Chat.lua", "Core/Cleanup.lua",
+	"Core/Options.lua", "Core/Commands.lua",
+}
+
 -- Load the addon files in TOC order and return the private namespace.
 function stub.loadAddon(root)
 	root = root or "Eloquence"
 	local E = {}
-	local files = {
-		"Core/Init.lua", "Core/Util.lua", "Core/Engine.lua", "Core/Race.lua",
-		"Dialects/Human.lua", "Dialects/Dwarf.lua", "Dialects/Gnome.lua",
-		"Dialects/NightElf.lua", "Dialects/Draenei.lua", "Dialects/Worgen.lua",
-		"Dialects/Orc.lua", "Dialects/Troll.lua", "Dialects/Tauren.lua",
-		"Dialects/Scourge.lua", "Dialects/BloodElf.lua", "Dialects/Goblin.lua",
-		"Dialects/Pandaren.lua", "Dialects/ZandalariTroll.lua",
-		"Dialects/Nightborne.lua", "Dialects/VoidElf.lua", "Dialects/KulTiran.lua",
-		"Dialects/Vulpera.lua", "Dialects/Dracthyr.lua", "Dialects/EarthenDwarf.lua",
-		"Dialects/Harronir.lua",
-		"Dialects/Variants.lua",
-		"Modules/SpellBook.lua", "Modules/Decompression.lua", "Modules/Mouthwash.lua",
-		"Modules/FantasyWriter.lua", "Modules/Dialectician.lua",
-		"Core/Pipeline.lua", "Core/Chat.lua", "Core/Cleanup.lua",
-		"Core/Options.lua", "Core/Commands.lua",
-	}
 
-	for _, relative in ipairs(files) do
+	for _, relative in ipairs(stub.FILES) do
 		local path = root .. "/" .. relative
 		local chunk, err = loadfile(path)
 		if not chunk then

@@ -283,6 +283,80 @@ Phrases run before words, so multi-word idioms beat their parts. `ctx` carries
 
 ---
 
+## Packaging and distribution
+
+A zip and a CurseForge listing are not alternatives — CurseForge distributes a
+zip, so the zip is the deliverable either way and CurseForge is one channel for
+it.
+
+Build one:
+
+```
+tools/package.sh          # writes dist/Eloquence-<version>.zip
+```
+
+The result contains a single top-level `Eloquence/` folder, which is what both a
+manual install and every addon manager expect. Development files — the test
+suite, `tools/`, CI config — are excluded, and `README.md` and `LICENSE` are
+copied inside the addon folder.
+
+**Do not hand people the GitHub "Download ZIP" button.** That produces
+`Eloquence-<branch>/Eloquence/…`, one level too deep, so the game will not see
+the addon; it also ships the test suite. Use a built zip or a Release.
+
+### Why the script validates before it builds
+
+The game loads exactly what `Eloquence.toc` lists. The test harness keeps its own
+load order in `Tests/wow_stub.lua`. If those two drift, **every test still passes
+while the addon fails to load a file in game** — the worst kind of failure,
+because nothing complains. So both the packager and the suite assert that the TOC,
+the harness list, and the files on disk all agree, and that `Variants.lua` still
+comes after the dialects it derives from. `tools/package.sh` refuses to build if
+they disagree.
+
+### Publishing
+
+`.github/workflows/ci.yml` runs the suite and a packaging check on every push.
+
+`.github/workflows/release.yml` cuts a release when you push a tag:
+
+```
+git tag v2.0.0 && git push origin v2.0.0
+```
+
+It runs the tests, builds the zip, and attaches it to a GitHub Release. That part
+needs no setup at all.
+
+The CurseForge step is skipped unless credentials exist, so it stays out of the
+way until you want it. To enable:
+
+1. Create the project on CurseForge (this part is manual and cannot be
+   automated — you need an account and a project page).
+2. Add a repository **secret** `CF_API_KEY` from CurseForge account settings →
+   API Tokens.
+3. Add a repository **variable** `CF_PROJECT_ID` — the numeric Project ID shown
+   on the project page.
+
+Or upload by hand, which is genuinely easy: drag `dist/Eloquence-<version>.zip`
+into the project's Upload File form and pick the game version.
+
+`tools/curseforge-upload.sh` does the upload, and handles the one fiddly part —
+CurseForge wants its own numeric game-version ID rather than an interface number,
+so `120007` is converted to `12.0.7` and looked up. Two ways to exercise it
+without uploading anything:
+
+```
+CF_SELFTEST=1 tools/curseforge-upload.sh                      # tests the conversion
+CF_DRY_RUN=1 CF_API_KEY=x CF_PROJECT_ID=1 \
+  tools/curseforge-upload.sh dist/Eloquence-2.0.0.zip         # offline, sends nothing
+```
+
+Note that the actual CurseForge API calls are the one part of this repository that
+has never run for real — everything up to the network request is verified, but the
+upload itself will need a live key the first time.
+
+Wago.io and WoWInterface are other options; both take the same zip.
+
 ## Tests
 
 The text handling — which is nearly all of the interesting behaviour — is tested
@@ -292,7 +366,7 @@ headlessly against a stubbed client. No game required:
 lua Tests/run.lua
 ```
 
-Currently 1350 assertions covering case preservation, escape-sequence integrity,
+Currently 1468 assertions covering case preservation, escape-sequence integrity,
 determinism, message splitting, each dialect at every strength, each filter,
 race resolution and aliasing, the chat filter round trip, outgoing splitting, the
 slash commands, and a hostile-input pass that throws malformed escape sequences

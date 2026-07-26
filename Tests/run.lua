@@ -894,6 +894,70 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Packaging: the TOC is the single source of truth")
+--------------------------------------------------------------------------------
+
+do
+	-- The game loads exactly what the TOC lists, in that order. This harness has
+	-- its own list. If the two drift, every test here still passes while the
+	-- addon fails to load a file in the actual game -- so tie them together.
+	local tocPath = "Eloquence/Eloquence.toc"
+	local handle = io.open(tocPath, "r")
+	check("the TOC is readable", handle ~= nil, tocPath)
+
+	if handle then
+		local tocFiles, seen = {}, {}
+		for line in handle:lines() do
+			line = line:gsub("\r", "")
+			-- Directives start with '#'; everything else that ends .lua is a file.
+			if not line:match("^%s*#") and line:match("%.lua%s*$") then
+				local normalised = line:gsub("\\", "/"):gsub("^%s+", ""):gsub("%s+$", "")
+				tocFiles[#tocFiles + 1] = normalised
+				seen[normalised] = true
+			end
+		end
+		handle:close()
+
+		eq("the TOC lists as many files as the harness loads", #tocFiles, #stub.FILES)
+
+		local harnessSeen = {}
+		for _, file in ipairs(stub.FILES) do harnessSeen[file] = true end
+
+		for _, file in ipairs(tocFiles) do
+			check("TOC entry is loaded by the harness: " .. file, harnessSeen[file] == true)
+			local f = io.open("Eloquence/" .. file, "r")
+			check("TOC entry exists on disk: " .. file, f ~= nil)
+			if f then f:close() end
+		end
+		for _, file in ipairs(stub.FILES) do
+			check("harness file is listed in the TOC: " .. file, seen[file] == true)
+		end
+
+		-- Load order matters: Variants.lua derives from the base dialects, so it
+		-- has to come after them in both lists.
+		local function indexOf(list, needle)
+			for i, v in ipairs(list) do if v == needle then return i end end
+		end
+		local variants = indexOf(tocFiles, "Dialects/Variants.lua")
+		check("Variants.lua is in the TOC", variants ~= nil)
+		if variants then
+			local latestParent = 0
+			for _, parent in ipairs({ "Dwarf", "Orc", "Draenei", "Gnome", "Tauren" }) do
+				local at = indexOf(tocFiles, "Dialects/" .. parent .. ".lua")
+				check(parent .. ".lua is in the TOC", at ~= nil)
+				if at and at > latestParent then latestParent = at end
+			end
+			check("Variants.lua loads after every dialect it derives from",
+				variants > latestParent,
+				string.format("Variants at %d, last parent at %d", variants, latestParent))
+		end
+
+		-- Core/Init.lua defines the namespace everything else uses.
+		eq("Core/Init.lua is loaded first", tocFiles[1], "Core/Init.lua")
+	end
+end
+
+--------------------------------------------------------------------------------
 
 io.write(string.format("\n%d passed, %d failed\n", passed, failed))
 if failed > 0 then
