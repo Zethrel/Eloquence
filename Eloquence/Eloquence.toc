@@ -1,0 +1,41 @@
+## Interface: 120005
+## Title: Eloquence
+## Notes: Linguistic chat filters and racial dialects. A revival of the classic RP chat addon.
+## Author: Eloquence Revival Project
+## Version: 2.0.0
+## SavedVariables: EloquenceDB
+## IconTexture: Interface\Icons\INV_Scroll_03
+## Category-enUS: Roleplay
+## X-Website: https://github.com/Zethrel/Eloquence
+## X-License: MIT
+
+Core\Init.lua
+Core\Util.lua
+Core\Engine.lua
+Core\Race.lua
+
+Dialects\Human.lua
+Dialects\Dwarf.lua
+Dialects\Gnome.lua
+Dialects\NightElf.lua
+Dialects\Draenei.lua
+Dialects\Worgen.lua
+Dialects\Orc.lua
+Dialects\Troll.lua
+Dialects\Tauren.lua
+Dialects\Scourge.lua
+Dialects\BloodElf.lua
+Dialects\Goblin.lua
+Dialects\Pandaren.lua
+
+Modules\SpellBook.lua
+Modules\Decompression.lua
+Modules\Mouthwash.lua
+Modules\FantasyWriter.lua
+Modules\Dialectician.lua
+
+Core\Pipeline.lua
+Core\Chat.lua
+Core\Cleanup.lua
+Core\Options.lua
+Core\Commands.lua
