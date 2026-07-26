@@ -4,6 +4,13 @@ local ADDON, E = ...
 E.ADDON = ADDON
 E.VERSION = "2.0.0"
 
+-- Single source of truth for attribution: used by /elo status, the options panel
+-- and the TOC. The original Eloquence was a Vanilla-era community addon; this is
+-- a reimplementation of it from its documented feature set.
+E.AUTHOR = "Zethrel"
+E.REALM = "Argent Dawn EU"
+E.CREDIT = E.AUTHOR .. " - " .. E.REALM
+
 -- Ordered list of the linguistic filters. The pipeline runs them in this order:
 -- normalise the text first, then layer flavour on top.
 E.MODULE_ORDER = { "spellbook", "decompression", "mouthwash", "fantasy", "dialect" }

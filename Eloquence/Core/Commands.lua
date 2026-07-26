@@ -35,6 +35,7 @@ end
 
 local function Status()
 	E.Print(format("version %s -- %s", E.VERSION, E.db.enabled and "|cff40ff40enabled|r" or "|cffff4040disabled|r"))
+	E.Print(format("  revival by |cffffff80%s|r |cff808080(%s)|r", E.AUTHOR, E.REALM))
 	for _, key in ipairs(E.MODULE_ORDER) do
 		local module, settings = E.MODULES[key], E.db.modules[key]
 		if module then

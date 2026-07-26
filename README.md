@@ -366,7 +366,7 @@ headlessly against a stubbed client. No game required:
 lua Tests/run.lua
 ```
 
-Currently 1468 assertions covering case preservation, escape-sequence integrity,
+Currently 1473 assertions covering case preservation, escape-sequence integrity,
 determinism, message splitting, each dialect at every strength, each filter,
 race resolution and aliasing, the chat filter round trip, outgoing splitting, the
 slash commands, and a hostile-input pass that throws malformed escape sequences
@@ -398,9 +398,20 @@ for f in $(find Eloquence -name '*.lua'); do luac -p "$f" || echo "FAIL $f"; don
 
 ## Credits
 
-The original Eloquence was a community roleplaying addon of the Vanilla era; this
-project owes its filter design, its dialect line-up and several of its example
-lines to that documentation. Modern addons in the same tradition worth knowing
-about are **AccentChat**, **Tongues** and **Dialect**.
+**This revival is by Zethrel — Argent Dawn EU.**
 
-MIT licensed.
+The original Eloquence was a community roleplaying addon of the Vanilla era,
+written for patch 1.12 by an author the surviving listings do not name. This
+project owes its filter design, its dialect line-up and several of its example
+lines — including the Dwarven *"Ah'm no' shuir if that wull wirk, laddie"* — to
+that addon's own documentation. It is a reimplementation rather than a fork: none
+of the original code was available (see
+[What this is, and what it is not](#what-this-is-and-what-it-is-not)).
+
+Race accents follow how Blizzard voices each race in the modern game. The
+Darnassian glossary comes from the community-maintained canon translation list.
+
+Modern addons in the same tradition, worth knowing about: **AccentChat**,
+**Tongues** and **Dialect**.
+
+MIT licensed — see [LICENSE](LICENSE).

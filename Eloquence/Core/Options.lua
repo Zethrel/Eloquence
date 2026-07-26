@@ -106,7 +106,8 @@ end
 
 local function Build()
 	MakeTitle("Eloquence " .. E.VERSION)
-	MakeNote("A revival of the classic roleplaying chat addon. Filters are applied to the chat you read; "
+	MakeNote("A revival of the classic roleplaying chat addon, by |cffffff80" .. E.AUTHOR
+		.. "|r of " .. E.REALM .. ". Filters are applied to the chat you read; "
 		.. "rewriting your own outgoing messages is opt-in below.")
 
 	MakeCheck(1, "Enable Eloquence", "Master switch for every filter.",

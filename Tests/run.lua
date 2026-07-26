@@ -957,6 +957,26 @@ do
 	end
 end
 
+do
+	-- Attribution lives in Init.lua and is echoed by the TOC, /elo status and the
+	-- options panel. Tie the TOC copy to the Lua copy so they cannot drift.
+	eq("the author is set", E.AUTHOR, "Zethrel")
+	eq("the realm is set", E.REALM, "Argent Dawn EU")
+	contains("the combined credit reads correctly", E.CREDIT, "Zethrel - Argent Dawn EU")
+
+	local handle = io.open("Eloquence/Eloquence.toc", "r")
+	if handle then
+		local author, version
+		for line in handle:lines() do
+			author = author or line:match("^## Author:%s*(.-)%s*\r?$")
+			version = version or line:match("^## Version:%s*(.-)%s*\r?$")
+		end
+		handle:close()
+		eq("the TOC author matches Init.lua", author, E.CREDIT)
+		eq("the TOC version matches Init.lua", version, E.VERSION)
+	end
+end
+
 --------------------------------------------------------------------------------
 
 io.write(string.format("\n%d passed, %d failed\n", passed, failed))
