@@ -1,4 +1,4 @@
-## Interface: 120005
+## Interface: 120007
 ## Title: Eloquence
 ## Notes: Linguistic chat filters and racial dialects. A revival of the classic RP chat addon.
 ## Author: Eloquence Revival Project
@@ -35,7 +35,7 @@ Dialects\KulTiran.lua
 Dialects\Vulpera.lua
 Dialects\Dracthyr.lua
 Dialects\EarthenDwarf.lua
-Dialects\Haranir.lua
+Dialects\Harronir.lua
 
 # Cultural variants -- must load last, they read the dialects above
 Dialects\Variants.lua

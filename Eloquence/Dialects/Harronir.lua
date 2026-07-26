@@ -1,6 +1,12 @@
--- Haranir: guardians of the rootways, from Harandar.
+-- Harronir: guardians of the rootways, from Harandar.
 --
--- The haranir are voiced with the same Xhosa-accented English as the Zandalari,
+-- NOTE ON SPELLING: the client reports this race as "Harronir" (englishRace
+-- token, race ID 86) -- two Rs. A good deal of community writing spells it
+-- "Haranir", so that spelling is aliased onto this one in Core\Race.lua and is
+-- accepted by /elo race. The token is what UnitRace actually returns, and it is
+-- what the dialect is registered under.
+--
+-- The harronir are voiced with the same Xhosa-accented English as the Zandalari,
 -- described as a soft, melodic, rhythmic delivery. As with Zandali, that accent
 -- is carried by the voice acting rather than by the grammar, so this dialect
 -- renders their register -- unhurried, warm, formal, spoken by people whose whole
@@ -12,8 +18,8 @@
 -- they live beside the Rift of Aln where dreams turn dangerous.
 local ADDON, E = ...
 
-E.RegisterDialect("Haranir", {
-	name = "Haranir",
+E.RegisterDialect("Harronir", {
+	name = "Harronir",
 	desc = "Soft and melodic, unhurried. Speaks of roots, dreams and what is kept.",
 
 	words = E.Engine.Extend(E.Engine.EXPAND_CONTRACTIONS, {

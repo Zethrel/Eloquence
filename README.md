@@ -51,7 +51,7 @@ The folder you copy must be the inner `Eloquence` directory — the one containi
 
 ### If the addon shows as out of date
 
-`## Interface: 120005` in `Eloquence.toc` is the only thing that needs changing.
+`## Interface: 120007` in `Eloquence.toc` is the only thing that needs changing.
 Run `/dump select(4, GetBuildInfo())` in game and put that number in the TOC.
 Nothing else is version-sensitive.
 
@@ -154,7 +154,7 @@ roster rather than just the classic thirteen.
 | Pandaren | Pandaren | Calm and patient, fond of proverbs. |
 | Dracthyr | Dracthyr | Precise and refined. Flights, wings and Aspects. |
 | Earthen | Earthen | Titan-forged precision. Literal, measured. **No Scots.** |
-| Haranir | Haranir | Soft and melodic. Roots, dreams, and what is kept. |
+| Harronir | Harronir | Soft and melodic. Roots, dreams, and what is kept. |
 
 ### Where the accents come from
 
@@ -163,12 +163,12 @@ details are easy to get wrong:
 
 - **Zandalari are not Darkspear.** Before Battle for Azeroth they reused the
   jungle troll voice set and sounded Jamaican; since BfA they are voiced with
-  Xhosa-accented English. **Haranir share that voice work** — a soft, melodic
+  Xhosa-accented English. **Harronir share that voice work** — a soft, melodic
   delivery on the same South African base.
 - **Earthen deliberately lack the dwarven Scots.** Dwarves are earthen who
   succumbed to the Curse of Flesh; those who did not still sound titan-forged.
 
-For Zandali and Haranir the addon **does not respell speech phonetically.** That
+For Zandali and Harronir the addon **does not respell speech phonetically.** That
 accent lives in the vocal delivery — on the page these characters speak formal,
 dignified English — so the dialects render their *register* and vocabulary
 instead. Respelling a real-world accent as broken English would be both wrong
@@ -176,8 +176,15 @@ about how they talk and a caricature. Regional British respelling is kept for
 Dwarven, Dark Iron and Kul Tiran, since that is the convention the original addon
 established with its Scots.
 
-Only genuine token spelling variants are aliased now (`Earthen` →
-`EarthenDwarf`); see `Eloquence/Core/Race.lua`.
+Only genuine token spelling variants are aliased now — `Earthen` →
+`EarthenDwarf`, and `Haranir` → `Harronir`; see `Eloquence/Core/Race.lua`.
+
+A note on that second one: the client reports the Midnight race as **`Harronir`**
+with two Rs (race ID 86, confirmed in game with
+`/dump select(2, UnitRace("player"))`), while a good deal of community writing
+spells it "Haranir". The dialect is registered under the token the client
+actually returns, and the other spelling is aliased onto it so `/elo race
+haranir` works either way.
 
 Five races are cultural variants rather than separate languages — Dark Iron,
 Mag'har, Lightforged, Mechagnome and Highmountain — and are built with
@@ -285,7 +292,7 @@ headlessly against a stubbed client. No game required:
 lua Tests/run.lua
 ```
 
-Currently 1344 assertions covering case preservation, escape-sequence integrity,
+Currently 1348 assertions covering case preservation, escape-sequence integrity,
 determinism, message splitting, each dialect at every strength, each filter,
 race resolution and aliasing, the chat filter round trip, outgoing splitting, the
 slash commands, and a hostile-input pass that throws malformed escape sequences

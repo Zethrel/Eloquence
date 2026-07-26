@@ -21,6 +21,9 @@ E.Race = Race
 -- Jamaican, and the earthen pointedly do not have the dwarven Scots accent.
 local ALIAS = {
 	Earthen = "EarthenDwarf",  -- seen both ways depending on API path
+	-- The client reports "Harronir" (race ID 86). Much community writing spells
+	-- it "Haranir", so accept that too.
+	Haranir = "Harronir",
 }
 Race.ALIAS = ALIAS
 

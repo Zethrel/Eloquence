@@ -618,6 +618,20 @@ do
 	-- are aliased.
 	eq("void elves have their own dialect", E.Race.Canonical("VoidElf"), "VoidElf")
 	eq("the Earthen spelling variant is aliased", E.Race.Canonical("Earthen"), "EarthenDwarf")
+
+	-- The client reports "Harronir" (race ID 86), verified in game. Community
+	-- writing often spells it "Haranir", so both must resolve.
+	eq("the client's Harronir token resolves", E.Race.Canonical("Harronir"), "Harronir")
+	eq("the Haranir spelling is aliased onto it", E.Race.Canonical("Haranir"), "Harronir")
+	check("both spellings reach the same dialect",
+		E.Race.DialectFor("Haranir") == E.DIALECTS["Harronir"])
+	-- End to end, the way a real chat event arrives.
+	onlyModules("dialect")
+	_G._guidRaces["Player-1-HARR"] = { race = "Harronir", class = "Druid", name = "Root" }
+	contains("a Harronir speaker gets the dialect",
+		E.Pipeline.Run("I don't know, friend", "Player-1-HARR",
+			E.Race.Resolve("Player-1-HARR", "Root"), "Common"),
+		"traveler")
 	check("a void elf gets Ren'dorei, not Thalassian",
 		E.Race.DialectFor("VoidElf") == E.DIALECTS["VoidElf"])
 end
@@ -648,7 +662,7 @@ do
 		"Orc", "Scourge", "Tauren", "Troll", "BloodElf", "Goblin",
 		"VoidElf", "LightforgedDraenei", "DarkIronDwarf", "KulTiran", "Mechagnome",
 		"Nightborne", "HighmountainTauren", "MagharOrc", "ZandalariTroll", "Vulpera",
-		"Dracthyr", "EarthenDwarf", "Haranir",
+		"Dracthyr", "EarthenDwarf", "Harronir",
 	}
 	for _, race in ipairs(PLAYABLE) do
 		local dialect = E.Race.DialectFor(race)

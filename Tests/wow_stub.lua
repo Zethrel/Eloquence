@@ -102,7 +102,7 @@ function stub.loadAddon(root)
 		"Dialects/Pandaren.lua", "Dialects/ZandalariTroll.lua",
 		"Dialects/Nightborne.lua", "Dialects/VoidElf.lua", "Dialects/KulTiran.lua",
 		"Dialects/Vulpera.lua", "Dialects/Dracthyr.lua", "Dialects/EarthenDwarf.lua",
-		"Dialects/Haranir.lua",
+		"Dialects/Harronir.lua",
 		"Dialects/Variants.lua",
 		"Modules/SpellBook.lua", "Modules/Decompression.lua", "Modules/Mouthwash.lua",
 		"Modules/FantasyWriter.lua", "Modules/Dialectician.lua",
