@@ -454,3 +454,21 @@ Modern addons in the same tradition, worth knowing about: **AccentChat**,
 **Tongues** and **Dialect**.
 
 MIT licensed — see [LICENSE](LICENSE).
+
+
+
+Message: ...ddOns/Blizzard_Settings_Shared/Blizzard_Settings.lua:144: bad argument #1 to 'OpenSettingsPanel' (outside of expected range -2147483648 to 2147483647 - Usage: C_SettingsUtil.OpenSettingsPanel([openToCategoryID, scrollToElementName]))
+Time: Mon Jul 27 20:27:26 2026
+Count: 1
+Stack:
+[Interface/AddOns/Blizzard_Settings_Shared/Blizzard_Settings.lua]:144: in function 'OpenToCategory'
+[Interface/AddOns/Eloquence/Core/Options.lua]:249: in function 'OpenOptions'
+[Interface/AddOns/Eloquence/Core/Commands.lua]:208: in function '?'
+[Interface/AddOns/Blizzard_ChatFrameBase/Shared/ChatFrameEditBox.lua]:259: in function 'ParseText'
+[Interface/AddOns/Blizzard_ChatFrameBase/Shared/ChatFrameEditBox.lua]:284: in function 'SendText'
+[Interface/AddOns/Blizzard_ChatFrameBase/Shared/ChatFrameEditBox.lua]:407: in function <...s/Blizzard_ChatFrameBase/Shared/ChatFrameEditBox.lua:403>
+
+Locals:
+categoryID="Eloquence"
+scrollToElementName=nil
+
