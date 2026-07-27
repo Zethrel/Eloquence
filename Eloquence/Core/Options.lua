@@ -188,10 +188,11 @@ local function Build()
 	MakeCheck(2, "Short channel names", "Renders \"1. General\" as \"1. G\".",
 		function() return E.db.cleanup.shortChannels end,
 		function(v) E.db.cleanup.shortChannels = v end, 170)
-	MakeCheck(3, "Class-coloured names", "Colours sender names by class.",
-		function() return E.db.cleanup.classColors end,
-		function(v) E.db.cleanup.classColors = v end, 170)
-	Advance(36)
+	Advance(26)
+	MakeNote("Class-coloured names are handled by the game itself -- Options, Social, "
+		.. "\"Chat Class Colors\". Eloquence used to do this and got it wrong, "
+		.. "so it no longer touches sender names.")
+	Advance(10)
 
 	-- Dialects ----------------------------------------------------------------
 	MakeTitle("Dialects", "GameFontNormal")

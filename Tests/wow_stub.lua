@@ -97,6 +97,36 @@ function stub.install(env)
 		WARRIOR = { r = 0.78, g = 0.61, b = 0.43, colorStr = "ffc79c6e" },
 	}
 
+	env.InCombatLockdown = function() return env._inCombat == true end
+	env._inCombat = false
+
+	-- Patch 12.0's chat send path. Addons hook ChatFrame.OnEditBoxPreSendText
+	-- and rewrite the edit box contents; the client then sends whatever the box
+	-- holds. `stub.typeIntoChat` below drives the whole sequence.
+	env.EventRegistry = {
+		_callbacks = {},
+		RegisterCallback = function(self, event, fn, owner)
+			self._callbacks[event] = self._callbacks[event] or {}
+			table.insert(self._callbacks[event], { fn = fn, owner = owner })
+		end,
+		TriggerEvent = function(self, event, ...)
+			for _, entry in ipairs(self._callbacks[event] or {}) do
+				entry.fn(entry.owner, ...)
+			end
+		end,
+	}
+
+	-- A stand-in chat edit box.
+	function env.NewEditBox(text, chatType)
+		local box = { _text = text, _chatType = chatType or "SAY" }
+		function box:GetText() return self._text end
+		function box:SetText(v) self._text = v end
+		function box:GetAttribute(key)
+			if key == "chatType" then return self._chatType end
+		end
+		return box
+	end
+
 	-- The modern client exposes this so addons can check before registering.
 	-- Backed by the same retired-event list that RegisterEvent raises on.
 	env._retiredEvents = stub.retiredEvents
@@ -149,6 +179,17 @@ function stub.loadAddon(root)
 	-- ADDON_LOADED normally does this.
 	E.db = E.CopyDefaults(E.DEFAULTS, {})
 	return E
+end
+
+-- Drive the full 12.0 send sequence: the client fires the pre-send callback,
+-- addons may rewrite the edit box, then the client sends whatever it now holds.
+-- Returns the text that actually went out.
+function stub.typeIntoChat(env, text, chatType)
+	local box = env.NewEditBox(text, chatType or "SAY")
+	env.EventRegistry:TriggerEvent("ChatFrame.OnEditBoxPreSendText", box)
+	env._sent = {}
+	env.SendChatMessage(box:GetText(), box:GetAttribute("chatType"))
+	return env._sent[1] and env._sent[1][1]
 end
 
 -- Fire the deferred PLAYER_LOGIN work, mirroring what Core/Init.lua does in the

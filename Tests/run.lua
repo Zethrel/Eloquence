@@ -822,6 +822,82 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Outgoing via the 12.0 edit box path")
+--------------------------------------------------------------------------------
+
+do
+	-- Patch 12.0 rearchitected chat sending: overriding the global
+	-- SendChatMessage no longer sees anything typed into the chat box. Messages
+	-- must be transformed through ChatFrame.OnEditBoxPreSendText instead. This
+	-- drives the real sequence -- fire the callback, then send whatever the edit
+	-- box holds -- so a hook on the wrong path fails here.
+	_G._playerRace = "DarkIronDwarf"
+	E.db.enabled = true
+	E.db.outgoing.enabled = true
+	E.db.outgoing.say = true
+	onlyModules("dialect")
+
+	eq("the edit box hook is the active method", E.Chat.outgoingMethod, "editbox")
+
+	local sent = stub.typeIntoChat(_G, "Hey friend", "SAY")
+	check("a typed message is transformed", sent ~= "Hey friend", tostring(sent))
+	contains("with the Dark Iron dialect", sent, "laddie")
+
+	-- Exactly once: the fallback wrapper must not re-transform what the edit box
+	-- hook already handled.
+	local twice = stub.typeIntoChat(_G, "I don't know friend", "SAY")
+	local once = E.Pipeline.Run("I don't know friend", UnitGUID("player"), "DarkIronDwarf", nil)
+	eq("transformed exactly once, not twice", twice, once)
+
+	-- Channels not opted into stay verbatim.
+	E.db.outgoing.guild = false
+	eq("un-opted channels are untouched",
+		stub.typeIntoChat(_G, "Hey friend", "GUILD"), "Hey friend")
+
+	eq("slash commands are never rewritten",
+		stub.typeIntoChat(_G, "/dance", "SAY"), "/dance")
+
+	-- Combat lockdown: rewriting the edit box there taints the protected send
+	-- and the client blocks the message outright.
+	_G._inCombat = true
+	eq("no rewriting during combat lockdown",
+		stub.typeIntoChat(_G, "Hey friend", "SAY"), "Hey friend")
+	_G._inCombat = false
+	check("and it resumes afterwards",
+		stub.typeIntoChat(_G, "Hey friend", "SAY") ~= "Hey friend")
+
+	-- The edit box path sends one message and cannot split, so an over-long
+	-- result must be left alone rather than truncated.
+	local long = string.rep("I do not know friend, ", 20)
+	eq("an over-long transform is skipped rather than truncated",
+		stub.typeIntoChat(_G, long, "SAY"), long)
+
+	E.db.outgoing.enabled = false
+	eq("disabling outgoing restores verbatim sending",
+		stub.typeIntoChat(_G, "Hey friend", "SAY"), "Hey friend")
+	E.db.outgoing.enabled = true
+end
+
+do
+	-- The sender argument must never be modified: the chat system builds the
+	-- player hyperlink around it, so colour codes injected there corrupt the
+	-- link and spill raw markup into the frame.
+	E.db.cleanup.classColors = true
+	local filter
+	for _, fn in ipairs(_G._filters["CHAT_MSG_SAY"]) do filter = fn end
+	local args = { "Hello there", "Becche-Ravencrest", "Common", "", "", "", 0, 0, "", "", 236,
+		"Player-1-DWARF", nil, false, false, false, false }
+	local _, _, sender = filter(nil, "CHAT_MSG_SAY", unpack(args, 1, 17))
+	if sender ~= nil then
+		excludes("the sender carries no colour codes", sender, "|c")
+		eq("the sender is passed through untouched", sender, "Becche-Ravencrest")
+	else
+		check("the presentation filter left the sender alone", true)
+	end
+	E.db.cleanup.classColors = false
+end
+
+--------------------------------------------------------------------------------
 section("Slash commands")
 --------------------------------------------------------------------------------
 

@@ -114,8 +114,19 @@ local function Doctor()
 
 	local hooked = E.Chat and E.Chat.IsOutgoingHooked()
 	if E.db.outgoing.enabled then
-		print(format("  %s   outgoing rewriting on, hook installed: %s",
-			hooked and ok or bad, tostring(hooked)))
+		-- Reporting "hook installed" alone was a false green: the legacy
+		-- SendChatMessage wrapper installs fine but the 12.0 chat path never
+		-- calls it, so say *which* hook is carrying the message.
+		local method = E.Chat and E.Chat.outgoingMethod
+		if not hooked then
+			print("  " .. bad .. " outgoing rewriting on but no hook installed")
+		elseif method == "editbox" then
+			print("  " .. ok .. "   outgoing via the edit box hook (correct for 12.0+)")
+		else
+			print("  " .. bad .. " outgoing only has the legacy SendChatMessage wrapper.")
+			print("       |cffffcc00This client rearchitected chat sending; typed messages will")
+			print("       not be transformed. EventRegistry callback unavailable.|r")
+		end
 	else
 		print("  " .. warn .. "   outgoing rewriting is off (only you see dialects)")
 	end
