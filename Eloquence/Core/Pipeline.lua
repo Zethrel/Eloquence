@@ -24,19 +24,54 @@ end
 -- Would the player even understand this? If someone speaks Orcish at an
 -- Alliance character, WoW has already replaced the text with gibberish -- there
 -- is nothing to dialect, and mangling it further just looks broken.
+--
+-- This check must FAIL OPEN. It is the only thing standing between an incoming
+-- message and the filters, and it is fed by an API that can legitimately return
+-- nothing -- too early in login, or if the call moves in a future patch. A empty
+-- language table used to mean "you understand nothing", which silently dropped
+-- every incoming message while leaving outgoing (which passes no language at
+-- all) working perfectly. Dialecting the occasional line of gibberish is a far
+-- smaller failure than the whole incoming half of the addon going quiet.
 local knownLanguages
+local languageLookupFailed = false
+
 local function RefreshLanguages()
-	knownLanguages = {}
-	for i = 1, GetNumLanguages() do
-		local name = GetLanguageByIndex(i)
-		if name then knownLanguages[name] = true end
+	local found = {}
+	local count = 0
+	if type(GetNumLanguages) == "function" and type(GetLanguageByIndex) == "function" then
+		local ok, total = pcall(GetNumLanguages)
+		if ok and type(total) == "number" then
+			for i = 1, total do
+				local okName, name = pcall(GetLanguageByIndex, i)
+				if okName and name and name ~= "" then
+					found[name] = true
+					count = count + 1
+				end
+			end
+		end
 	end
+	knownLanguages = found
+	languageLookupFailed = count == 0
 end
 
 local function Understood(language)
 	if not language or language == "" then return true end
 	if not knownLanguages then RefreshLanguages() end
+	-- Nothing known means the lookup failed, not that the character is a mute.
+	if languageLookupFailed then return true end
 	return knownLanguages[language] == true
+end
+
+-- Exposed so the login/zone handlers and the test suite can force a re-read.
+Pipeline.RefreshLanguages = RefreshLanguages
+
+-- Exposed for /elo doctor.
+function Pipeline.LanguageInfo()
+	if not knownLanguages then RefreshLanguages() end
+	local list = {}
+	for name in pairs(knownLanguages) do list[#list + 1] = name end
+	table.sort(list)
+	return list, languageLookupFailed
 end
 
 E.OnLogin("Pipeline", function()

@@ -143,6 +143,38 @@ local function Doctor()
 		print("  " .. bad .. " options panel is not registered -- /elo will not open it")
 	end
 
+	-- 2c. Is incoming chat actually reaching the filter?
+	local stats = E.Chat and E.Chat.stats
+	if stats then
+		if stats.calls == 0 then
+			print("  " .. bad .. " no incoming chat has reached the filter yet.")
+			print("       |cffffcc00Either nobody has spoken since login, or the filter is not")
+			print("       being called at all. Say something and re-run this.|r")
+		else
+			print(format("  %s   incoming seen: %d, rewritten: %d", ok, stats.calls, stats.changed))
+			local skips = {}
+			if stats.skippedSelf > 0 then skips[#skips + 1] = stats.skippedSelf .. " own" end
+			if stats.skippedOff > 0 then skips[#skips + 1] = stats.skippedOff .. " channel off" end
+			if stats.skippedLanguage > 0 then skips[#skips + 1] = stats.skippedLanguage .. " language" end
+			if #skips > 0 then
+				print("       |cff808080skipped: " .. table.concat(skips, ", ") .. "|r")
+			end
+		end
+		local last = E.Chat.lastSeen
+		if last then
+			print(format("       last: %s from %s -- %s",
+				tostring(last.event), tostring(last.sender), tostring(last.verdict)))
+		end
+	end
+
+	local languages, languageFailed = E.Pipeline.LanguageInfo()
+	if languageFailed then
+		print("  " .. warn .. "   could not read your known languages; "
+			.. "filtering everything rather than nothing")
+	else
+		print(format("  %s   languages understood: %s", ok, table.concat(languages, ", ")))
+	end
+
 	-- 3. Who are we, and does that resolve to a dialect?
 	local race = E.Race.Player()
 	local dialect = race and E.Race.DialectFor(race)
@@ -193,6 +225,7 @@ local function Help()
 	print("  |cffffff80/elo on|off|r               master switch")
 	print("  |cffffff80/elo status|r               show what is enabled")
 	print("  |cffffff80/elo doctor|r               diagnose why nothing is happening")
+	print("  |cffffff80/elo spy|r                  report what the filter decides per message")
 	print("  |cffffff80/elo test <text>|r          preview your own dialect")
 	print("  |cffffff80/elo test <race> <text>|r   preview a specific dialect")
 	print("  |cffffff80/elo <filter> on|off|r      spellbook, decomp, mouthwash, fantasy, dialect")
@@ -225,6 +258,12 @@ local function Handler(input)
 	if command == "help" or command == "?" then Help() return end
 	if command == "status" then Status() return end
 	if command == "doctor" then Doctor() return end
+	if command == "spy" then
+		E.Chat.spy = not E.Chat.spy
+		E.Print("spy " .. (E.Chat.spy and "|cff40ff40on|r -- every incoming message will report what the filter decided"
+			or "off"))
+		return
+	end
 	if command == "config" or command == "options" or command == "panel" then
 		E.OpenOptions() return
 	end

@@ -31,17 +31,60 @@ local function ShouldFilterSelf(guid)
 	return db.dialect.applyToSelf
 end
 
+-- Counters and a last-message record, so /elo spy and /elo doctor can show what
+-- the filter actually saw. Without this, "incoming does not work" is
+-- indistinguishable from "the filter is never called".
+Chat.stats = { calls = 0, changed = 0, skippedSelf = 0, skippedOff = 0, skippedLanguage = 0 }
+Chat.lastSeen = nil
+Chat.spy = false
+
+local function Record(info)
+	Chat.lastSeen = info
+	if Chat.spy then
+		E.Print(("|cff808080spy|r %s from %s"):format(info.event or "?", tostring(info.sender)))
+		print(("       guid %s -> race %s -> dialect %s"):format(
+			tostring(info.guid), tostring(info.race), tostring(info.dialect)))
+		print(("       language %s, verdict: %s"):format(tostring(info.language), info.verdict))
+		if info.before then
+			print("       |cff808080" .. info.before .. "|r")
+			print("       |cffffff80" .. tostring(info.after) .. "|r")
+		end
+	end
+end
+
 local function MakeFilter(settingKey)
 	return function(_, event, text, sender, ...)
 		local db = E.db
 		if not db or not db.enabled or not db.incoming.enabled then return false end
-		if not db.incoming[settingKey] then return false end
+		Chat.stats.calls = Chat.stats.calls + 1
+
+		if not db.incoming[settingKey] then
+			Chat.stats.skippedOff = Chat.stats.skippedOff + 1
+			Record({ event = event, sender = sender, verdict = "the " .. settingKey .. " channel is switched off" })
+			return false
+		end
 		if not text or text == "" then return false end
 
 		local language = select(LANGUAGE_INDEX, ...)
 		local guid = select(GUID_INDEX, ...)
 
 		if guid and guid ~= "" and guid == UnitGUID("player") and not ShouldFilterSelf(guid) then
+			Chat.stats.skippedSelf = Chat.stats.skippedSelf + 1
+			Record({
+				event = event, sender = sender, guid = guid, language = language,
+				verdict = db.outgoing.enabled
+					and "your own message, already rewritten on the way out"
+					or "your own message; enable 'apply a dialect to my own messages'",
+			})
+			return false
+		end
+
+		if not E.Pipeline.Understood(language) then
+			Chat.stats.skippedLanguage = Chat.stats.skippedLanguage + 1
+			Record({
+				event = event, sender = sender, guid = guid, language = language,
+				verdict = "language not understood, so the text is already gibberish",
+			})
 			return false
 		end
 
@@ -49,9 +92,22 @@ local function MakeFilter(settingKey)
 		if settingKey ~= "monster" then
 			race = E.Race.Resolve(guid, sender)
 		end
+		local dialect = race and E.Race.DialectFor(race)
 
 		local result = E.Pipeline.Run(text, guid, race, language)
-		if result and result ~= text then
+		local changed = result and result ~= text
+		if changed then Chat.stats.changed = Chat.stats.changed + 1 end
+
+		Record({
+			event = event, sender = sender, guid = guid, language = language,
+			race = race, dialect = dialect and dialect.name or nil,
+			before = text, after = result,
+			verdict = changed and "rewritten"
+				or (not race and "no race resolved, so no dialect applied")
+				or "no rule matched this text",
+		})
+
+		if changed then
 			return false, result, sender, ...
 		end
 		return false

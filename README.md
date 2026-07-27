@@ -66,6 +66,7 @@ Nothing else is version-sensitive.
 /elo on|off               master switch
 /elo status               show what is enabled
 /elo doctor               diagnose why nothing is happening
+/elo spy                  report what the filter decides for each message
 /elo config               open the options panel (same as bare /elo)
 /elo test <text>          preview your own dialect
 /elo test <race> <text>   preview a specific dialect
@@ -94,7 +95,12 @@ Nothing else is version-sensitive.
 It reports whether every module started, whether the chat filters and the
 outgoing hook actually attached, whether your race resolves to a dialect, and
 then runs a sample line through the pipeline so you can see the before and after.
-Anything marked `FAIL` is the answer.
+Anything marked `FAIL` is the answer. It also reports how much incoming chat has
+reached the filter and what it decided about the last message, which separates
+"the filter never ran" from "the filter ran and changed nothing".
+
+For a running commentary, `/elo spy` prints the sender, resolved race, dialect,
+language and verdict for every incoming message until you turn it off.
 
 Worth knowing: **retail hides Lua errors by default**, so a broken command looks
 identical to one that did nothing. `/console scriptErrors 1` turns them on, which
@@ -414,7 +420,7 @@ headlessly against a stubbed client. No game required:
 lua Tests/run.lua
 ```
 
-Currently 1505 assertions covering case preservation, escape-sequence integrity,
+Currently 1521 assertions covering case preservation, escape-sequence integrity,
 determinism, message splitting, each dialect at every strength, each filter,
 race resolution and aliasing, the chat filter round trip, outgoing splitting, the
 slash commands, and a hostile-input pass that throws malformed escape sequences
