@@ -39,8 +39,9 @@ local function Status()
 	for _, key in ipairs(E.MODULE_ORDER) do
 		local module, settings = E.MODULES[key], E.db.modules[key]
 		if module then
-			E.Print(format("  %-22s %s  |cff808080strength %d|r", module.name,
-				settings.enabled and "|cff40ff40on |r" or "|cffff4040off|r", settings.strength or 2))
+			E.Print(format("  %-22s %s  |cff808080strength %d%s|r", module.name,
+				settings.enabled and "|cff40ff40on |r" or "|cffff4040off|r", settings.strength or 2,
+				settings.incoming == false and ", outgoing only" or ""))
 		end
 	end
 	local race = E.Race.Player()
@@ -69,7 +70,8 @@ local function Test(args)
 	local result = text
 	for _, key in ipairs(E.MODULE_ORDER) do
 		local module, settings = E.MODULES[key], E.db.modules[key]
-		if module and settings.enabled and (key ~= "dialect" or dialect) then
+		if module and settings.enabled and settings.incoming ~= false
+			and (key ~= "dialect" or dialect) then
 			ctx.strength = settings.strength or 2
 			ctx.dialect = dialect
 			local ok, out = pcall(module.Filter, result, ctx)
@@ -241,6 +243,7 @@ local function Help()
 	print("  |cffffff80/elo test <race> <text>|r   preview a specific dialect")
 	print("  |cffffff80/elo <filter> on|off|r      spellbook, decomp, mouthwash, fantasy, dialect")
 	print("  |cffffff80/elo <filter> 1|2|3|r       filter strength: light, medium, heavy")
+	print("  |cffffff80/elo <filter> incoming on|off|r  apply it to others' chat too")
 	print("  |cffffff80/elo race <race> on|off|r   mute or unmute one race's dialect")
 	print("  |cffffff80/elo races|r                list every dialect")
 	print("  |cffffff80/elo out on|off|r           rewrite your outgoing chat")
@@ -342,6 +345,22 @@ local function Handler(input)
 	if moduleKey then
 		local settings = E.db.modules[moduleKey]
 		local word = lower(E.Trim(rest))
+
+		-- "<filter> incoming on|off" controls whether it touches other people's
+		-- chat, separately from whether the filter is on at all.
+		local incomingWord = word:match("^incoming%s+(%S+)$")
+		if incomingWord then
+			local value = Boolean(incomingWord)
+			if value == nil then
+				E.Print(format("usage: /elo %s incoming on|off", command))
+				return
+			end
+			settings.incoming = value
+			if E.RefreshOptions then E.RefreshOptions() end
+			E.Print(format("%s on other people's chat: %s",
+				E.MODULES[moduleKey].name, value and "on" or "off"))
+			return
+		end
 		local value = Boolean(word)
 		local level = tonumber(word)
 

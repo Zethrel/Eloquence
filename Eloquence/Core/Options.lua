@@ -149,6 +149,13 @@ local function Build()
 		if column == 3 then Advance(26) end
 	end
 	if #incoming % 3 ~= 0 then Advance(26) end
+	MakeCheck(1, "Apply the Spell Book to other people's chat",
+		"Off by default. Correcting someone else's spelling also erases deliberate "
+		.. "speech quirks -- rolled Rs, stretched vowels, shouting. Your own outgoing "
+		.. "typos are still fixed either way.",
+		function() return E.db.modules.spellbook.incoming end,
+		function(v) E.db.modules.spellbook.incoming = v end, 340)
+	Advance(26)
 	MakeCheck(1, "Also rewrite chat bubbles",
 		"The bubble above a speaker's head is drawn separately from the chat "
 		.. "frame, so it needs rewriting on its own. Say and yell only.",

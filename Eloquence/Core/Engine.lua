@@ -206,14 +206,15 @@ end
 
 local function ApplyWords(words, chunk)
 	return (gsub(chunk, "[%a']+", function(token)
-		-- Peel off surrounding apostrophes so 'tis and dogs' still resolve.
-		local core, trail = token:match("^(.-)('*)$")
-		local lead
-		lead, core = core:match("^('*)(.*)$")
-		if core == "" then return nil end
-		local replacement = words[lower(core)]
+		-- An apostrophe on either end is the author eliding something on purpose
+		-- -- "no'", "th'", "'tis", "aboot tha'". Substituting the letters and
+		-- gluing the apostrophe back on produced nonsense like "no'" -> "nae'",
+		-- which is precisely the sort of authored voice that must survive. Leave
+		-- any word with an edge apostrophe exactly as written.
+		if token:sub(1, 1) == "'" or token:sub(-1) == "'" then return nil end
+		local replacement = words[lower(token)]
 		if not replacement then return nil end
-		return lead .. E.MatchCase(core, replacement) .. trail
+		return E.MatchCase(token, replacement)
 	end))
 end
 

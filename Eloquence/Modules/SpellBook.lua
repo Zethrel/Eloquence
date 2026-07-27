@@ -106,13 +106,12 @@ function module.Filter(text, ctx)
 		if shouty then chunk = Unshout(chunk) end
 		if strength >= 1 then chunk = SquashRepeats(chunk) end
 		chunk = gsub(chunk, "[%a']+", function(token)
-			local core, trail = token:match("^(.-)('*)$")
-			local lead
-			lead, core = core:match("^('*)(.*)$")
-			if core == "" then return nil end
-			local fixed = CORRECTIONS[lower(core)]
+			-- An edge apostrophe is deliberate elision, not a typo. See the note
+			-- in Engine.lua's ApplyWords.
+			if token:sub(1, 1) == "'" or token:sub(-1) == "'" then return nil end
+			local fixed = CORRECTIONS[lower(token)]
 			if not fixed then return nil end
-			return lead .. E.MatchCase(core, fixed) .. trail
+			return E.MatchCase(token, fixed)
 		end)
 		if strength >= 2 then
 			-- Tidy spacing around punctuation.

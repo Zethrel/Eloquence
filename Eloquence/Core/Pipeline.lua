@@ -108,7 +108,8 @@ end
 -- Run the enabled modules over `text`.
 --   guid  - speaker GUID, used for race lookup and seeding
 --   race  - optional pre-resolved race (the outgoing path knows it already)
-function Pipeline.Run(text, guid, race, language)
+-- `direction` is "incoming" or "outgoing" (default "incoming").
+function Pipeline.Run(text, guid, race, language, direction)
 	local db = E.db
 	if not db or not db.enabled then return text end
 	if ShouldSkip(text) then return text end
@@ -120,7 +121,9 @@ function Pipeline.Run(text, guid, race, language)
 	for _, key in ipairs(E.MODULE_ORDER) do
 		local settings = db.modules[key]
 		local module = E.MODULES[key]
-		if module and settings and settings.enabled then
+		local allowedHere = settings
+			and (direction == "outgoing" or settings.incoming ~= false)
+		if module and settings and settings.enabled and allowedHere then
 			-- Skip the dialect pass entirely when we could not work out a race.
 			if key ~= "dialect" or ctx.dialect then
 				ctx.strength = settings.strength or 2

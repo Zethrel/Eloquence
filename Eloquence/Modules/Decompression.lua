@@ -127,17 +127,15 @@ function module.Filter(text, ctx)
 		end
 
 		chunk = gsub(chunk, "[%a']+", function(token)
-			local core, trail = token:match("^(.-)('*)$")
-			local lead
-			lead, core = core:match("^('*)(.*)$")
-			if core == "" then return nil end
-			local key = lower(core)
+			-- An edge apostrophe is deliberate elision, not shorthand.
+			if token:sub(1, 1) == "'" or token:sub(-1) == "'" then return nil end
+			local key = lower(token)
 			local expansion = ACRONYMS[key]
 			if not expansion and strength >= 2 and #key <= 5 then
 				expansion = SHORTHAND[key]
 			end
 			if not expansion then return nil end
-			return lead .. E.MatchCase(core, expansion) .. trail
+			return E.MatchCase(token, expansion)
 		end)
 
 		return chunk

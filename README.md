@@ -123,6 +123,10 @@ Enabled out of the box: **The Spell Book**, **Decompression Engine**,
 Off by default: **Mouthwash** and **Fantasy Writer** (both change a lot of text
 and are a matter of taste), outgoing rewriting, and short channel names.
 
+**The Spell Book does not touch other people's chat unless you opt in**
+(`/elo spellbook incoming on`). It still fixes your own typos on the way out.
+See below for why.
+
 Class-coloured names are **not** an Eloquence feature. The game does it natively
 (Options → Social → "Chat Class Colors"). Eloquence tried to do it by colouring
 the sender argument, which corrupted the player hyperlink, because the chat
@@ -183,6 +187,44 @@ Three consequences worth knowing:
 
 If you want your own messages in dialect but only for yourself, leave outgoing
 off and turn on "Also apply a dialect to my own messages" instead.
+
+---
+
+## Not mangling what other people wrote
+
+On a roleplaying realm, how somebody spells things is a choice. A character
+rolling their Rs as *Zethrrel*, or another mangling the same name as *Zettle*,
+has written that deliberately — and a filter that "corrects" it is destroying
+authored voice, not tidying a typo. Three rules keep that intact:
+
+**Names are protected.** A capitalised word that does not start a sentence is
+treated as a proper noun and passed through untouched by *every* filter, not just
+the dialects. `Zethrrel`, `Zettle` and `Zethrrrrel` all survive verbatim.
+
+The rule deliberately excludes ALL-CAPS words, because `ZETHRREL` is
+indistinguishable from a shouted ordinary word, and protecting every word in a
+shouted message would make de-shouting impossible. `I` and its contractions are
+also exempt, or the Dwarven `i` → `Ah` would only ever fire at the start of a
+sentence.
+
+**Deliberate elision is respected.** A word with an apostrophe at either end —
+`no'`, `tha'`, `'tis` — is left exactly as written. This used to produce
+`no'` → `nae'`: the letters were substituted and the apostrophe glued back on,
+which is nonsense and exactly the kind of authored voice that must survive.
+Internal apostrophes are unaffected, so `don't` → `dinnae` still works.
+
+The upshot is that text somebody has already written in accent passes through
+untouched rather than being re-accented on top:
+
+```
+Ah'm no' shuir aboot tha', laddie.   ->   Ah'm no' shuir aboot tha', laddie.
+```
+
+**The Spell Book is opt-in for incoming.** It is the only filter that *removes*
+character rather than adding it — squashing `Hmmmm`, de-shouting, correcting
+spelling. Useful on your own outgoing text, hostile on someone else's. It
+defaults to outgoing only; `/elo spellbook incoming on` if you want it applied to
+what you read.
 
 ---
 
@@ -430,7 +472,7 @@ headlessly against a stubbed client. No game required:
 lua Tests/run.lua
 ```
 
-Currently 1532 assertions covering case preservation, escape-sequence integrity,
+Currently 1549 assertions covering case preservation, escape-sequence integrity,
 determinism, message splitting, each dialect at every strength, each filter,
 race resolution and aliasing, the chat filter round trip, outgoing splitting, the
 slash commands, and a hostile-input pass that throws malformed escape sequences

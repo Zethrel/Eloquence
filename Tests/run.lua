@@ -569,9 +569,14 @@ do
 	local result = E.Pipeline.Run("brb, i dont know if thats going to work friend",
 		"Player-1-DWARF", "Dwarf", "Common")
 	check("pipeline produced a string", type(result) == "string", tostring(result))
-	contains("spellbook ran (apostrophe fixed then dialected)", result, "dinnae")
 	contains("decompression ran", result, "be richt back")
 	contains("dialect ran", result, "laddie")
+	-- The Spell Book is gated off for incoming: correcting someone else's
+	-- spelling means erasing deliberate speech quirks.
+	contains("spellbook did NOT correct someone else's typo", result, "dont")
+	-- ...but it still runs on the way out, where the typo is your own.
+	local mine = E.Pipeline.Run("i dont know", nil, "Dwarf", nil, "outgoing")
+	contains("spellbook still fixes your own outgoing typos", mine, "dinnae")
 end
 
 do
@@ -659,10 +664,10 @@ do
 end
 
 do
-	-- No race resolved means no dialect, but the cleanup filters still run.
+	-- No race resolved means no dialect, but the other filters still run.
 	onlyModules("spellbook")
 	eq("filters work with no race at all",
-		E.Pipeline.Run("i dont know", nil, nil, "Common"), "i don't know")
+		E.Pipeline.Run("i dont know", nil, nil, nil, "outgoing"), "i don't know")
 end
 
 --------------------------------------------------------------------------------
@@ -880,6 +885,83 @@ do
 	_G._sent = {}
 	SendChatMessage("i dont know friend", "SAY")
 	eq("disabling outgoing restores verbatim sending", _G._sent[1][1], "i dont know friend")
+end
+
+--------------------------------------------------------------------------------
+section("Authored voice must survive the filters")
+--------------------------------------------------------------------------------
+
+do
+	-- On a roleplaying realm, other people's spelling is a deliberate choice.
+	-- Names in particular are sacred: "Zethrrel" with rolled Rs, or another
+	-- character mangling it as "Zettle", must come out exactly as written.
+	onlyModules("spellbook", "decompression", "dialect")
+	for key in pairs(E.db.modules) do E.db.modules[key].incoming = true end
+
+	local cases = {
+		"Well met, Zethrrel.",
+		"Greetings, Zettle!",
+		"Ahh, Zethrrrrel, ye came.",
+		"Yer name be Zethrrel, aye?",
+		"I greet Zethrrel and Zettle both.",
+	}
+	for _, text in ipairs(cases) do
+		local out = E.Pipeline.Run(text, "Player-1-DWARF", "Dwarf", "Common")
+		if text:find("Zethrrel", 1, true) then
+			contains("Zethrrel survives: " .. text, out, "Zethrrel")
+		end
+		if text:find("Zethrrrrel", 1, true) then
+			contains("stretched rolled Rs survive: " .. text, out, "Zethrrrrel")
+		end
+		if text:find("Zettle", 1, true) then
+			contains("Zettle survives: " .. text, out, "Zettle")
+		end
+	end
+
+	-- The pronoun I must stay translatable, or Dwarven "i" -> "Ah" would only
+	-- ever fire at the start of a sentence.
+	contains("the pronoun I is still dialected mid-sentence",
+		dialectOnly("Dwarf", "Well, I know that"), "Ah")
+
+	-- Sentence-initial capitals are ordinary words, not names.
+	contains("a capitalised sentence opening is still dialected",
+		dialectOnly("Dwarf", "Know this well."), "Ken")
+end
+
+do
+	-- Edge apostrophes are deliberate elision. Substituting the letters and
+	-- gluing the apostrophe back on turned "no'" into "nae'".
+	local accented = "Ah'm no' shuir aboot tha', laddie."
+	local out = dialectOnly("Dwarf", accented)
+	excludes("an author's elision is not re-accented", out, "nae'")
+	eq("text already written in accent is left alone", out, accented)
+
+	contains("internal apostrophes still work",
+		dialectOnly("Dwarf", "I don't know"), "dinnae")
+	eq("a leading apostrophe is respected",
+		dialectOnly("Dwarf", "'tis so"), "'tis so")
+end
+
+do
+	-- The Spell Book must not touch incoming chat unless opted in.
+	eq("the Spell Book defaults to off for incoming",
+		E.DEFAULTS.modules.spellbook.incoming, false)
+
+	for key in pairs(E.db.modules) do E.db.modules[key].enabled = false end
+	E.db.modules.spellbook.enabled = true
+	E.db.modules.spellbook.incoming = false
+
+	local quirky = "Hmmmm... heyyyy there"
+	eq("someone else's stretched vowels survive",
+		E.Pipeline.Run(quirky, "Player-1-DWARF", "Dwarf", "Common"), quirky)
+	check("but your own are tidied on the way out",
+		E.Pipeline.Run(quirky, nil, "Dwarf", nil, "outgoing") ~= quirky)
+
+	-- Opting in restores the old behaviour.
+	E.db.modules.spellbook.incoming = true
+	check("opting in applies it to incoming again",
+		E.Pipeline.Run(quirky, "Player-1-DWARF", "Dwarf", "Common") ~= quirky)
+	E.db.modules.spellbook.incoming = false
 end
 
 --------------------------------------------------------------------------------

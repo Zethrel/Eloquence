@@ -176,7 +176,7 @@ local function TransformOutgoing(text, chatType)
 	if E.Pipeline.ShouldSkip(text) then return nil end
 
 	local race = E.Race.Player()
-	local result = E.Pipeline.Run(text, UnitGUID("player"), race, nil)
+	local result = E.Pipeline.Run(text, UnitGUID("player"), race, nil, "outgoing")
 	if not result or result == text then return nil end
 	return result
 end

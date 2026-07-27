@@ -33,9 +33,75 @@ local PROTECTED = {
 	"www%.[^%s]+",                -- bare www URLs
 }
 
+--------------------------------------------------------------------------------
+-- Proper nouns
+--------------------------------------------------------------------------------
+
+-- Words that are capitalised without starting a sentence are almost always
+-- names, and on a roleplaying realm a name is the last thing that should be
+-- rewritten. Someone writing "Zethrrel" with rolled Rs, or another character
+-- deliberately mangling it as "Zettle", has made a choice; sanding that off is
+-- worse than doing nothing. Protecting them here means every filter leaves them
+-- alone, not just the dialects.
+--
+-- "I" and its contractions are exempt, or the Dwarven "i" -> "Ah" would never
+-- fire anywhere except at the start of a sentence.
+local PRONOUN_I = {
+	["I"] = true, ["I'm"] = true, ["I'll"] = true, ["I've"] = true, ["I'd"] = true,
+}
+
+-- A word starts a sentence if only whitespace and opening punctuation separate
+-- it from the start of the text or from a preceding . ! or ?
+local function StartsSentence(text, wordStart)
+	local i = wordStart - 1
+	while i >= 1 do
+		local c = sub(text, i, i)
+		if c:match("%s") or c == "(" or c == "[" or c == '"' or c == "*" or c == "<" then
+			i = i - 1
+		elseif c == "." or c == "!" or c == "?" or c == ":" or c == ";" then
+			return true
+		else
+			return false
+		end
+	end
+	return true
+end
+
+local function FindProperNouns(text)
+	local spans = {}
+	local pos = 1
+	while true do
+		local s, e = find(text, "%a[%w']*", pos)
+		if not s then break end
+		local word = sub(text, s, e)
+		local first = sub(word, 1, 1)
+		-- "Zethrrel" is a name; "ZETHRREL" is indistinguishable from a shouted
+		-- word, and treating every word in an ALL-CAPS message as a name would
+		-- make de-shouting impossible. Only Capitalised words are protected.
+		local shouted = #word > 1 and word == word:upper()
+		if first == first:upper() and first:match("%a")
+			and not shouted
+			and not PRONOUN_I[word]
+			and not StartsSentence(text, s) then
+			spans[#spans + 1] = { s = s, e = e }
+		end
+		pos = e + 1
+	end
+	return spans
+end
+
+E.FindProperNouns = FindProperNouns
+
+--------------------------------------------------------------------------------
+
 -- Split `text` into a list of { text = string, protected = boolean } segments.
-function E.Tokenize(text)
-	local out, pos, len = {}, 1, #text
+-- With `protectNames`, mid-sentence capitalised words are protected too.
+function E.Tokenize(text, protectNames)
+	-- Collect every protected range first, then emit segments around them. Doing
+	-- it in two passes keeps the escape-sequence scan and the proper-noun scan
+	-- independent of each other.
+	local ranges = {}
+	local pos, len = 1, #text
 	while pos <= len do
 		local bestS, bestE
 		for i = 1, #PROTECTED do
@@ -44,26 +110,44 @@ function E.Tokenize(text)
 				bestS, bestE = s, e
 			end
 		end
-		if not bestS then
-			out[#out + 1] = { text = sub(text, pos), protected = false }
-			break
-		end
-		if bestS > pos then
-			out[#out + 1] = { text = sub(text, pos, bestS - 1), protected = false }
-		end
-		out[#out + 1] = { text = sub(text, bestS, bestE), protected = true }
+		if not bestS then break end
+		ranges[#ranges + 1] = { s = bestS, e = bestE }
 		pos = bestE + 1
+	end
+
+	if protectNames then
+		for _, span in ipairs(FindProperNouns(text)) do
+			-- Skip anything already inside an escape sequence.
+			local inside = false
+			for _, range in ipairs(ranges) do
+				if span.s >= range.s and span.s <= range.e then inside = true break end
+			end
+			if not inside then ranges[#ranges + 1] = span end
+		end
+		table.sort(ranges, function(a, b) return a.s < b.s end)
+	end
+
+	local out = {}
+	local cursor = 1
+	for _, range in ipairs(ranges) do
+		if range.s > cursor then
+			out[#out + 1] = { text = sub(text, cursor, range.s - 1), protected = false }
+		end
+		if range.e >= cursor then
+			out[#out + 1] = { text = sub(text, math.max(range.s, cursor), range.e), protected = true }
+			cursor = range.e + 1
+		end
+	end
+	if cursor <= len then
+		out[#out + 1] = { text = sub(text, cursor), protected = false }
 	end
 	return out
 end
 
--- Run `fn(plainChunk)` over every unprotected segment and reassemble.
+-- Run `fn(plainChunk)` over every unprotected segment and reassemble. Proper
+-- nouns count as protected, so no filter can rewrite somebody's name.
 function E.MapPlain(text, fn)
-	-- Fast path: nothing worth protecting.
-	if not find(text, "[|{]") and not find(text, "://") and not find(text, "www%.") then
-		return fn(text) or text
-	end
-	local segs = E.Tokenize(text)
+	local segs = E.Tokenize(text, true)
 	local parts = {}
 	for i = 1, #segs do
 		local seg = segs[i]
@@ -82,7 +166,7 @@ end
 -- otherwise skew the answer.
 function E.PlainText(text)
 	local parts = {}
-	for _, seg in ipairs(E.Tokenize(text)) do
+	for _, seg in ipairs(E.Tokenize(text, true)) do
 		if not seg.protected then parts[#parts + 1] = seg.text end
 	end
 	return table.concat(parts)

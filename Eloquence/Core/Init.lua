@@ -2,7 +2,7 @@
 local ADDON, E = ...
 
 E.ADDON = ADDON
-E.VERSION = "2.1.0"
+E.VERSION = "2.2.0"
 
 -- Single source of truth for attribution: used by /elo status, the options panel
 -- and the TOC. The original Eloquence was a Vanilla-era community addon; this is
@@ -90,8 +90,15 @@ E.DEFAULTS = {
 	},
 
 	-- Per-filter toggles. strength 1 = light, 2 = medium, 3 = heavy.
+	--
+	-- `incoming = false` means the filter runs on your own outgoing text but not
+	-- on other people's. The Spell Book defaults that way on purpose: correcting
+	-- someone else's spelling means sanding off deliberate speech quirks -- rolled
+	-- Rs, stretched vowels, shouted names -- which on a roleplaying realm is
+	-- destroying authored voice rather than tidying a typo. Fixing your own typos
+	-- on the way out is still useful, so it stays on for that.
 	modules = {
-		spellbook     = { enabled = true,  strength = 2 },
+		spellbook     = { enabled = true,  strength = 2, incoming = false },
 		decompression = { enabled = true,  strength = 2 },
 		mouthwash     = { enabled = false, strength = 2 },
 		fantasy       = { enabled = false, strength = 2 },
