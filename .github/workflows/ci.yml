@@ -10,7 +10,7 @@ jobs:
     name: Tests and packaging check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # The addon targets WoW's Lua 5.1; 5.4 runs the suite fine and is what is
       # packaged for Ubuntu. Keep the addon code 5.1-compatible regardless.
