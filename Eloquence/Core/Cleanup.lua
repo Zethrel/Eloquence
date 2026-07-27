@@ -185,7 +185,7 @@ local function PresentationFilter(_, event, text, sender, language, channelName,
 	return false
 end
 
-E.OnLogin(function()
+E.OnLogin("Cleanup", function()
 	InstallURLHandler()
 	for event in pairs(E.CHANNELS) do
 		ChatFrame_AddMessageEventFilter(event, PresentationFilter)

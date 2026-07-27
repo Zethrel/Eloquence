@@ -138,12 +138,15 @@ function Race.KnownDialects()
 	return list
 end
 
-E.OnLogin(function()
+E.OnLogin("Race", function()
 	local f = CreateFrame("Frame")
-	f:RegisterEvent("PLAYER_TARGET_CHANGED")
-	f:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
-	f:RegisterEvent("GROUP_ROSTER_UPDATE")
-	f:RegisterEvent("PLAYER_FOCUS_CHANGED")
+	-- All optional: these only warm the fallback name cache, and GUID lookup is
+	-- the primary path. Guarded because event names come and go between
+	-- expansions and an unknown one raises an error.
+	E.SafeRegisterEvent(f, "PLAYER_TARGET_CHANGED")
+	E.SafeRegisterEvent(f, "UPDATE_MOUSEOVER_UNIT")
+	E.SafeRegisterEvent(f, "GROUP_ROSTER_UPDATE")
+	E.SafeRegisterEvent(f, "PLAYER_FOCUS_CHANGED")
 	f:SetScript("OnEvent", function(_, event)
 		if event == "PLAYER_TARGET_CHANGED" then
 			ScanUnit("target")

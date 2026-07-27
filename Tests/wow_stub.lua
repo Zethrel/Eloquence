@@ -5,12 +5,26 @@
 
 local stub = {}
 
+-- Events retired from modern retail. RegisterEvent on one of these raises a Lua
+-- error in the real client, so the stub raises too -- otherwise a stale event
+-- name sails through the suite and only fails in game, which is exactly what
+-- happened once already.
+stub.retiredEvents = {
+	LEARNED_SPELL_IN_TAB = true,
+	UNIT_QUEST_LOG_CHANGED_OBSOLETE = true,
+}
+
 -- Widgets: every method is a no-op that returns the frame, so long chains of
 -- SetPoint():SetSize() style calls do not blow up.
 local function NewFrame()
 	local frame = { _events = {} }
 	local methods = {
-		RegisterEvent = function(self, event) self._events[event] = true end,
+		RegisterEvent = function(self, event)
+			if stub.retiredEvents[event] then
+				error("Attempt to register unknown event '" .. tostring(event) .. "'", 2)
+			end
+			self._events[event] = true
+		end,
 		UnregisterEvent = function(self, event) self._events[event] = nil end,
 		SetScript = function(self, which, fn) self["_" .. which] = fn end,
 		GetScript = function(self, which) return self["_" .. which] end,
@@ -83,6 +97,15 @@ function stub.install(env)
 		WARRIOR = { r = 0.78, g = 0.61, b = 0.43, colorStr = "ffc79c6e" },
 	}
 
+	-- The modern client exposes this so addons can check before registering.
+	-- Backed by the same retired-event list that RegisterEvent raises on.
+	env._retiredEvents = stub.retiredEvents
+	env.C_EventUtils = {
+		IsEventValid = function(event)
+			return not stub.retiredEvents[event]
+		end,
+	}
+
 	-- Lua 5.4 dropped the global unpack that WoW's 5.1 provides.
 	if not env.unpack then env.unpack = table.unpack end
 
@@ -128,9 +151,16 @@ function stub.loadAddon(root)
 	return E
 end
 
--- Fire the deferred PLAYER_LOGIN work.
+-- Fire the deferred PLAYER_LOGIN work, mirroring what Core/Init.lua does in the
+-- game: each module isolated by pcall, failures recorded rather than thrown.
+-- Tests then assert the error list is empty, so a real failure is still loud.
 function stub.login(E)
-	for _, fn in ipairs(E.onLogin or {}) do fn() end
+	for _, entry in ipairs(E.onLogin or {}) do
+		local ok, err = pcall(entry.fn)
+		if not ok then
+			E.initErrors[#E.initErrors + 1] = { name = entry.name, err = tostring(err) }
+		end
+	end
 end
 
 return stub

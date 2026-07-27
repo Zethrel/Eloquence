@@ -58,9 +58,13 @@ local function MakeFilter(settingKey)
 	end
 end
 
+-- Recorded so /elo doctor can prove the filters actually attached.
+Chat.installedFilters = 0
+
 function Chat.InstallIncoming()
 	for event, settingKey in pairs(E.CHANNELS) do
 		ChatFrame_AddMessageEventFilter(event, MakeFilter(settingKey))
+		Chat.installedFilters = Chat.installedFilters + 1
 	end
 end
 
@@ -136,9 +140,13 @@ function Chat.EnsureOutgoingHook()
 	E.Debug("outgoing hook installed")
 end
 
+function Chat.IsOutgoingHooked()
+	return outgoingInstalled
+end
+
 --------------------------------------------------------------------------------
 
-E.OnLogin(function()
+E.OnLogin("Chat", function()
 	Chat.InstallIncoming()
 	if E.db.outgoing.enabled then
 		Chat.EnsureOutgoingHook()

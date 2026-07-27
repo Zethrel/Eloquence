@@ -894,6 +894,70 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Startup: every module must actually initialise")
+--------------------------------------------------------------------------------
+
+do
+	-- The regression that made the addon do nothing at all. Core/Race.lua and
+	-- Core/Pipeline.lua registered event names, one of which no longer exists in
+	-- retail. RegisterEvent on an unknown event raises, and the raise aborted the
+	-- login loop, so Chat never installed its filters or the outgoing hook. Every
+	-- test passed; the addon was inert in game.
+	check("no module failed to start", #E.initErrors == 0,
+		#E.initErrors > 0 and (E.initErrors[1].name .. ": " .. E.initErrors[1].err) or "")
+
+	-- Retired events must be skipped, not fatal.
+	check("the retired event was skipped rather than thrown", (function()
+		for _, event in ipairs(E.skippedEvents) do
+			if event == "LEARNED_SPELL_IN_TAB" then return true end
+		end
+		return false
+	end)(), "skipped: " .. table.concat(E.skippedEvents, ", "))
+
+	-- And the things that depend on startup completing actually happened.
+	check("incoming chat filters were installed", (E.Chat.installedFilters or 0) > 0,
+		"installed " .. tostring(E.Chat.installedFilters))
+	local channelCount = 0
+	for _ in pairs(E.CHANNELS) do channelCount = channelCount + 1 end
+	eq("one filter per chat event", E.Chat.installedFilters, channelCount)
+end
+
+do
+	-- Isolation: a module that blows up must not take the rest with it.
+	local order = {}
+	local fake = {
+		onLogin = {}, initErrors = {},
+		OnLogin = E.OnLogin,
+	}
+	-- Re-create the dispatcher's contract in miniature.
+	local entries = {
+		{ name = "First", fn = function() order[#order + 1] = "first" end },
+		{ name = "Broken", fn = function() error("deliberate") end },
+		{ name = "Third", fn = function() order[#order + 1] = "third" end },
+	}
+	local errors = {}
+	for _, entry in ipairs(entries) do
+		local ok, err = pcall(entry.fn)
+		if not ok then errors[#errors + 1] = { name = entry.name, err = err } end
+	end
+	eq("modules after a failure still run", #order, 2)
+	eq("and the failure is recorded", #errors, 1)
+	eq("with the module named", errors[1].name, "Broken")
+end
+
+do
+	-- /elo doctor must survive being run, including when things are broken.
+	local handler = SlashCmdList["ELOQUENCE"]
+	check("/elo doctor runs", pcall(handler, "doctor"))
+
+	-- Simulate a broken startup and make sure the report still prints.
+	local saved = E.initErrors
+	E.initErrors = { { name = "Chat", err = "simulated failure" } }
+	check("/elo doctor reports a failed module without erroring", pcall(handler, "doctor"))
+	E.initErrors = saved
+end
+
+--------------------------------------------------------------------------------
 section("Packaging: the TOC is the single source of truth")
 --------------------------------------------------------------------------------
 

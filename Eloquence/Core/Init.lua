@@ -2,7 +2,7 @@
 local ADDON, E = ...
 
 E.ADDON = ADDON
-E.VERSION = "2.0.0"
+E.VERSION = "2.0.1"
 
 -- Single source of truth for attribution: used by /elo status, the options panel
 -- and the TOC. The original Eloquence was a Vanilla-era community addon; this is
@@ -144,6 +144,27 @@ function E.RegisterDialect(race, dialect)
 	return dialect
 end
 
+-- Diagnostics, surfaced by /elo doctor.
+E.initErrors = {}      -- { name = "Chat", err = "..." }
+E.skippedEvents = {}   -- events the client rejected
+
+-- Registering an event name the client does not know raises a Lua error, and an
+-- error thrown during setup used to abort every module that had not initialised
+-- yet -- which is how one stale event name could silently disable the whole
+-- addon. Events change between expansions, so registration is always guarded.
+function E.SafeRegisterEvent(frame, event)
+	if C_EventUtils and C_EventUtils.IsEventValid and not C_EventUtils.IsEventValid(event) then
+		E.skippedEvents[#E.skippedEvents + 1] = event
+		return false
+	end
+	local ok = pcall(frame.RegisterEvent, frame, event)
+	if not ok then
+		E.skippedEvents[#E.skippedEvents + 1] = event
+		return false
+	end
+	return true
+end
+
 local f = CreateFrame("Frame")
 f:RegisterEvent("ADDON_LOADED")
 f:RegisterEvent("PLAYER_LOGIN")
@@ -152,13 +173,22 @@ f:SetScript("OnEvent", function(_, event, arg1)
 		EloquenceDB = CopyDefaults(E.DEFAULTS, EloquenceDB)
 		E.db = EloquenceDB
 	elseif event == "PLAYER_LOGIN" then
-		for _, fn in ipairs(E.onLogin or {}) do
-			fn()
+		-- Each module is isolated: one failing must not stop the rest from
+		-- setting up, and it must be visible rather than silent.
+		for _, entry in ipairs(E.onLogin or {}) do
+			local ok, err = pcall(entry.fn)
+			if not ok then
+				E.initErrors[#E.initErrors + 1] = { name = entry.name, err = tostring(err) }
+				print(("|cff8080ffEloquence:|r |cffff4040%s failed to start.|r Run |cffffff80/elo doctor|r.")
+					:format(entry.name))
+			end
 		end
 	end
 end)
 
 E.onLogin = {}
-function E.OnLogin(fn)
-	table.insert(E.onLogin, fn)
+
+-- `name` identifies the module in /elo doctor when its setup fails.
+function E.OnLogin(name, fn)
+	table.insert(E.onLogin, { name = name, fn = fn })
 end

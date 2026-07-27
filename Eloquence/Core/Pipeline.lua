@@ -39,13 +39,18 @@ local function Understood(language)
 	return knownLanguages[language] == true
 end
 
-E.OnLogin(function()
+E.OnLogin("Pipeline", function()
 	RefreshLanguages()
 	-- The set of known languages only changes on login or when a character
 	-- learns one, which is rare enough that this is plenty.
 	local f = CreateFrame("Frame")
-	f:RegisterEvent("PLAYER_ENTERING_WORLD")
-	f:RegisterEvent("LEARNED_SPELL_IN_TAB")
+	E.SafeRegisterEvent(f, "PLAYER_ENTERING_WORLD")
+	-- LEARNED_SPELL_IN_TAB was retired; LEARNED_SPELL_IN_SKILL_LINE replaced it.
+	-- Both are attempted and neither is required -- the language list only
+	-- changes when a character learns a language, which is rare, and
+	-- PLAYER_ENTERING_WORLD already covers every practical case.
+	E.SafeRegisterEvent(f, "LEARNED_SPELL_IN_SKILL_LINE")
+	E.SafeRegisterEvent(f, "LEARNED_SPELL_IN_TAB")
 	f:SetScript("OnEvent", RefreshLanguages)
 end)
 

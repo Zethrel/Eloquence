@@ -229,7 +229,7 @@ end
 panel:SetScript("OnShow", Refresh)
 E.RefreshOptions = Refresh
 
-E.OnLogin(function()
+E.OnLogin("Options", function()
 	Build()
 	Refresh()
 
