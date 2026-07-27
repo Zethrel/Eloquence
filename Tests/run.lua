@@ -584,6 +584,67 @@ do
 end
 
 do
+	-- The language gate must FAIL OPEN. It sits in front of every incoming
+	-- message, and if the language API returns nothing -- too early in login, or
+	-- because the call moved -- treating that as "understands nothing" silently
+	-- kills the entire incoming half while outgoing (which passes no language)
+	-- carries on working perfectly. That asymmetry is very hard to diagnose.
+	local savedLanguages = _G._languages
+	_G._languages = {}
+	E.Pipeline.RefreshLanguages()
+
+	local languages, failed = E.Pipeline.LanguageInfo()
+	check("an empty language list is reported as a failed lookup", failed,
+		"languages: " .. table.concat(languages, ", "))
+	check("and everything is understood rather than nothing",
+		E.Pipeline.Understood("Common") and E.Pipeline.Understood("Thalassian"))
+
+	onlyModules("dialect")
+	local result = E.Pipeline.Run("I don't know friend", "Player-1-DWARF", "Dwarf", "Common")
+	check("so incoming chat is still filtered", result ~= "I don't know friend", tostring(result))
+
+	_G._languages = savedLanguages
+	E.Pipeline.RefreshLanguages()
+	check("a populated list stops being treated as a failure",
+		not select(2, E.Pipeline.LanguageInfo()))
+	eq("and unknown languages are skipped again",
+		E.Pipeline.Run("zug zug lok'tar", "Player-1-DWARF", "Dwarf", "Thalassian"),
+		"zug zug lok'tar")
+end
+
+do
+	-- The filter must record what it decided, so "incoming does not work" can be
+	-- distinguished from "the filter was never called".
+	onlyModules("dialect")
+	E.Chat.stats.calls = 0
+	E.Chat.stats.changed = 0
+	local filter = _G._filters["CHAT_MSG_SAY"][1]
+	local args = { "i dont know friend", "Bromm", "Common", "", "", "", 0, 0, "", "", 42,
+		"Player-1-DWARF", nil, false, false, false, false }
+	filter(nil, "CHAT_MSG_SAY", unpack(args, 1, 17))
+	eq("the filter counted the message", E.Chat.stats.calls, 1)
+	eq("and counted the rewrite", E.Chat.stats.changed, 1)
+	check("and recorded what it saw", E.Chat.lastSeen ~= nil)
+	if E.Chat.lastSeen then
+		eq("including the sender", E.Chat.lastSeen.sender, "Bromm")
+		eq("and the resolved dialect", E.Chat.lastSeen.dialect, "Dwarven")
+		eq("and a verdict", E.Chat.lastSeen.verdict, "rewritten")
+	end
+
+	-- Your own message with outgoing on is skipped, and says so.
+	E.db.outgoing.enabled = true
+	local mine = { "i dont know friend", "Me", "Common", "", "", "", 0, 0, "", "", 43,
+		_G._playerGUID, nil, false, false, false, false }
+	filter(nil, "CHAT_MSG_SAY", unpack(mine, 1, 17))
+	eq("own messages are skipped", E.Chat.stats.skippedSelf, 1)
+	contains("with a reason a player can act on", E.Chat.lastSeen.verdict, "already rewritten")
+
+	check("/elo spy toggles", pcall(SlashCmdList["ELOQUENCE"], "spy"))
+	check("/elo spy toggles back", pcall(SlashCmdList["ELOQUENCE"], "spy"))
+	check("/elo doctor reports incoming stats", pcall(SlashCmdList["ELOQUENCE"], "doctor"))
+end
+
+do
 	eq("slash commands are skipped", E.Pipeline.Run("/dance", "Player-1-DWARF", "Dwarf", "Common"), "/dance")
 	local link = LINK
 	eq("a bare link is left alone", E.Pipeline.Run(link, "Player-1-DWARF", "Dwarf", "Common"), link)
