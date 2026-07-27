@@ -100,6 +100,15 @@ Worth knowing: **retail hides Lua errors by default**, so a broken command looks
 identical to one that did nothing. `/console scriptErrors 1` turns them on, which
 is worth doing before reporting a problem.
 
+One trap worth recording for anyone else writing an addon panel: nearly every
+Dragonflight-era guide tells you to do `category.ID = addonName` after
+`Settings.RegisterCanvasLayoutCategory`. **That is wrong on 12.0.**
+`Settings.OpenToCategory` now forwards the ID to
+`C_SettingsUtil.OpenSettingsPanel`, which requires an integer, so passing the
+addon name throws `bad argument #1 to 'OpenSettingsPanel' (outside of expected
+range …)` and the panel silently never opens. Leave the numeric ID the Settings
+system assigns alone.
+
 ### Defaults
 
 Enabled out of the box: **The Spell Book**, **Decompression Engine**,
@@ -405,7 +414,7 @@ headlessly against a stubbed client. No game required:
 lua Tests/run.lua
 ```
 
-Currently 1501 assertions covering case preservation, escape-sequence integrity,
+Currently 1505 assertions covering case preservation, escape-sequence integrity,
 determinism, message splitting, each dialect at every strength, each filter,
 race resolution and aliasing, the chat filter round trip, outgoing splitting, the
 slash commands, and a hostile-input pass that throws malformed escape sequences
@@ -454,21 +463,3 @@ Modern addons in the same tradition, worth knowing about: **AccentChat**,
 **Tongues** and **Dialect**.
 
 MIT licensed — see [LICENSE](LICENSE).
-
-
-
-Message: ...ddOns/Blizzard_Settings_Shared/Blizzard_Settings.lua:144: bad argument #1 to 'OpenSettingsPanel' (outside of expected range -2147483648 to 2147483647 - Usage: C_SettingsUtil.OpenSettingsPanel([openToCategoryID, scrollToElementName]))
-Time: Mon Jul 27 20:27:26 2026
-Count: 1
-Stack:
-[Interface/AddOns/Blizzard_Settings_Shared/Blizzard_Settings.lua]:144: in function 'OpenToCategory'
-[Interface/AddOns/Eloquence/Core/Options.lua]:249: in function 'OpenOptions'
-[Interface/AddOns/Eloquence/Core/Commands.lua]:208: in function '?'
-[Interface/AddOns/Blizzard_ChatFrameBase/Shared/ChatFrameEditBox.lua]:259: in function 'ParseText'
-[Interface/AddOns/Blizzard_ChatFrameBase/Shared/ChatFrameEditBox.lua]:284: in function 'SendText'
-[Interface/AddOns/Blizzard_ChatFrameBase/Shared/ChatFrameEditBox.lua]:407: in function <...s/Blizzard_ChatFrameBase/Shared/ChatFrameEditBox.lua:403>
-
-Locals:
-categoryID="Eloquence"
-scrollToElementName=nil
-

@@ -1046,8 +1046,27 @@ do
 	check("/elo config runs", pcall(handler, "config"))
 	check("/elo options runs", pcall(handler, "options"))
 
-	-- No Settings API at all (the stub provides none) must still be survivable.
-	check("it copes with no Settings API", pcall(E.OpenOptions))
+	-- The regression that made /elo throw and appear to do nothing. Every
+	-- Dragonflight-era guide says to set `category.ID = addonName`, but 12.0's
+	-- OpenToCategory forwards the ID to C_SettingsUtil.OpenSettingsPanel, which
+	-- demands an integer. The ID assigned at registration must survive untouched.
+	eq("the options panel registered via the Settings API", E.optionsMethod, "settings")
+	check("the category kept its assigned numeric ID",
+		type(E.settingsCategory and E.settingsCategory.ID) == "number",
+		"ID is " .. type(E.settingsCategory and E.settingsCategory.ID)
+			.. " (" .. tostring(E.settingsCategory and E.settingsCategory.ID) .. ")")
+
+	_G._openedCategories = {}
+	handler("")
+	check("bare /elo actually opened the panel", #_G._openedCategories > 0,
+		"OpenToCategory was never reached")
+	if #_G._openedCategories > 0 then
+		check("and passed a numeric category ID, not the addon name",
+			type(_G._openedCategories[1]) == "number",
+			"got " .. tostring(_G._openedCategories[1]))
+		eq("matching the registered category",
+			_G._openedCategories[1], E.settingsCategory.ID)
+	end
 
 	-- Combat lockdown: ShowUIPanel is blocked, so opening cannot work.
 	_G._inCombat = true

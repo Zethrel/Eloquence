@@ -100,6 +100,34 @@ function stub.install(env)
 	env.InCombatLockdown = function() return env._inCombat == true end
 	env._inCombat = false
 
+	-- The Settings API, modelling the 12.0 contract that matters:
+	-- Settings.OpenToCategory forwards the ID to C_SettingsUtil.OpenSettingsPanel,
+	-- which takes an *integer*. Passing the addon name -- as every
+	-- Dragonflight-era guide recommends -- raises
+	--   bad argument #1 to 'OpenSettingsPanel' (outside of expected range ...)
+	-- Categories therefore get numeric IDs here and OpenToCategory rejects
+	-- anything else, so the mistake fails the suite instead of only in game.
+	local nextCategoryID = 100
+	env._openedCategories = {}
+	env.Settings = {
+		RegisterCanvasLayoutCategory = function(frame, name)
+			nextCategoryID = nextCategoryID + 1
+			local category = { ID = nextCategoryID, name = name, frame = frame }
+			function category:GetID() return self.ID end
+			return category
+		end,
+		RegisterAddOnCategory = function(category)
+			env._registeredCategory = category
+		end,
+		OpenToCategory = function(categoryID)
+			if type(categoryID) ~= "number" then
+				error(("bad argument #1 to 'OpenSettingsPanel' (outside of expected "
+					.. "range -2147483648 to 2147483647), got %s"):format(tostring(categoryID)), 2)
+			end
+			table.insert(env._openedCategories, categoryID)
+		end,
+	}
+
 	-- Patch 12.0's chat send path. Addons hook ChatFrame.OnEditBoxPreSendText
 	-- and rewrite the edit box contents; the client then sends whatever the box
 	-- holds. `stub.typeIntoChat` below drives the whole sequence.

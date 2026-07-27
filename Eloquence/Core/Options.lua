@@ -236,7 +236,17 @@ E.OnLogin("Options", function()
 	-- (empty) rather than /elo silently doing nothing.
 	if Settings and Settings.RegisterCanvasLayoutCategory then
 		local category = Settings.RegisterCanvasLayoutCategory(panel, "Eloquence")
-		category.ID = "Eloquence"
+		-- Do NOT overwrite category.ID.
+		--
+		-- Every Dragonflight-era guide says to do `category.ID = panel.name`, and
+		-- it is wrong on 12.0. Settings.OpenToCategory now forwards the ID to
+		-- C_SettingsUtil.OpenSettingsPanel, which requires a *number*:
+		--
+		--   bad argument #1 to 'OpenSettingsPanel' (outside of expected range
+		--   -2147483648 to 2147483647)   -- categoryID="Eloquence"
+		--
+		-- The Settings system assigns a numeric ID at registration. Clobbering it
+		-- with the addon name is what made /elo throw and do nothing.
 		Settings.RegisterAddOnCategory(category)
 		E.settingsCategory = category
 		E.optionsMethod = "settings"
@@ -268,18 +278,19 @@ function E.OpenOptions()
 
 	local category = E.settingsCategory
 	if Settings and Settings.OpenToCategory and category then
-		-- Prefer the live ID over the one we assigned, in case the Settings
-		-- system reassigned it during registration.
-		local id = category
+		-- Whatever the Settings system assigned, untouched. On 12.0 this must be
+		-- a number; passing the addon name throws inside OpenSettingsPanel.
+		local id
 		if category.GetID then
 			local okID, live = pcall(category.GetID, category)
-			if okID and live then id = live end
-		else
-			id = category.ID or "Eloquence"
+			if okID then id = live end
 		end
+		if id == nil then id = category.ID end
 
-		local opened = pcall(Settings.OpenToCategory, id)
+		local opened = id ~= nil and pcall(Settings.OpenToCategory, id)
 		if not opened then
+			-- Older clients accepted the category name. Harmless to try, and it
+			-- is the only remaining option if the ID above was rejected.
 			opened = pcall(Settings.OpenToCategory, "Eloquence")
 		end
 		if opened then
