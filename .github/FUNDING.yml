@@ -1,0 +1,9 @@
+# Puts a "Sponsor" button at the top of the repository page.
+#
+# This is the only place in the repository a funding link belongs, alongside the
+# README credits and the CurseForge project description. It must never go into
+# the addon itself -- not the Lua, not the options panel, not the TOC, whose
+# fields render in the in-game addon list. Blizzard's UI Add-On Development
+# Policy prohibits addons from soliciting donations or carrying advertisements,
+# and an addon that nags on login deserves the delisting either way.
+ko_fi: zethrel

@@ -516,6 +516,12 @@ upload itself will need a live key the first time.
 
 Wago.io and WoWInterface are other options; both take the same zip.
 
+When you write the CurseForge project description, that is the place to put the
+[Ko-fi](https://ko-fi.com/zethrel) link if you want it seen at all — most addon
+users install through the CurseForge app and never open the GitHub page, so the
+repository's Sponsor button reaches almost none of them. The description field is
+the storefront; the repository is for people who came looking for the source.
+
 ## Tests
 
 The text handling — which is nearly all of the interesting behaviour — is tested
@@ -579,3 +585,17 @@ Modern addons in the same tradition, worth knowing about: **AccentChat**,
 **Tongues** and **Dialect**.
 
 MIT licensed — see [LICENSE](LICENSE).
+
+### Supporting it
+
+Eloquence is free and always will be — Blizzard's addon policy requires it, and
+it is the right shape for an addon anyway. If you would like to put something in
+the tip jar towards keeping this and other revived RP addons maintained, there is
+one at [ko-fi.com/zethrel](https://ko-fi.com/zethrel). Entirely optional, and it
+buys no features: everything the addon does is in the box for everyone.
+
+You will not find that link anywhere inside the addon, and it should stay that
+way. Blizzard's UI Add-On Development Policy prohibits addons from soliciting
+donations or displaying advertisements, so the link lives here, on the repository
+page, and in the CurseForge description — never in the Lua, the options panel, or
+the TOC, whose fields show up in the in-game addon list.
