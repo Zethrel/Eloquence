@@ -104,6 +104,10 @@ end
 -- Layout
 --------------------------------------------------------------------------------
 
+-- Forward declaration: the preset buttons built below need to call Refresh, which
+-- is defined after them.
+local Refresh
+
 local function Build()
 	MakeTitle("Eloquence " .. E.VERSION)
 	MakeNote("A revival of the classic roleplaying chat addon, by |cffffff80" .. E.AUTHOR
@@ -114,6 +118,35 @@ local function Build()
 		function() return E.db.enabled end,
 		function(v) E.db.enabled = v end, 200)
 	Advance(30)
+
+	-- Presets, so the common combinations are one click rather than a tour of
+	-- every checkbox below.
+	MakeTitle("Presets", "GameFontNormal")
+	local column = 1
+	for _, key in ipairs(E.Presets.order) do
+		local preset = E.Presets.list[key]
+		local btn = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
+		btn:SetSize(120, 22)
+		btn:SetPoint("TOPLEFT", COL[column], y)
+		btn:SetText(preset.name)
+		btn:SetScript("OnClick", function()
+			E.Presets.Apply(key)
+			Refresh()
+			E.Print("preset |cffffff80" .. preset.name .. "|r applied.")
+		end)
+		btn:SetScript("OnEnter", function(self)
+			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+			GameTooltip:SetText(preset.name, 1, 1, 1)
+			GameTooltip:AddLine(preset.desc, nil, nil, nil, true)
+			GameTooltip:AddLine("Leaves outgoing sending and muted races alone.", 0.6, 0.6, 0.6, true)
+			GameTooltip:Show()
+		end)
+		btn:SetScript("OnLeave", GameTooltip_Hide)
+		column = column + 1
+		if column > 3 then column = 1 Advance(26) end
+	end
+	if column ~= 1 then Advance(26) end
+	Advance(10)
 
 	-- Filters -----------------------------------------------------------------
 	MakeTitle("Filters", "GameFontNormal")
@@ -233,7 +266,7 @@ local function Build()
 	content:SetHeight(-y + 20)
 end
 
-local function Refresh()
+function Refresh()
 	for _, widget in ipairs(allCheckboxes) do
 		widget:Refresh()
 	end

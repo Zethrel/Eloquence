@@ -237,7 +237,7 @@ stub.FILES = {
 	"Modules/SpellBook.lua", "Modules/Decompression.lua", "Modules/Mouthwash.lua",
 	"Modules/FantasyWriter.lua", "Modules/Dialectician.lua",
 	"Core/Pipeline.lua", "Core/Bubbles.lua", "Core/Chat.lua", "Core/Cleanup.lua",
-	"Core/Options.lua", "Core/Commands.lua",
+	"Core/Options.lua", "Core/Presets.lua", "Core/Commands.lua",
 }
 
 -- Load the addon files in TOC order and return the private namespace.

@@ -246,6 +246,7 @@ local function Help()
 	print("  |cffffff80/elo <filter> incoming on|off|r  apply it to others' chat too")
 	print("  |cffffff80/elo race <race> on|off|r   mute or unmute one race's dialect")
 	print("  |cffffff80/elo races|r                list every dialect")
+	print("  |cffffff80/elo preset [name]|r        apply a bundle of settings, or list them")
 	print("  |cffffff80/elo out on|off|r           rewrite your outgoing chat")
 	print("  |cffffff80/elo reset|r                restore defaults")
 end
@@ -282,6 +283,25 @@ local function Handler(input)
 		E.OpenOptions() return
 	end
 	if command == "races" then Races() return end
+	if command == "preset" or command == "presets" then
+		local wanted = lower(E.Trim(rest))
+		if wanted ~= "" and E.Presets.Apply(wanted) then
+			local preset = E.Presets.list[wanted]
+			if E.RefreshOptions then E.RefreshOptions() end
+			E.Print(format("preset |cffffff80%s|r applied -- %s", preset.name, preset.desc))
+			E.Print("|cff808080outgoing rewriting and muted races were left as they were.|r")
+			return
+		end
+		if wanted ~= "" then
+			E.Print("no such preset: " .. wanted)
+		end
+		E.Print("presets:")
+		for _, key in ipairs(E.Presets.order) do
+			local preset = E.Presets.list[key]
+			print(format("  |cffffff80%-10s|r %s", key, preset.desc))
+		end
+		return
+	end
 	if command == "test" then Test(rest) return end
 
 	if command == "debug" then

@@ -888,6 +888,87 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Channel defaults and presets")
+--------------------------------------------------------------------------------
+
+do
+	-- The in-character channels are filtered; coordination channels are not.
+	-- Dialecting "interrupt now, bloodlust on pull" makes useful chat harder to
+	-- read rather than more immersive.
+	local D = E.DEFAULTS
+	for _, key in ipairs({ "say", "yell", "emote" }) do
+		eq("incoming " .. key .. " is on by default", D.incoming[key], true)
+		eq("outgoing " .. key .. " is on by default", D.outgoing[key], true)
+	end
+	for _, key in ipairs({ "party", "raid", "instance", "guild", "officer", "channel" }) do
+		eq("incoming " .. key .. " is off by default", D.incoming[key], false)
+		eq("outgoing " .. key .. " is off by default", D.outgoing[key], false)
+	end
+
+	-- The one deliberate asymmetry: reading an in-character whisper in dialect is
+	-- welcome; sending one is riskier, since whispers are often out of character.
+	eq("incoming whispers are filtered", D.incoming.whisper, true)
+	eq("outgoing whispers are not", D.outgoing.whisper, false)
+
+	-- Outgoing stays off entirely until asked for.
+	eq("outgoing rewriting is off by default", D.outgoing.enabled, false)
+end
+
+do
+	local handler = SlashCmdList["ELOQUENCE"]
+	check("/elo preset lists the presets", pcall(handler, "preset"))
+	check("an unknown preset is survivable", pcall(handler, "preset nonsense"))
+
+	for _, key in ipairs(E.Presets.order) do
+		check("/elo preset " .. key .. " applies", pcall(handler, "preset " .. key))
+		local preset = E.Presets.list[key]
+		check(key .. " has a name and description",
+			type(preset.name) == "string" and type(preset.desc) == "string")
+	end
+
+	-- Roleplay: in-character channels only, dialects on, Spell Book kept off
+	-- other people's chat.
+	E.Presets.Apply("rp")
+	eq("rp filters say", E.db.incoming.say, true)
+	eq("rp leaves raid alone", E.db.incoming.raid, false)
+	eq("rp enables dialects", E.db.modules.dialect.enabled, true)
+	eq("rp keeps the Spell Book off incoming", E.db.modules.spellbook.incoming, false)
+
+	-- Clean: no dialects, tidy everything.
+	E.Presets.Apply("clean")
+	eq("clean disables dialects", E.db.modules.dialect.enabled, false)
+	eq("clean filters raid too", E.db.incoming.raid, true)
+	eq("clean applies the Spell Book to incoming", E.db.modules.spellbook.incoming, true)
+
+	-- Immersive: NPCs included, heavier.
+	E.Presets.Apply("immersive")
+	eq("immersive includes NPCs", E.db.incoming.monster, true)
+	eq("immersive turns up the dialect", E.db.modules.dialect.strength, 3)
+	eq("immersive enables the Fantasy Writer", E.db.modules.fantasy.enabled, true)
+
+	-- Off: everything down, addon still loaded.
+	E.Presets.Apply("off")
+	for key in pairs(E.db.modules) do
+		eq("off disables " .. key, E.db.modules[key].enabled, false)
+	end
+
+	-- A preset must never flip outgoing sending on, nor clear muted races.
+	E.db.outgoing.enabled = false
+	E.db.dialect.races["Troll"] = false
+	for _, key in ipairs(E.Presets.order) do
+		E.Presets.Apply(key)
+		eq(key .. " never enables outgoing sending", E.db.outgoing.enabled, false)
+		eq(key .. " never clears a muted race", E.db.dialect.races["Troll"], false)
+	end
+	E.db.dialect.races["Troll"] = nil
+
+	eq("an unknown preset reports failure", E.Presets.Apply("nope"), false)
+	eq("a nil preset reports failure", E.Presets.Apply(nil), false)
+
+	handler("reset")
+end
+
+--------------------------------------------------------------------------------
 section("Authored voice must survive the filters")
 --------------------------------------------------------------------------------
 

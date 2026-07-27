@@ -2,7 +2,7 @@
 local ADDON, E = ...
 
 E.ADDON = ADDON
-E.VERSION = "2.2.0"
+E.VERSION = "2.3.0"
 
 -- Single source of truth for attribution: used by /elo status, the options panel
 -- and the TOC. The original Eloquence was a Vanilla-era community addon; this is
@@ -55,18 +55,27 @@ E.DEFAULTS = {
 	debug = false,
 
 	-- Which incoming chat types get filtered.
+	--
+	-- Only the in-character channels by default, mirroring the outgoing list.
+	-- Party, raid, instance, guild, officer and public channels are coordination
+	-- by convention -- dialecting "interrupt now, bloodlust on pull" makes the
+	-- useful chat harder to read rather than more immersive.
+	--
+	-- Whispers are the one deliberate asymmetry: reading an in-character whisper
+	-- in dialect is welcome, but *sending* one is riskier, since a whisper is
+	-- just as often an out-of-character question.
 	incoming = {
 		enabled  = true,
 		say      = true,
 		yell     = true,
 		emote    = true,
 		whisper  = true,
-		party    = true,
-		raid     = true,
-		instance = true,
-		guild    = true,
-		officer  = true,
-		channel  = true,
+		party    = false,
+		raid     = false,
+		instance = false,
+		guild    = false,
+		officer  = false,
+		channel  = false,
 		monster  = false,
 		-- Chat bubbles are a separate render path from the chat frame; see
 		-- Core/Bubbles.lua.

@@ -74,6 +74,7 @@ Nothing else is version-sensitive.
 /elo <filter> 1|2|3       filter strength: light, medium, heavy
 /elo race <race> on|off   mute or unmute one race's dialect
 /elo races                list every dialect
+/elo preset [name]        apply a bundle of settings, or list them
 /elo out on|off           rewrite your outgoing chat
 /elo reset                restore defaults
 ```
@@ -115,10 +116,33 @@ addon name throws `bad argument #1 to 'OpenSettingsPanel' (outside of expected
 range …)` and the panel silently never opens. Leave the numeric ID the Settings
 system assigns alone.
 
+### Presets
+
+Rather than argue about defaults, `/elo preset` bundles the sensible
+combinations — also as buttons at the top of the options panel:
+
+| Preset | What it does |
+| --- | --- |
+| `rp` | Dialects on the in-character channels only. Coordination chat left alone. This is the default shape. |
+| `immersive` | As `rp`, but heavier, and NPCs get dialects too. |
+| `clean` | No dialects. Just tidier chat everywhere: spelling, acronyms, profanity. |
+| `off` | Every filter disabled, addon still loaded. |
+
+A preset never turns **outgoing sending** on and never clears **muted races** —
+the first changes what other people receive, and the second you set deliberately.
+
 ### Defaults
 
 Enabled out of the box: **The Spell Book**, **Decompression Engine**,
 **Dialectician**, and clickable trimmed URLs.
+
+**Only the in-character channels are filtered** — say, yell, emote and whispers.
+Party, raid, instance, guild, officer and public channels are coordination by
+convention, and dialecting *"interrupt now, bloodlust on pull"* makes the useful
+chat harder to read rather than more immersive. Outgoing mirrors this, with one
+deliberate asymmetry: incoming whispers are filtered but outgoing ones are not,
+because reading an in-character whisper in dialect is welcome while sending one
+is riskier.
 
 Off by default: **Mouthwash** and **Fantasy Writer** (both change a lot of text
 and are a matter of taste), outgoing rewriting, and short channel names.
@@ -472,7 +496,7 @@ headlessly against a stubbed client. No game required:
 lua Tests/run.lua
 ```
 
-Currently 1549 assertions covering case preservation, escape-sequence integrity,
+Currently 1608 assertions covering case preservation, escape-sequence integrity,
 determinism, message splitting, each dialect at every strength, each filter,
 race resolution and aliasing, the chat filter round trip, outgoing splitting, the
 slash commands, and a hostile-input pass that throws malformed escape sequences
