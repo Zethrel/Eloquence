@@ -66,6 +66,7 @@ Nothing else is version-sensitive.
 /elo on|off               master switch
 /elo status               show what is enabled
 /elo doctor               diagnose why nothing is happening
+/elo config               open the options panel (same as bare /elo)
 /elo test <text>          preview your own dialect
 /elo test <race> <text>   preview a specific dialect
 /elo <filter> on|off      spellbook, decomp, mouthwash, fantasy, dialect
@@ -94,6 +95,10 @@ It reports whether every module started, whether the chat filters and the
 outgoing hook actually attached, whether your race resolves to a dialect, and
 then runs a sample line through the pipeline so you can see the before and after.
 Anything marked `FAIL` is the answer.
+
+Worth knowing: **retail hides Lua errors by default**, so a broken command looks
+identical to one that did nothing. `/console scriptErrors 1` turns them on, which
+is worth doing before reporting a problem.
 
 ### Defaults
 
@@ -400,7 +405,7 @@ headlessly against a stubbed client. No game required:
 lua Tests/run.lua
 ```
 
-Currently 1493 assertions covering case preservation, escape-sequence integrity,
+Currently 1501 assertions covering case preservation, escape-sequence integrity,
 determinism, message splitting, each dialect at every strength, each filter,
 race resolution and aliasing, the chat filter round trip, outgoing splitting, the
 slash commands, and a hostile-input pass that throws malformed escape sequences

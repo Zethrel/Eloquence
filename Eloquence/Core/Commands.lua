@@ -131,6 +131,18 @@ local function Doctor()
 		print("  " .. warn .. "   outgoing rewriting is off (only you see dialects)")
 	end
 
+	-- 2b. Can the options panel actually open?
+	if E.optionsBuildError then
+		print("  " .. bad .. " the options panel failed to build:")
+		print("       |cffff8080" .. E.optionsBuildError .. "|r")
+	elseif E.optionsMethod == "settings" and E.settingsCategory then
+		print("  " .. ok .. "   options panel registered (Settings API)")
+	elseif E.optionsMethod == "legacy" then
+		print("  " .. warn .. "   options panel registered (legacy API)")
+	else
+		print("  " .. bad .. " options panel is not registered -- /elo will not open it")
+	end
+
 	-- 3. Who are we, and does that resolve to a dialect?
 	local race = E.Race.Player()
 	local dialect = race and E.Race.DialectFor(race)
@@ -177,6 +189,7 @@ end
 local function Help()
 	E.Print("commands:")
 	print("  |cffffff80/elo|r                      open the options panel")
+	print("  |cffffff80/elo config|r               same, if bare /elo misbehaves")
 	print("  |cffffff80/elo on|off|r               master switch")
 	print("  |cffffff80/elo status|r               show what is enabled")
 	print("  |cffffff80/elo doctor|r               diagnose why nothing is happening")
@@ -212,6 +225,9 @@ local function Handler(input)
 	if command == "help" or command == "?" then Help() return end
 	if command == "status" then Status() return end
 	if command == "doctor" then Doctor() return end
+	if command == "config" or command == "options" or command == "panel" then
+		E.OpenOptions() return
+	end
 	if command == "races" then Races() return end
 	if command == "test" then Test(rest) return end
 

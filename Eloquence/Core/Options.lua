@@ -231,26 +231,77 @@ panel:SetScript("OnShow", Refresh)
 E.RefreshOptions = Refresh
 
 E.OnLogin("Options", function()
-	Build()
-	Refresh()
-
+	-- Registration first. Building the widgets is the part most likely to break
+	-- on an API change, and if it throws, the panel should still exist and open
+	-- (empty) rather than /elo silently doing nothing.
 	if Settings and Settings.RegisterCanvasLayoutCategory then
 		local category = Settings.RegisterCanvasLayoutCategory(panel, "Eloquence")
 		category.ID = "Eloquence"
 		Settings.RegisterAddOnCategory(category)
 		E.settingsCategory = category
+		E.optionsMethod = "settings"
 	elseif InterfaceOptions_AddCategory then
 		InterfaceOptions_AddCategory(panel)
+		E.optionsMethod = "legacy"
+	else
+		E.optionsMethod = "none"
+	end
+
+	local ok, err = pcall(function()
+		Build()
+		Refresh()
+	end)
+	if not ok then
+		E.optionsBuildError = tostring(err)
 	end
 end)
 
+-- Opening the panel has more ways to fail quietly than anything else in the
+-- addon, and Lua errors are hidden by default in retail (`/console scriptErrors
+-- 1` shows them), so a failure here looks exactly like /elo doing nothing.
+-- Every path therefore ends in either an open panel or a printed explanation.
 function E.OpenOptions()
-	if Settings and Settings.OpenToCategory and E.settingsCategory then
-		Settings.OpenToCategory(E.settingsCategory.ID)
-	elseif InterfaceOptionsFrame_OpenToCategory then
-		InterfaceOptionsFrame_OpenToCategory(panel)
-		InterfaceOptionsFrame_OpenToCategory(panel)
-	else
-		E.Print("Could not open the options panel; use /elo for command-line options.")
+	if InCombatLockdown and InCombatLockdown() then
+		E.Print("the options panel cannot be opened during combat. Try |cffffff80/elo status|r.")
+		return
+	end
+
+	local category = E.settingsCategory
+	if Settings and Settings.OpenToCategory and category then
+		-- Prefer the live ID over the one we assigned, in case the Settings
+		-- system reassigned it during registration.
+		local id = category
+		if category.GetID then
+			local okID, live = pcall(category.GetID, category)
+			if okID and live then id = live end
+		else
+			id = category.ID or "Eloquence"
+		end
+
+		local opened = pcall(Settings.OpenToCategory, id)
+		if not opened then
+			opened = pcall(Settings.OpenToCategory, "Eloquence")
+		end
+		if opened then
+			-- Long-standing quirk: the first call sometimes only opens the
+			-- settings window on the previous category.
+			pcall(Settings.OpenToCategory, id)
+			if E.optionsBuildError then
+				E.Print("|cffffcc00the panel opened but failed to build:|r " .. E.optionsBuildError)
+			end
+			return
+		end
+	end
+
+	if InterfaceOptionsFrame_OpenToCategory then
+		pcall(InterfaceOptionsFrame_OpenToCategory, panel)
+		pcall(InterfaceOptionsFrame_OpenToCategory, panel)
+		return
+	end
+
+	E.Print("|cffff4040could not open the options panel.|r Everything is available from the "
+		.. "command line -- try |cffffff80/elo help|r, or |cffffff80/elo doctor|r to see why.")
+	if E.optionsBuildError then
+		E.Print("panel build error: " .. E.optionsBuildError)
 	end
 end

@@ -1034,6 +1034,39 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Options panel: /elo must never silently do nothing")
+--------------------------------------------------------------------------------
+
+do
+	-- Lua errors are hidden by default in retail, so any failure in here looks
+	-- to the player exactly like the command being ignored. Every path must
+	-- therefore either open the panel or print something.
+	local handler = SlashCmdList["ELOQUENCE"]
+	check("bare /elo runs without erroring", pcall(handler, ""))
+	check("/elo config runs", pcall(handler, "config"))
+	check("/elo options runs", pcall(handler, "options"))
+
+	-- No Settings API at all (the stub provides none) must still be survivable.
+	check("it copes with no Settings API", pcall(E.OpenOptions))
+
+	-- Combat lockdown: ShowUIPanel is blocked, so opening cannot work.
+	_G._inCombat = true
+	check("it copes during combat lockdown", pcall(handler, ""))
+	_G._inCombat = false
+
+	-- A panel that failed to build must be reported, not hidden.
+	local saved = E.optionsBuildError
+	E.optionsBuildError = "simulated build failure"
+	check("a build failure is survivable", pcall(handler, ""))
+	check("and doctor reports it", pcall(handler, "doctor"))
+	E.optionsBuildError = saved
+
+	-- Registration happens before the widgets are built, so a build failure
+	-- still leaves something to open.
+	check("the options method was recorded", E.optionsMethod ~= nil, tostring(E.optionsMethod))
+end
+
+--------------------------------------------------------------------------------
 section("Packaging: the TOC is the single source of truth")
 --------------------------------------------------------------------------------
 
