@@ -132,17 +132,28 @@ Cleanup.Abbreviate = Abbreviate
 -- Class colours
 --------------------------------------------------------------------------------
 
-local function ClassColor(guid)
-	if not guid or guid == "" or not find(guid, "^Player%-") then return nil end
-	local _, englishClass = GetPlayerInfoByGUID(guid)
-	if not englishClass then return nil end
-	local colors = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[englishClass]
-	if not colors then return nil end
-	return colors.colorStr and ("|c" .. colors.colorStr) or format("|cff%02x%02x%02x",
-		(colors.r or 1) * 255, (colors.g or 1) * 255, (colors.b or 1) * 255)
-end
-
-Cleanup.ClassColor = ClassColor
+-- CLASS-COLOURED NAMES: REMOVED, DELIBERATELY.
+--
+-- This used to colour the sender by wrapping arg2 in a colour code. That is
+-- wrong and it visibly corrupted chat. The sender argument is not just display
+-- text -- the chat system builds the player hyperlink around it, roughly
+--
+--   |Hplayer:<sender>:<lineID>:<chatType>|h[<display>]|h
+--
+-- so colour codes injected into it land *inside the link payload*, where the
+-- embedded pipes break the parser. The result was raw link text spilling into
+-- the chat frame:
+--
+--   |Hplayer:Becche-Ravencrest:236:SAY:[Becche-Ravencrest] says: Hello there
+--
+-- Doing it properly means colouring only the display text between |h and |h,
+-- which needs an AddMessage wrapper on every chat frame. That is not worth
+-- building, because the client already does exactly this: Blizzard's
+-- GetColoredName handles it natively, controlled by the colorChatNamesByClass
+-- and chatClassColorOverride CVars and exposed in the Chat settings panel.
+--
+-- The setting key is kept in DEFAULTS so existing saved variables load cleanly,
+-- but nothing reads it any more.
 
 --------------------------------------------------------------------------------
 -- Wiring
@@ -170,14 +181,7 @@ local function PresentationFilter(_, event, text, sender, language, channelName,
 		end
 	end
 
-	if db.cleanup.classColors and sender and sender ~= "" then
-		-- Four payload args are named above, so arg12 sits at index 8.
-		local guid = select(8, ...)
-		local color = ClassColor(guid)
-		if color and not find(sender, "|c", 1, true) then
-			newSender, changed = color .. sender .. "|r", true
-		end
-	end
+	-- Note: the sender is deliberately never modified. See the comment above.
 
 	if changed then
 		return false, newText, newSender, language, newChannel, ...

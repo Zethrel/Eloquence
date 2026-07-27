@@ -822,6 +822,82 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Outgoing via the 12.0 edit box path")
+--------------------------------------------------------------------------------
+
+do
+	-- Patch 12.0 rearchitected chat sending: overriding the global
+	-- SendChatMessage no longer sees anything typed into the chat box. Messages
+	-- must be transformed through ChatFrame.OnEditBoxPreSendText instead. This
+	-- drives the real sequence -- fire the callback, then send whatever the edit
+	-- box holds -- so a hook on the wrong path fails here.
+	_G._playerRace = "DarkIronDwarf"
+	E.db.enabled = true
+	E.db.outgoing.enabled = true
+	E.db.outgoing.say = true
+	onlyModules("dialect")
+
+	eq("the edit box hook is the active method", E.Chat.outgoingMethod, "editbox")
+
+	local sent = stub.typeIntoChat(_G, "Hey friend", "SAY")
+	check("a typed message is transformed", sent ~= "Hey friend", tostring(sent))
+	contains("with the Dark Iron dialect", sent, "laddie")
+
+	-- Exactly once: the fallback wrapper must not re-transform what the edit box
+	-- hook already handled.
+	local twice = stub.typeIntoChat(_G, "I don't know friend", "SAY")
+	local once = E.Pipeline.Run("I don't know friend", UnitGUID("player"), "DarkIronDwarf", nil)
+	eq("transformed exactly once, not twice", twice, once)
+
+	-- Channels not opted into stay verbatim.
+	E.db.outgoing.guild = false
+	eq("un-opted channels are untouched",
+		stub.typeIntoChat(_G, "Hey friend", "GUILD"), "Hey friend")
+
+	eq("slash commands are never rewritten",
+		stub.typeIntoChat(_G, "/dance", "SAY"), "/dance")
+
+	-- Combat lockdown: rewriting the edit box there taints the protected send
+	-- and the client blocks the message outright.
+	_G._inCombat = true
+	eq("no rewriting during combat lockdown",
+		stub.typeIntoChat(_G, "Hey friend", "SAY"), "Hey friend")
+	_G._inCombat = false
+	check("and it resumes afterwards",
+		stub.typeIntoChat(_G, "Hey friend", "SAY") ~= "Hey friend")
+
+	-- The edit box path sends one message and cannot split, so an over-long
+	-- result must be left alone rather than truncated.
+	local long = string.rep("I do not know friend, ", 20)
+	eq("an over-long transform is skipped rather than truncated",
+		stub.typeIntoChat(_G, long, "SAY"), long)
+
+	E.db.outgoing.enabled = false
+	eq("disabling outgoing restores verbatim sending",
+		stub.typeIntoChat(_G, "Hey friend", "SAY"), "Hey friend")
+	E.db.outgoing.enabled = true
+end
+
+do
+	-- The sender argument must never be modified: the chat system builds the
+	-- player hyperlink around it, so colour codes injected there corrupt the
+	-- link and spill raw markup into the frame.
+	E.db.cleanup.classColors = true
+	local filter
+	for _, fn in ipairs(_G._filters["CHAT_MSG_SAY"]) do filter = fn end
+	local args = { "Hello there", "Becche-Ravencrest", "Common", "", "", "", 0, 0, "", "", 236,
+		"Player-1-DWARF", nil, false, false, false, false }
+	local _, _, sender = filter(nil, "CHAT_MSG_SAY", unpack(args, 1, 17))
+	if sender ~= nil then
+		excludes("the sender carries no colour codes", sender, "|c")
+		eq("the sender is passed through untouched", sender, "Becche-Ravencrest")
+	else
+		check("the presentation filter left the sender alone", true)
+	end
+	E.db.cleanup.classColors = false
+end
+
+--------------------------------------------------------------------------------
 section("Slash commands")
 --------------------------------------------------------------------------------
 
@@ -955,6 +1031,58 @@ do
 	E.initErrors = { { name = "Chat", err = "simulated failure" } }
 	check("/elo doctor reports a failed module without erroring", pcall(handler, "doctor"))
 	E.initErrors = saved
+end
+
+--------------------------------------------------------------------------------
+section("Options panel: /elo must never silently do nothing")
+--------------------------------------------------------------------------------
+
+do
+	-- Lua errors are hidden by default in retail, so any failure in here looks
+	-- to the player exactly like the command being ignored. Every path must
+	-- therefore either open the panel or print something.
+	local handler = SlashCmdList["ELOQUENCE"]
+	check("bare /elo runs without erroring", pcall(handler, ""))
+	check("/elo config runs", pcall(handler, "config"))
+	check("/elo options runs", pcall(handler, "options"))
+
+	-- The regression that made /elo throw and appear to do nothing. Every
+	-- Dragonflight-era guide says to set `category.ID = addonName`, but 12.0's
+	-- OpenToCategory forwards the ID to C_SettingsUtil.OpenSettingsPanel, which
+	-- demands an integer. The ID assigned at registration must survive untouched.
+	eq("the options panel registered via the Settings API", E.optionsMethod, "settings")
+	check("the category kept its assigned numeric ID",
+		type(E.settingsCategory and E.settingsCategory.ID) == "number",
+		"ID is " .. type(E.settingsCategory and E.settingsCategory.ID)
+			.. " (" .. tostring(E.settingsCategory and E.settingsCategory.ID) .. ")")
+
+	_G._openedCategories = {}
+	handler("")
+	check("bare /elo actually opened the panel", #_G._openedCategories > 0,
+		"OpenToCategory was never reached")
+	if #_G._openedCategories > 0 then
+		check("and passed a numeric category ID, not the addon name",
+			type(_G._openedCategories[1]) == "number",
+			"got " .. tostring(_G._openedCategories[1]))
+		eq("matching the registered category",
+			_G._openedCategories[1], E.settingsCategory.ID)
+	end
+
+	-- Combat lockdown: ShowUIPanel is blocked, so opening cannot work.
+	_G._inCombat = true
+	check("it copes during combat lockdown", pcall(handler, ""))
+	_G._inCombat = false
+
+	-- A panel that failed to build must be reported, not hidden.
+	local saved = E.optionsBuildError
+	E.optionsBuildError = "simulated build failure"
+	check("a build failure is survivable", pcall(handler, ""))
+	check("and doctor reports it", pcall(handler, "doctor"))
+	E.optionsBuildError = saved
+
+	-- Registration happens before the widgets are built, so a build failure
+	-- still leaves something to open.
+	check("the options method was recorded", E.optionsMethod ~= nil, tostring(E.optionsMethod))
 end
 
 --------------------------------------------------------------------------------

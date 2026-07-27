@@ -72,8 +72,34 @@ end
 -- Outgoing
 --------------------------------------------------------------------------------
 
+-- HOW OUTGOING CHAT IS INTERCEPTED
+--
+-- Patch 12.0.0 rearchitected the chat send path. Overriding the global
+-- SendChatMessage -- the technique addons used for twenty years -- no longer
+-- sees anything typed into the chat box, and ChatEdit_SendText is now only a
+-- deprecated alias loaded behind a CVar. Blizzard added an explicit hook point
+-- for this instead:
+--
+--   EventRegistry:RegisterCallback("ChatFrame.OnEditBoxPreSendText", ...)
+--
+-- It fires after the edit box has parsed the text but before the text is read
+-- for sending, so editBox:SetText() still changes what goes out.
+--
+-- The old SendChatMessage wrapper is kept as a fallback, because macros and
+-- other addons still call it directly and it is the only path on pre-12.0
+-- clients.
+--
+-- `editBoxHandled` makes the edit box authoritative for anything typed. It is
+-- set whenever the pre-send callback fires, including when that callback
+-- deliberately declines to transform (in combat, or when the result would be too
+-- long) -- otherwise the fallback wrapper would transform the very messages the
+-- edit box path just decided to leave alone. A send with no preceding callback
+-- is a macro or another addon, and still gets transformed.
 local outgoingInstalled = false
 local sending = false
+local editBoxHandled = false
+
+Chat.outgoingMethod = nil
 
 -- WoW caps a chat message at 255 bytes. A dialect can easily make a message
 -- longer ("I don't know" -> "Ah dinnae ken"), so anything that overflows is
@@ -94,9 +120,72 @@ local function TransformOutgoing(text, chatType)
 	return result
 end
 
+-- The 12.0+ path. Returns true if the callback was registered.
+local function InstallEditBoxHook()
+	if not (EventRegistry and EventRegistry.RegisterCallback) then return false end
+
+	local owner = {}
+	Chat.editBoxHookOwner = owner
+
+	local ok = pcall(function()
+		EventRegistry:RegisterCallback("ChatFrame.OnEditBoxPreSendText", function(...)
+			-- The callback signature has moved around between builds, so find
+			-- the edit box by duck typing rather than by argument position.
+			local editBox
+			for i = 1, select("#", ...) do
+				local candidate = select(i, ...)
+				if type(candidate) == "table" and candidate.GetText and candidate.SetText then
+					editBox = candidate
+					break
+				end
+			end
+			if not editBox then return end
+
+			-- From here on this send belongs to the edit box path, whatever we
+			-- decide to do with it.
+			editBoxHandled = true
+
+			-- Calling SetText here during combat lockdown taints the protected
+			-- send that follows, which makes the client block the message
+			-- outright. Never worth a dialect.
+			if InCombatLockdown and InCombatLockdown() then return end
+
+			local okText, text = pcall(editBox.GetText, editBox)
+			if not okText or type(text) ~= "string" or text == "" then return end
+
+			local chatType = "SAY"
+			if editBox.GetAttribute then
+				local okAttr, attr = pcall(editBox.GetAttribute, editBox, "chatType")
+				if okAttr and type(attr) == "string" and attr ~= "" then chatType = attr end
+			end
+
+			local okRun, transformed = pcall(TransformOutgoing, text, chatType)
+			if not okRun or not transformed then return end
+
+			-- This path replaces the edit box contents, so it sends exactly one
+			-- message and cannot split. Rather than let the client truncate a
+			-- too-long line, leave it alone.
+			if #transformed > MAX_BYTES then
+				E.Debug("outgoing skipped, too long after transform:", #transformed)
+				return
+			end
+
+			pcall(editBox.SetText, editBox, transformed)
+		end, owner)
+	end)
+
+	return ok
+end
+
 function Chat.EnsureOutgoingHook()
 	if outgoingInstalled then return end
 	outgoingInstalled = true
+
+	if InstallEditBoxHook() then
+		Chat.outgoingMethod = "editbox"
+	else
+		Chat.outgoingMethod = "sendchatmessage"
+	end
 
 	local original = SendChatMessage
 	Chat.originalSendChatMessage = original
@@ -104,6 +193,13 @@ function Chat.EnsureOutgoingHook()
 	-- SendChatMessage takes exactly (message, chatType, languageID, target).
 	SendChatMessage = function(text, chatType, languageID, target)
 		if sending or type(text) ~= "string" then
+			return original(text, chatType, languageID, target)
+		end
+
+		-- The edit box path already decided about this message -- either it
+		-- transformed it or it deliberately did not. Either way, hands off.
+		if editBoxHandled then
+			editBoxHandled = false
 			return original(text, chatType, languageID, target)
 		end
 

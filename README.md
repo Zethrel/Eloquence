@@ -30,7 +30,7 @@ describe are all taken from the original addon's own documentation:
 | Filter your own outgoing chat, or keep it private | Implemented, opt-in |
 | Trim long URLs into clickable links | Implemented |
 | Abbreviated channel headers | Implemented |
-| Class-coloured player names | Implemented |
+| Class-coloured player names | Removed — the client does this natively |
 
 One thing is meaningfully **better** than the original. Eloquence's known
 weakness was race detection: in 1.12 there was no reliable way to learn a
@@ -66,6 +66,7 @@ Nothing else is version-sensitive.
 /elo on|off               master switch
 /elo status               show what is enabled
 /elo doctor               diagnose why nothing is happening
+/elo config               open the options panel (same as bare /elo)
 /elo test <text>          preview your own dialect
 /elo test <race> <text>   preview a specific dialect
 /elo <filter> on|off      spellbook, decomp, mouthwash, fantasy, dialect
@@ -95,14 +96,32 @@ outgoing hook actually attached, whether your race resolves to a dialect, and
 then runs a sample line through the pipeline so you can see the before and after.
 Anything marked `FAIL` is the answer.
 
+Worth knowing: **retail hides Lua errors by default**, so a broken command looks
+identical to one that did nothing. `/console scriptErrors 1` turns them on, which
+is worth doing before reporting a problem.
+
+One trap worth recording for anyone else writing an addon panel: nearly every
+Dragonflight-era guide tells you to do `category.ID = addonName` after
+`Settings.RegisterCanvasLayoutCategory`. **That is wrong on 12.0.**
+`Settings.OpenToCategory` now forwards the ID to
+`C_SettingsUtil.OpenSettingsPanel`, which requires an integer, so passing the
+addon name throws `bad argument #1 to 'OpenSettingsPanel' (outside of expected
+range …)` and the panel silently never opens. Leave the numeric ID the Settings
+system assigns alone.
+
 ### Defaults
 
 Enabled out of the box: **The Spell Book**, **Decompression Engine**,
 **Dialectician**, and clickable trimmed URLs.
 
 Off by default: **Mouthwash** and **Fantasy Writer** (both change a lot of text
-and are a matter of taste), outgoing rewriting, short channel names, and
-class-coloured names.
+and are a matter of taste), outgoing rewriting, and short channel names.
+
+Class-coloured names are **not** an Eloquence feature. The game does it natively
+(Options → Social → "Chat Class Colors"). Eloquence tried to do it by colouring
+the sender argument, which corrupted the player hyperlink, because the chat
+system builds the link *around* that argument rather than treating it as display
+text. It has been removed rather than reimplemented.
 
 ---
 
@@ -116,18 +135,35 @@ before it is drawn. Nothing is sent to the server, nothing anyone said is
 changed, and no protected code is touched, so there is no taint risk. Only you
 see the difference.
 
-**Outgoing (off by default).** `/elo out on` wraps `SendChatMessage` so that
-other players see your dialect. This genuinely changes what you send, so it is
-opt-in, per channel, and the wrapper is only installed once you enable it — a
-player who never turns it on carries none of the extra surface. Two things worth
-knowing:
+**Outgoing (off by default).** `/elo out on` makes other players see your
+dialect. This genuinely changes what you send, so it is opt-in, per channel, and
+nothing is hooked until you enable it.
 
-- Messages that grow past WoW's 255-byte limit are **split across several
-  lines**, not truncated. A dialect can easily lengthen a sentence.
-- Wrapping a global function is a very well-precedented addon technique, but it
-  is not completely free of taint risk in the way the incoming path is. If you
-  ever see "Interface action failed because of an AddOn" while chatting, turn
-  this off first.
+Patch 12.0.0 rearchitected the chat send path. Overriding the global
+`SendChatMessage` — the technique addons used for twenty years — **no longer sees
+anything typed into the chat box**, and `ChatEdit_SendText` is now only a
+deprecated alias behind a CVar. Eloquence uses the hook point Blizzard added for
+this instead:
+
+```lua
+EventRegistry:RegisterCallback("ChatFrame.OnEditBoxPreSendText", ...)
+```
+
+It fires after the edit box parses the text but before the text is read for
+sending, so rewriting the box changes what goes out. The old `SendChatMessage`
+wrapper is kept as a fallback for macros, other addons, and pre-12.0 clients.
+`/elo doctor` reports which path is actually carrying your messages.
+
+Three consequences worth knowing:
+
+- **Nothing is rewritten during combat lockdown.** Rewriting the edit box there
+  taints the protected send that follows, and the client blocks the message
+  outright. A dialect is not worth a swallowed message.
+- **An over-long result is left alone.** This path sends exactly one message and
+  cannot split, so rather than let a line be truncated, it goes out untransformed.
+- Typed chat is handled entirely by the edit box path, including when that path
+  deliberately declines — otherwise the fallback would transform the very
+  messages it just decided to leave alone.
 
 If you want your own messages in dialect but only for yourself, leave outgoing
 off and turn on "Also apply a dialect to my own messages" instead.
@@ -378,7 +414,7 @@ headlessly against a stubbed client. No game required:
 lua Tests/run.lua
 ```
 
-Currently 1482 assertions covering case preservation, escape-sequence integrity,
+Currently 1505 assertions covering case preservation, escape-sequence integrity,
 determinism, message splitting, each dialect at every strength, each filter,
 race resolution and aliasing, the chat filter round trip, outgoing splitting, the
 slash commands, and a hostile-input pass that throws malformed escape sequences
@@ -427,21 +463,3 @@ Modern addons in the same tradition, worth knowing about: **AccentChat**,
 **Tongues** and **Dialect**.
 
 MIT licensed — see [LICENSE](LICENSE).
-
-
-
-Message: ...ddOns/Blizzard_Settings_Shared/Blizzard_Settings.lua:144: bad argument #1 to 'OpenSettingsPanel' (outside of expected range -2147483648 to 2147483647 - Usage: C_SettingsUtil.OpenSettingsPanel([openToCategoryID, scrollToElementName]))
-Time: Mon Jul 27 20:27:26 2026
-Count: 1
-Stack:
-[Interface/AddOns/Blizzard_Settings_Shared/Blizzard_Settings.lua]:144: in function 'OpenToCategory'
-[Interface/AddOns/Eloquence/Core/Options.lua]:249: in function 'OpenOptions'
-[Interface/AddOns/Eloquence/Core/Commands.lua]:208: in function '?'
-[Interface/AddOns/Blizzard_ChatFrameBase/Shared/ChatFrameEditBox.lua]:259: in function 'ParseText'
-[Interface/AddOns/Blizzard_ChatFrameBase/Shared/ChatFrameEditBox.lua]:284: in function 'SendText'
-[Interface/AddOns/Blizzard_ChatFrameBase/Shared/ChatFrameEditBox.lua]:407: in function <...s/Blizzard_ChatFrameBase/Shared/ChatFrameEditBox.lua:403>
-
-Locals:
-categoryID="Eloquence"
-scrollToElementName=nil
-

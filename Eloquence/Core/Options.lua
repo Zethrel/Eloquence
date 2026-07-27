@@ -188,10 +188,11 @@ local function Build()
 	MakeCheck(2, "Short channel names", "Renders \"1. General\" as \"1. G\".",
 		function() return E.db.cleanup.shortChannels end,
 		function(v) E.db.cleanup.shortChannels = v end, 170)
-	MakeCheck(3, "Class-coloured names", "Colours sender names by class.",
-		function() return E.db.cleanup.classColors end,
-		function(v) E.db.cleanup.classColors = v end, 170)
-	Advance(36)
+	Advance(26)
+	MakeNote("Class-coloured names are handled by the game itself -- Options, Social, "
+		.. "\"Chat Class Colors\". Eloquence used to do this and got it wrong, "
+		.. "so it no longer touches sender names.")
+	Advance(10)
 
 	-- Dialects ----------------------------------------------------------------
 	MakeTitle("Dialects", "GameFontNormal")
@@ -230,26 +231,88 @@ panel:SetScript("OnShow", Refresh)
 E.RefreshOptions = Refresh
 
 E.OnLogin("Options", function()
-	Build()
-	Refresh()
-
+	-- Registration first. Building the widgets is the part most likely to break
+	-- on an API change, and if it throws, the panel should still exist and open
+	-- (empty) rather than /elo silently doing nothing.
 	if Settings and Settings.RegisterCanvasLayoutCategory then
 		local category = Settings.RegisterCanvasLayoutCategory(panel, "Eloquence")
-		category.ID = "Eloquence"
+		-- Do NOT overwrite category.ID.
+		--
+		-- Every Dragonflight-era guide says to do `category.ID = panel.name`, and
+		-- it is wrong on 12.0. Settings.OpenToCategory now forwards the ID to
+		-- C_SettingsUtil.OpenSettingsPanel, which requires a *number*:
+		--
+		--   bad argument #1 to 'OpenSettingsPanel' (outside of expected range
+		--   -2147483648 to 2147483647)   -- categoryID="Eloquence"
+		--
+		-- The Settings system assigns a numeric ID at registration. Clobbering it
+		-- with the addon name is what made /elo throw and do nothing.
 		Settings.RegisterAddOnCategory(category)
 		E.settingsCategory = category
+		E.optionsMethod = "settings"
 	elseif InterfaceOptions_AddCategory then
 		InterfaceOptions_AddCategory(panel)
+		E.optionsMethod = "legacy"
+	else
+		E.optionsMethod = "none"
+	end
+
+	local ok, err = pcall(function()
+		Build()
+		Refresh()
+	end)
+	if not ok then
+		E.optionsBuildError = tostring(err)
 	end
 end)
 
+-- Opening the panel has more ways to fail quietly than anything else in the
+-- addon, and Lua errors are hidden by default in retail (`/console scriptErrors
+-- 1` shows them), so a failure here looks exactly like /elo doing nothing.
+-- Every path therefore ends in either an open panel or a printed explanation.
 function E.OpenOptions()
-	if Settings and Settings.OpenToCategory and E.settingsCategory then
-		Settings.OpenToCategory(E.settingsCategory.ID)
-	elseif InterfaceOptionsFrame_OpenToCategory then
-		InterfaceOptionsFrame_OpenToCategory(panel)
-		InterfaceOptionsFrame_OpenToCategory(panel)
-	else
-		E.Print("Could not open the options panel; use /elo for command-line options.")
+	if InCombatLockdown and InCombatLockdown() then
+		E.Print("the options panel cannot be opened during combat. Try |cffffff80/elo status|r.")
+		return
+	end
+
+	local category = E.settingsCategory
+	if Settings and Settings.OpenToCategory and category then
+		-- Whatever the Settings system assigned, untouched. On 12.0 this must be
+		-- a number; passing the addon name throws inside OpenSettingsPanel.
+		local id
+		if category.GetID then
+			local okID, live = pcall(category.GetID, category)
+			if okID then id = live end
+		end
+		if id == nil then id = category.ID end
+
+		local opened = id ~= nil and pcall(Settings.OpenToCategory, id)
+		if not opened then
+			-- Older clients accepted the category name. Harmless to try, and it
+			-- is the only remaining option if the ID above was rejected.
+			opened = pcall(Settings.OpenToCategory, "Eloquence")
+		end
+		if opened then
+			-- Long-standing quirk: the first call sometimes only opens the
+			-- settings window on the previous category.
+			pcall(Settings.OpenToCategory, id)
+			if E.optionsBuildError then
+				E.Print("|cffffcc00the panel opened but failed to build:|r " .. E.optionsBuildError)
+			end
+			return
+		end
+	end
+
+	if InterfaceOptionsFrame_OpenToCategory then
+		pcall(InterfaceOptionsFrame_OpenToCategory, panel)
+		pcall(InterfaceOptionsFrame_OpenToCategory, panel)
+		return
+	end
+
+	E.Print("|cffff4040could not open the options panel.|r Everything is available from the "
+		.. "command line -- try |cffffff80/elo help|r, or |cffffff80/elo doctor|r to see why.")
+	if E.optionsBuildError then
+		E.Print("panel build error: " .. E.optionsBuildError)
 	end
 end

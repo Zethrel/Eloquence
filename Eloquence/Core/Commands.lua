@@ -114,10 +114,33 @@ local function Doctor()
 
 	local hooked = E.Chat and E.Chat.IsOutgoingHooked()
 	if E.db.outgoing.enabled then
-		print(format("  %s   outgoing rewriting on, hook installed: %s",
-			hooked and ok or bad, tostring(hooked)))
+		-- Reporting "hook installed" alone was a false green: the legacy
+		-- SendChatMessage wrapper installs fine but the 12.0 chat path never
+		-- calls it, so say *which* hook is carrying the message.
+		local method = E.Chat and E.Chat.outgoingMethod
+		if not hooked then
+			print("  " .. bad .. " outgoing rewriting on but no hook installed")
+		elseif method == "editbox" then
+			print("  " .. ok .. "   outgoing via the edit box hook (correct for 12.0+)")
+		else
+			print("  " .. bad .. " outgoing only has the legacy SendChatMessage wrapper.")
+			print("       |cffffcc00This client rearchitected chat sending; typed messages will")
+			print("       not be transformed. EventRegistry callback unavailable.|r")
+		end
 	else
 		print("  " .. warn .. "   outgoing rewriting is off (only you see dialects)")
+	end
+
+	-- 2b. Can the options panel actually open?
+	if E.optionsBuildError then
+		print("  " .. bad .. " the options panel failed to build:")
+		print("       |cffff8080" .. E.optionsBuildError .. "|r")
+	elseif E.optionsMethod == "settings" and E.settingsCategory then
+		print("  " .. ok .. "   options panel registered (Settings API)")
+	elseif E.optionsMethod == "legacy" then
+		print("  " .. warn .. "   options panel registered (legacy API)")
+	else
+		print("  " .. bad .. " options panel is not registered -- /elo will not open it")
 	end
 
 	-- 3. Who are we, and does that resolve to a dialect?
@@ -166,6 +189,7 @@ end
 local function Help()
 	E.Print("commands:")
 	print("  |cffffff80/elo|r                      open the options panel")
+	print("  |cffffff80/elo config|r               same, if bare /elo misbehaves")
 	print("  |cffffff80/elo on|off|r               master switch")
 	print("  |cffffff80/elo status|r               show what is enabled")
 	print("  |cffffff80/elo doctor|r               diagnose why nothing is happening")
@@ -201,6 +225,9 @@ local function Handler(input)
 	if command == "help" or command == "?" then Help() return end
 	if command == "status" then Status() return end
 	if command == "doctor" then Doctor() return end
+	if command == "config" or command == "options" or command == "panel" then
+		E.OpenOptions() return
+	end
 	if command == "races" then Races() return end
 	if command == "test" then Test(rest) return end
 
