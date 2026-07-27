@@ -516,11 +516,15 @@ upload itself will need a live key the first time.
 
 Wago.io and WoWInterface are other options; both take the same zip.
 
-When you write the CurseForge project description, that is the place to put the
-[Ko-fi](https://ko-fi.com/zethrel) link if you want it seen at all — most addon
-users install through the CurseForge app and never open the GitHub page, so the
-repository's Sponsor button reaches almost none of them. The description field is
-the storefront; the repository is for people who came looking for the source.
+The project page's summary and description live in
+[`docs/curseforge.md`](docs/curseforge.md), so the store copy and this README can
+be kept in step. Edit that file rather than the web form, then paste it across.
+
+That description is also where the [Ko-fi](https://ko-fi.com/zethrel) link belongs
+if you want it seen at all — most addon users install through the CurseForge app
+and never open the GitHub page, so the repository's Sponsor button reaches almost
+none of them. The description field is the storefront; the repository is for
+people who came looking for the source.
 
 ## Tests
 
