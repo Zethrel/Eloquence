@@ -141,6 +141,16 @@ before it is drawn. Nothing is sent to the server, nothing anyone said is
 changed, and no protected code is touched, so there is no taint risk. Only you
 see the difference.
 
+**Chat bubbles are a second, separate render path.** The bubble above someone's
+head is drawn by the client straight from the chat event and never passes through
+a chat filter, so a correctly dialected chat frame will sit above an untouched
+bubble. There is no hook for bubble text, so the only approach available is to
+remember each rewrite, wait for the client to create the bubble, then find the one
+whose text still matches the original and replace it — see `Core/Bubbles.lua`.
+Consequences: it only applies to say and yell (nothing else makes a bubble),
+bubbles the client marks forbidden are skipped, and matching is by text, so two
+people saying the same thing both get the same correct replacement.
+
 **Outgoing (off by default).** `/elo out on` makes other players see your
 dialect. This genuinely changes what you send, so it is opt-in, per channel, and
 nothing is hooked until you enable it.
@@ -420,7 +430,7 @@ headlessly against a stubbed client. No game required:
 lua Tests/run.lua
 ```
 
-Currently 1521 assertions covering case preservation, escape-sequence integrity,
+Currently 1532 assertions covering case preservation, escape-sequence integrity,
 determinism, message splitting, each dialect at every strength, each filter,
 race resolution and aliasing, the chat filter round trip, outgoing splitting, the
 slash commands, and a hostile-input pass that throws malformed escape sequences

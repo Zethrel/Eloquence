@@ -167,6 +167,17 @@ local function Doctor()
 		end
 	end
 
+	if E.db.incoming.bubbles then
+		if E.Bubbles and E.Bubbles.supported then
+			print(format("  %s   chat bubbles supported, rewritten so far: %d",
+				ok, E.Bubbles.rewritten or 0))
+		else
+			print("  " .. warn .. "   chat bubbles unavailable on this client")
+		end
+	else
+		print("  " .. warn .. "   chat bubble rewriting is off")
+	end
+
 	local languages, languageFailed = E.Pipeline.LanguageInfo()
 	if languageFailed then
 		print("  " .. warn .. "   could not read your known languages; "

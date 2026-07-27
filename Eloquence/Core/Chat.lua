@@ -108,6 +108,11 @@ local function MakeFilter(settingKey)
 		})
 
 		if changed then
+			-- The bubble above their head is drawn from the raw event and never
+			-- passes through here, so it needs telling separately.
+			if E.Bubbles then
+				pcall(E.Bubbles.Queue, event, text, result)
+			end
 			return false, result, sender, ...
 		end
 		return false

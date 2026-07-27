@@ -883,6 +883,87 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Chat bubbles are a separate render path")
+--------------------------------------------------------------------------------
+
+do
+	-- The bubble above someone's head is drawn by the client from the raw chat
+	-- event and never passes through ChatFrame_AddMessageEventFilter, so a
+	-- correct chat frame proves nothing about the bubble. It has to be found and
+	-- rewritten afterwards.
+	onlyModules("dialect")
+	E.db.enabled = true
+	E.db.incoming.enabled = true
+	E.db.incoming.say = true
+	E.db.incoming.bubbles = true
+	E.db.outgoing.enabled = false
+	_G._guidRaces["Player-1-BUBBLE"] = { race = "Dwarf", class = "Warrior", name = "Bromm" }
+
+	local original = "I don't know friend"
+	local expected = E.Pipeline.Run(original, "Player-1-BUBBLE", "Dwarf", "Common")
+	check("the sample is actually transformed", expected ~= original, tostring(expected))
+
+	-- The bubble does not exist yet when the message arrives, which is the whole
+	-- reason this needs polling rather than a single pass.
+	_G._bubbles = {}
+	E.Bubbles.Queue("CHAT_MSG_SAY", original, expected)
+
+	local bubble = _G.NewChatBubble(original)
+	E.Bubbles.Scan()
+	eq("a bubble appearing later still gets rewritten", bubble._fontString:GetText(), expected)
+
+	-- Bubbles the client forbids must be left strictly alone.
+	_G._bubbles = {}
+	local forbidden = _G.NewChatBubble(original, true)
+	E.Bubbles.Queue("CHAT_MSG_SAY", original, expected)
+	E.Bubbles.Scan()
+	eq("forbidden bubbles are untouched", forbidden._fontString:GetText(), original)
+
+	-- Unrelated bubbles are not touched.
+	_G._bubbles = {}
+	local other = _G.NewChatBubble("something else entirely")
+	E.Bubbles.Queue("CHAT_MSG_SAY", original, expected)
+	E.Bubbles.Scan()
+	eq("unrelated bubbles are untouched", other._fontString:GetText(), "something else entirely")
+
+	-- Only events that actually produce a bubble are queued. Advance the clock so
+	-- the earlier entries have expired and cannot satisfy these cases.
+	_G._time = _G._time + 60
+	_G._bubbles = {}
+	local whisper = _G.NewChatBubble(original)
+	E.Bubbles.Queue("CHAT_MSG_WHISPER", original, expected)
+	E.Bubbles.Scan()
+	eq("whispers never make bubbles, so nothing is queued",
+		whisper._fontString:GetText(), original)
+
+	-- The setting is respected.
+	_G._time = _G._time + 60
+	E.db.incoming.bubbles = false
+	_G._bubbles = {}
+	local off = _G.NewChatBubble(original)
+	E.Bubbles.Queue("CHAT_MSG_SAY", original, expected)
+	E.Bubbles.Scan()
+	eq("bubbles are left alone when the setting is off", off._fontString:GetText(), original)
+	E.db.incoming.bubbles = true
+end
+
+do
+	-- End to end: driving the real chat filter should rewrite the bubble too.
+	onlyModules("dialect")
+	_G._bubbles = {}
+	local original = "i dont know friend"
+	local filter = _G._filters["CHAT_MSG_SAY"][1]
+	local args = { original, "Bromm", "Common", "", "", "", 0, 0, "", "", 44,
+		"Player-1-BUBBLE", nil, false, false, false, false }
+	local _, rewritten = filter(nil, "CHAT_MSG_SAY", unpack(args, 1, 17))
+	check("the chat frame copy was rewritten", rewritten ~= original, tostring(rewritten))
+
+	local bubble = _G.NewChatBubble(original)
+	E.Bubbles.Scan()
+	eq("and the bubble now matches the chat frame", bubble._fontString:GetText(), rewritten)
+end
+
+--------------------------------------------------------------------------------
 section("Outgoing via the 12.0 edit box path")
 --------------------------------------------------------------------------------
 

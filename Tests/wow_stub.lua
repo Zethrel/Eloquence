@@ -155,6 +155,56 @@ function stub.install(env)
 		return box
 	end
 
+	-- Chat bubbles. The client draws these straight from the chat event, so they
+	-- never pass through a chat filter and have to be rewritten by finding the
+	-- FontString after the fact. Modelled closely enough to test that: bubbles
+	-- appear only after a delay, some are forbidden and must be left alone, and
+	-- the text lives on a FontString nested one level down.
+	env._time = 1000
+	env.GetTime = function() return env._time end
+
+	env._bubbles = {}
+	env.C_ChatBubbles = {
+		GetAllChatBubbles = function() return env._bubbles end,
+	}
+
+	-- Build a bubble shaped like the real thing: frame -> child -> FontString.
+	function env.NewChatBubble(text, forbidden)
+		local fontString = {
+			_text = text,
+			GetObjectType = function() return "FontString" end,
+			IsForbidden = function() return false end,
+		}
+		function fontString:GetText() return self._text end
+		function fontString:SetText(v) self._text = v end
+
+		local child = {
+			IsForbidden = function() return false end,
+			GetRegions = function() return fontString end,
+			GetChildren = function() return end,
+		}
+		local bubble = {
+			IsForbidden = function() return forbidden == true end,
+			GetChildren = function() return child end,
+			GetRegions = function() return end,
+			_fontString = fontString,
+		}
+		table.insert(env._bubbles, bubble)
+		return bubble
+	end
+
+	-- Timers the test can pump by hand.
+	env._tickers = {}
+	env.C_Timer = {
+		NewTicker = function(interval, callback)
+			local handle = { interval = interval, callback = callback, cancelled = false }
+			function handle:Cancel() self.cancelled = true end
+			table.insert(env._tickers, handle)
+			return handle
+		end,
+		After = function(_, callback) callback() end,
+	}
+
 	-- The modern client exposes this so addons can check before registering.
 	-- Backed by the same retired-event list that RegisterEvent raises on.
 	env._retiredEvents = stub.retiredEvents
@@ -186,7 +236,7 @@ stub.FILES = {
 	"Dialects/Variants.lua",
 	"Modules/SpellBook.lua", "Modules/Decompression.lua", "Modules/Mouthwash.lua",
 	"Modules/FantasyWriter.lua", "Modules/Dialectician.lua",
-	"Core/Pipeline.lua", "Core/Chat.lua", "Core/Cleanup.lua",
+	"Core/Pipeline.lua", "Core/Bubbles.lua", "Core/Chat.lua", "Core/Cleanup.lua",
 	"Core/Options.lua", "Core/Commands.lua",
 }
 

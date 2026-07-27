@@ -2,7 +2,7 @@
 local ADDON, E = ...
 
 E.ADDON = ADDON
-E.VERSION = "2.0.5"
+E.VERSION = "2.1.0"
 
 -- Single source of truth for attribution: used by /elo status, the options panel
 -- and the TOC. The original Eloquence was a Vanilla-era community addon; this is
@@ -68,6 +68,9 @@ E.DEFAULTS = {
 		officer  = true,
 		channel  = true,
 		monster  = false,
+		-- Chat bubbles are a separate render path from the chat frame; see
+		-- Core/Bubbles.lua.
+		bubbles  = true,
 	},
 
 	-- Rewriting your own outgoing text so other players see the dialect.

@@ -149,7 +149,12 @@ local function Build()
 		if column == 3 then Advance(26) end
 	end
 	if #incoming % 3 ~= 0 then Advance(26) end
-	Advance(10)
+	MakeCheck(1, "Also rewrite chat bubbles",
+		"The bubble above a speaker's head is drawn separately from the chat "
+		.. "frame, so it needs rewriting on its own. Say and yell only.",
+		function() return E.db.incoming.bubbles end,
+		function(v) E.db.incoming.bubbles = v end, 320)
+	Advance(30)
 
 	-- Outgoing ----------------------------------------------------------------
 	MakeTitle("Your own outgoing chat", "GameFontNormal")
