@@ -1,13 +1,19 @@
 -- Darnassian-flavoured: formal, unhurried, few contractions, some Darnassian.
 -- "Ishnu'alah." "Asha'falah."
 --
+-- SOURCE
+-- The glossary is drawn from "Darnassian (Canon) Translation", a community
+-- document collecting every attested word and phrase and keeping the confirmed
+-- translations separate from the speculative ones:
+-- https://docs.google.com/document/d/1bD2qSEdWweR7xfIqUx_Iewv_4F40gboM-6ViSgfn1O8
+--
 -- ADDING MORE DARNASSIAN
 -- The GLOSSARY table below is the place for it. Everything currently in it is
 -- attested in Warcraft sources (quest text, unit voice lines, Warcraft III), and
--- nothing has been invented -- if you extend it from a community translation
--- document, keep that split and leave out anything the document itself marks as
--- unknown or unconfirmed. Phrase entries are ordinary Lua patterns, matched
--- before the single-word table, so multi-word idioms win over their parts.
+-- nothing has been invented -- if you extend it from the document above, keep
+-- that split and leave out anything it marks as unknown or unconfirmed. Phrase
+-- entries are ordinary Lua patterns, matched before the single-word table, so
+-- multi-word idioms win over their parts.
 local ADDON, E = ...
 
 -- English trigger -> canon Darnassian, applied at strength 3 only: a whole

@@ -365,6 +365,12 @@ face", *Bessae* "from the"), and *Belore*, whose "sun" reading is Thalassian
 rather than Darnassian. `Dialects/NightElf.lua` documents that split at the top;
 keep it if you extend the glossary.
 
+The source is
+[Darnassian (Canon) Translation](https://docs.google.com/document/d/1bD2qSEdWweR7xfIqUx_Iewv_4F40gboM-6ViSgfn1O8),
+a community document that separates confirmed translations from speculative
+ones. Only the confirmed side is used. If you extend the glossary from it, keep
+that split.
+
 ---
 
 ## How it fits together
@@ -562,7 +568,12 @@ of the original code was available (see
 [What this is, and what it is not](#what-this-is-and-what-it-is-not)).
 
 Race accents follow how Blizzard voices each race in the modern game. The
-Darnassian glossary comes from the community-maintained canon translation list.
+Darnassian glossary comes from
+[Darnassian (Canon) Translation](https://docs.google.com/document/d/1bD2qSEdWweR7xfIqUx_Iewv_4F40gboM-6ViSgfn1O8),
+a community-maintained document collecting every attested Darnassian word and
+phrase from quest text, unit voice lines and Warcraft III, with the confirmed
+translations kept separate from the speculative ones. Only the confirmed entries
+were used here. Thanks to everyone who put that list together.
 
 Modern addons in the same tradition, worth knowing about: **AccentChat**,
 **Tongues** and **Dialect**.
