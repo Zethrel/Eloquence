@@ -13,8 +13,11 @@ local Presets = {}
 E.Presets = Presets
 
 -- Channel sets, so the intent is legible rather than a wall of booleans.
+-- Whispers are excluded: in-character whispering is done in /say with a "[low]"
+-- tag so bystanders can overhear, which leaves the whisper channel as
+-- out-of-character traffic.
 local IN_CHARACTER = {
-	say = true, yell = true, emote = true, whisper = true,
+	say = true, yell = true, emote = true, whisper = false,
 	party = false, raid = false, instance = false,
 	guild = false, officer = false, channel = false,
 }
@@ -32,7 +35,7 @@ Presets.list = {
 		name = "Roleplay",
 		desc = "Dialects on the in-character channels only. Coordination chat left alone.",
 		incoming = E.CopyDefaults(IN_CHARACTER, { monster = false, bubbles = true, enabled = true }),
-		outgoing = E.CopyDefaults(IN_CHARACTER, { whisper = false }),
+		outgoing = E.CopyDefaults(IN_CHARACTER, {}),
 		modules = {
 			spellbook     = { enabled = true,  strength = 2, incoming = false },
 			decompression = { enabled = true,  strength = 2, incoming = true },
@@ -46,7 +49,7 @@ Presets.list = {
 		name = "Immersive",
 		desc = "As Roleplay, but heavier, and NPCs get dialects too.",
 		incoming = E.CopyDefaults(IN_CHARACTER, { monster = true, bubbles = true, enabled = true }),
-		outgoing = E.CopyDefaults(IN_CHARACTER, { whisper = false }),
+		outgoing = E.CopyDefaults(IN_CHARACTER, {}),
 		modules = {
 			spellbook     = { enabled = true,  strength = 2, incoming = false },
 			decompression = { enabled = true,  strength = 3, incoming = true },

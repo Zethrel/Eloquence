@@ -31,6 +31,20 @@ local PROTECTED = {
 	"%b{}",                       -- {rt3}, {star}, {square}...
 	"%a[%w%+%-%.]*://[^%s]+",     -- scheme URLs
 	"www%.[^%s]+",                -- bare www URLs
+
+	-- Roleplaying conventions. These are not speech and must never be dialected.
+	--
+	-- Double parentheses are the near-universal marker for an out-of-character
+	-- aside inside an in-character channel. Rendering "(( brb, the dog needs
+	-- out ))" as "(( brb, the dog needs oot ))" is precisely wrong: the player
+	-- has explicitly stepped outside their character to say it. Single
+	-- parentheses are deliberately not matched, since those are ordinary prose.
+	"%(%(.-%)%)",
+	-- Square-bracketed tags mark the register or language of what follows --
+	-- "[low]" for quiet speech that passers-by may overhear, "[Thalassian]" for
+	-- the language being spoken. The tag is metadata about the line, not part of
+	-- it, so it passes through while the speech after it is still dialected.
+	"%[.-%]",
 }
 
 --------------------------------------------------------------------------------

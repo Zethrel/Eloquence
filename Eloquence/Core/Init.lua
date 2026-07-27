@@ -2,7 +2,7 @@
 local ADDON, E = ...
 
 E.ADDON = ADDON
-E.VERSION = "2.3.0"
+E.VERSION = "2.4.0"
 
 -- Single source of truth for attribution: used by /elo status, the options panel
 -- and the TOC. The original Eloquence was a Vanilla-era community addon; this is
@@ -61,15 +61,16 @@ E.DEFAULTS = {
 	-- by convention -- dialecting "interrupt now, bloodlust on pull" makes the
 	-- useful chat harder to read rather than more immersive.
 	--
-	-- Whispers are the one deliberate asymmetry: reading an in-character whisper
-	-- in dialect is welcome, but *sending* one is riskier, since a whisper is
-	-- just as often an out-of-character question.
+	-- Whispers are off on both sides. In-character whispering is conventionally
+	-- done in /say with a "[low]" tag, so that nearby characters get the chance
+	-- to overhear -- which leaves the actual whisper channel as out-of-character
+	-- traffic, like party and guild.
 	incoming = {
 		enabled  = true,
 		say      = true,
 		yell     = true,
 		emote    = true,
-		whisper  = true,
+		whisper  = false,
 		party    = false,
 		raid     = false,
 		instance = false,

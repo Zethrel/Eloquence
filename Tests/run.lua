@@ -905,10 +905,12 @@ do
 		eq("outgoing " .. key .. " is off by default", D.outgoing[key], false)
 	end
 
-	-- The one deliberate asymmetry: reading an in-character whisper in dialect is
-	-- welcome; sending one is riskier, since whispers are often out of character.
-	eq("incoming whispers are filtered", D.incoming.whisper, true)
-	eq("outgoing whispers are not", D.outgoing.whisper, false)
+	-- Whispers are off on both sides. In-character whispering is conventionally
+	-- done in /say with a "[low]" tag, so nearby characters get the chance to
+	-- overhear -- which leaves the whisper channel itself as out-of-character
+	-- traffic, like party and guild.
+	eq("incoming whispers are not filtered", D.incoming.whisper, false)
+	eq("outgoing whispers are not filtered", D.outgoing.whisper, false)
 
 	-- Outgoing stays off entirely until asked for.
 	eq("outgoing rewriting is off by default", D.outgoing.enabled, false)
@@ -1021,6 +1023,44 @@ do
 		dialectOnly("Dwarf", "I don't know"), "dinnae")
 	eq("a leading apostrophe is respected",
 		dialectOnly("Dwarf", "'tis so"), "'tis so")
+end
+
+do
+	-- Roleplaying conventions carried inside an in-character channel.
+	onlyModules("spellbook", "decompression", "mouthwash", "fantasy", "dialect")
+	for key in pairs(E.db.modules) do E.db.modules[key].incoming = true end
+
+	-- Double parentheses mark an out-of-character aside. The player has stepped
+	-- outside their character to say it, so dialecting it is exactly backwards.
+	local ooc = "(( brb, the dog needs out ))"
+	eq("an OOC aside is left alone",
+		E.Pipeline.Run(ooc, "Player-1-DWARF", "Dwarf", "Common"), ooc)
+
+	local mixed = "Aye, that I know. (( brb, the dog needs out ))"
+	local out = E.Pipeline.Run(mixed, "Player-1-DWARF", "Dwarf", "Common")
+	contains("the OOC half survives inside a mixed line", out, "(( brb, the dog needs out ))")
+	check("the in-character half is still dialected", out ~= mixed, out)
+
+	-- Single parentheses are ordinary prose and stay in scope.
+	check("a single-parenthesised aside is still dialected",
+		dialectOnly("Dwarf", "(I don't know)") ~= "(I don't know)")
+
+	-- Square brackets tag the register or language of the line. The tag is
+	-- metadata; the speech after it is not.
+	local low = E.Pipeline.Run("[low] I don't know, friend.", "Player-1-DWARF", "Dwarf", "Common")
+	contains("a [low] tag passes through untouched", low, "[low]")
+	check("the speech after the tag is still dialected", low ~= "[low] I don't know, friend.", low)
+
+	local lang = E.Pipeline.Run("[Thalassian] I don't know.", "Player-1-DWARF", "Dwarf", "Common")
+	contains("a language tag is not dialected", lang, "[Thalassian]")
+
+	-- A tag whose contents the dialect would otherwise happily chew on: without
+	-- protection this comes back as "[tae the crowd]".
+	contains("a stage direction in brackets is not dialected",
+		E.Pipeline.Run("[to the crowd] Hello", "Player-1-DWARF", "Dwarf", "Common"),
+		"[to the crowd]")
+
+	onlyModules("dialect")
 end
 
 do

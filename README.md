@@ -136,13 +136,16 @@ the first changes what other people receive, and the second you set deliberately
 Enabled out of the box: **The Spell Book**, **Decompression Engine**,
 **Dialectician**, and clickable trimmed URLs.
 
-**Only the in-character channels are filtered** — say, yell, emote and whispers.
-Party, raid, instance, guild, officer and public channels are coordination by
-convention, and dialecting *"interrupt now, bloodlust on pull"* makes the useful
-chat harder to read rather than more immersive. Outgoing mirrors this, with one
-deliberate asymmetry: incoming whispers are filtered but outgoing ones are not,
-because reading an in-character whisper in dialect is welcome while sending one
-is riskier.
+**Only the in-character channels are filtered** — say, yell and emote, incoming
+and outgoing alike. Party, raid, instance, guild, officer and public channels are
+coordination by convention, and dialecting *"interrupt now, bloodlust on pull"*
+makes the useful chat harder to read rather than more immersive.
+
+Whispers are off on both sides, which surprises people until you look at how
+in-character whispering is actually done: in `/say`, opened with a `[low]` tag,
+so that nearby characters get the chance to overhear. That convention leaves the
+whisper channel itself carrying out-of-character traffic, the same as party and
+guild.
 
 Off by default: **Mouthwash** and **Fantasy Writer** (both change a lot of text
 and are a matter of taste), outgoing rewriting, and short channel names.
@@ -219,7 +222,7 @@ off and turn on "Also apply a dialect to my own messages" instead.
 On a roleplaying realm, how somebody spells things is a choice. A character
 rolling their Rs as *Zethrrel*, or another mangling the same name as *Zettle*,
 has written that deliberately — and a filter that "corrects" it is destroying
-authored voice, not tidying a typo. Three rules keep that intact:
+authored voice, not tidying a typo. Four rules keep that intact:
 
 **Names are protected.** A capitalised word that does not start a sentence is
 treated as a proper noun and passed through untouched by *every* filter, not just
@@ -243,6 +246,26 @@ untouched rather than being re-accented on top:
 ```
 Ah'm no' shuir aboot tha', laddie.   ->   Ah'm no' shuir aboot tha', laddie.
 ```
+
+**Roleplaying conventions are not speech.** Two of them get carried inside
+in-character channels and must never be dialected:
+
+```
+(( brb, the dog needs out ))   ->   (( brb, the dog needs out ))
+[low] I don't know, friend.    ->   [low] Ah dinnae ken, laddie.
+[to the crowd] Hello           ->   [to the crowd] Hail
+```
+
+Double parentheses are the near-universal marker for an out-of-character aside —
+the player has explicitly stepped outside their character to say it, so rendering
+it as *"(( brb, the dog needs oot ))"* is precisely wrong. Single parentheses are
+deliberately *not* matched, since those are ordinary prose.
+
+Square brackets tag the register or language of the line: `[low]` for quiet
+speech that passers-by may overhear, `[Thalassian]` for the language being
+spoken, `[to the crowd]` for a stage direction. The tag is metadata about the
+line rather than part of it, so it passes through while the speech after it is
+still dialected.
 
 **The Spell Book is opt-in for incoming.** It is the only filter that *removes*
 character rather than adding it — squashing `Hmmmm`, de-shouting, correcting
