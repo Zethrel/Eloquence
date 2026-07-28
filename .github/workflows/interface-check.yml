@@ -1,0 +1,110 @@
+name: Interface check
+
+# Notices when a WoW patch has moved past the interface number in the TOC, and
+# opens an issue saying so.
+#
+# It does NOT bump the TOC, and it must not be changed to. The interface number
+# asserts that a human has tested this addon against that patch. A major patch is
+# precisely when a chat addon is most likely to break -- 12.0 rearchitected the
+# send path and killed outgoing dialects with no Lua error at all -- so an
+# automatic bump would publish a release claiming compatibility that nobody had
+# checked. Being flagged out of date is the honest failure: the addon still loads
+# if the user opts in, and the label correctly says nobody has verified this yet.
+
+on:
+  schedule:
+    # Wednesdays, 09:00 UTC. Retail patches land Tuesday in the US and reach EU
+    # overnight, so by Wednesday morning both regions report the new build.
+    - cron: '0 9 * * 3'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # The parser is covered by fixtures, so a format change is caught here
+      # rather than being mistaken for "no drift".
+      - name: Self-test the parser
+        run: CHECK_SELFTEST=1 ./tools/check-interface.sh
+
+      - name: Compare the TOC against the live client
+        id: check
+        run: |
+          set +e
+          ./tools/check-interface.sh
+          status=$?
+          set -e
+          case "$status" in
+            0) ;;
+            2)
+              # Network trouble is not news. Do not fail the run over it, or the
+              # weekly job cries wolf and gets ignored.
+              echo "::notice::Version endpoint unreachable this run; nothing compared."
+              echo "skipped=true" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::error::check-interface.sh failed ($status) -- the endpoint format may have changed."
+              exit "$status"
+              ;;
+          esac
+
+      - name: Open an issue when the patch has moved on
+        if: steps.check.outputs.skipped != 'true' && steps.check.outputs.drift == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LIVE_PATCH: ${{ steps.check.outputs.live_patch }}
+          LIVE_INTERFACE: ${{ steps.check.outputs.live_interface }}
+          TOC_INTERFACE: ${{ steps.check.outputs.toc_interface }}
+        run: |
+          title="WoW $LIVE_PATCH is live -- TOC still targets $TOC_INTERFACE"
+
+          # One issue per patch, not one per week. Match on the interface number
+          # so a later patch opens a fresh issue rather than reusing a stale one.
+          existing="$(gh issue list --state open --search "$LIVE_INTERFACE in:title" \
+            --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            echo "::notice::Issue #$existing already tracks $LIVE_PATCH."
+            exit 0
+          fi
+
+          gh label create interface-drift \
+            --color 0e8a16 \
+            --description "The live client has moved past the TOC's interface number" \
+            2>/dev/null || true
+
+          gh issue create \
+            --title "$title" \
+            --label interface-drift \
+            --body "$(cat <<EOF
+          The retail client is now **$LIVE_PATCH** (interface \`$LIVE_INTERFACE\`).
+          \`Eloquence/Eloquence.toc\` still declares \`## Interface: $TOC_INTERFACE\`,
+          so the addon shows as out of date and will not load unless the player
+          ticks the box.
+
+          **This is not a bump-and-ship.** The interface number says a human tested
+          the addon against this patch, so test before changing it. Patch 12.0
+          rearchitected the chat send path and outgoing dialects silently stopped
+          working with no Lua error, which is the failure mode to watch for.
+
+          Worth checking in game, with \`/console scriptErrors 1\` on:
+
+          - [ ] \`/elo doctor\` reports all modules started and no rejected events
+          - [ ] Incoming chat is still dialected (another player, or \`/elo spy\`)
+          - [ ] Chat bubbles above characters are rewritten, not just the chat frame
+          - [ ] Outgoing still rewrites what is actually sent, with \`/elo outgoing on\`
+          - [ ] The options panel opens on \`/elo\`
+
+          Then set \`## Interface: $LIVE_INTERFACE\` in the TOC, bump the version,
+          and cut a release.
+
+          ---
+          _Opened automatically by [.github/workflows/interface-check.yml](../blob/main/.github/workflows/interface-check.yml)._
+          EOF
+          )"

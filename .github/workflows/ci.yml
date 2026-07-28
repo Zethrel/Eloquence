@@ -28,6 +28,15 @@ jobs:
       - name: Run the test suite
         run: lua5.4 Tests/run.lua
 
+      # Both helpers parse things that live outside this repository -- CurseForge
+      # game versions and Blizzard's build feed -- so their parsers are covered by
+      # fixtures here. Without this the interface check could silently degrade to
+      # "never reports drift", which looks identical to "no patch yet".
+      - name: Self-test the packaging helpers
+        run: |
+          CF_SELFTEST=1 ./tools/curseforge-upload.sh
+          CHECK_SELFTEST=1 ./tools/check-interface.sh
+
       # Also proves the TOC matches what is on disk, so a forgotten TOC entry
       # cannot reach a release.
       - name: Build the release zip

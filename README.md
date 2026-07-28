@@ -63,6 +63,9 @@ The folder you copy must be the inner `Eloquence` directory — the one containi
 Run `/dump select(4, GetBuildInfo())` in game and put that number in the TOC.
 Nothing else is version-sensitive.
 
+A weekly workflow watches for this and opens an issue when a patch moves past the
+TOC — see [Keeping up with patches](#keeping-up-with-patches).
+
 ---
 
 ## Using it
@@ -558,6 +561,38 @@ has never run for real — everything up to the network request is verified, but
 upload itself will need a live key the first time.
 
 Wago.io and WoWInterface are other options; both take the same zip.
+
+### Keeping up with patches
+
+`.github/workflows/interface-check.yml` runs every Wednesday, compares the TOC's
+interface number against the live retail client, and opens an issue when a patch
+has moved past it. `tools/check-interface.sh` does the work and can be run by
+hand.
+
+**It deliberately does not bump the TOC**, and should not be changed to. The
+interface number is a compatibility claim — `## Interface: 120100` asserts that a
+human tested this addon against 12.1.0. A script setting it asserts only that a
+number changed on a website.
+
+A major patch is exactly when this addon is most likely to break. Patch 12.0
+rearchitected the chat send path: overriding `SendChatMessage` stopped seeing
+typed chat, and outgoing dialects silently did nothing, with no Lua error to
+notice. An automatic bump would have shipped a release claiming 12.0 support
+while the headline feature was dead. Being flagged out of date is the safe
+failure — the addon still loads if the player opts in, and the label honestly
+says nobody has checked yet.
+
+The parser is covered by fixtures and runs in CI:
+
+```
+CHECK_SELFTEST=1 tools/check-interface.sh
+```
+
+That matters more than it looks. The failure this guards against is not a crash
+but a silent degradation to "never reports drift", which is indistinguishable
+from "no patch has landed". The live fetch is the one part that has never run
+here — Blizzard's build endpoint is not reachable from every environment — so the
+first real run is the first proof it works end to end.
 
 The project page's summary and description live in
 [`docs/curseforge.md`](docs/curseforge.md), so the store copy and this README can
