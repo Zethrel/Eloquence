@@ -504,24 +504,41 @@ It runs the tests, builds the zip, and attaches it to a GitHub Release. That par
 needs no setup at all.
 
 The project is live at
-[curseforge.com/wow/addons/eloquence-revived](https://www.curseforge.com/wow/addons/eloquence-revived),
-and CurseForge's own GitHub integration imports each GitHub release on its own —
-so **nothing needs configuring here**. The workflow's CurseForge step stays
-skipped and logs a notice saying so; that is expected, not a missing step.
+[curseforge.com/wow/addons/eloquence-revived](https://www.curseforge.com/wow/addons/eloquence-revived).
 
-The workflow can push to CurseForge itself instead, if you ever want the upload to
-originate from CI rather than from CurseForge polling the repository. Two settings
-enable it:
+**Publishing there is a manual step.** The CurseForge account is connected to this
+repository, but that connection imported one file around the time the project was
+approved and has not picked up a release since: `v2.4.1` produced no file on
+CurseForge, not even a pending one, and replacing the `v2.4.0` asset did not sync
+either. So do not assume a GitHub release reaches CurseForge by itself — it does
+not, on the evidence so far.
+
+That is one observation rather than a settled conclusion. If the integration turns
+out to have an auto-publish setting that was simply switched off, this section is
+wrong and the fix is a checkbox rather than anything in this repository.
+
+To upload by hand, which takes under a minute:
+
+1. Download the zip from the
+   [GitHub release](https://github.com/Zethrel/Eloquence/releases), or build it
+   locally with `tools/package.sh`.
+2. Drag it into the project's **Upload File** form and pick the game version
+   matching the TOC's `## Interface` line (`120007` → `12.0.7`).
+3. Mark it the **main file**, so the project page's Install button serves it.
+4. Write a **changelog**. Eloquence changes what chat looks like, so "single
+   parentheses are now treated as out-of-character" is exactly what a returning
+   user needs to read.
+
+The workflow can do the upload from CI instead. Two settings enable it:
 
 1. Add a repository **secret** `CF_API_KEY` from CurseForge account settings →
    API Tokens.
 2. Add a repository **variable** `CF_PROJECT_ID` — the numeric Project ID shown
    on the project page.
 
-Do not enable both mechanisms at once, or a release lands on CurseForge twice.
-
-Or upload by hand, which is genuinely easy: drag `dist/Eloquence-<version>.zip`
-into the project's Upload File form and pick the game version.
+Both must be present or the step skips, which is what the "Upload to CurseForge
+skipped" notice in every release run so far means. Do not enable this while the
+CurseForge-side integration is also publishing, or each release lands twice.
 
 `tools/curseforge-upload.sh` does the upload, and handles the one fiddly part —
 CurseForge wants its own numeric game-version ID rather than an interface number,
@@ -530,8 +547,10 @@ without uploading anything:
 
 ```
 CF_SELFTEST=1 tools/curseforge-upload.sh                      # tests the conversion
+
+tools/package.sh                                              # build one to point at
 CF_DRY_RUN=1 CF_API_KEY=x CF_PROJECT_ID=1 \
-  tools/curseforge-upload.sh dist/Eloquence-2.0.0.zip         # offline, sends nothing
+  tools/curseforge-upload.sh dist/Eloquence-*.zip             # offline, sends nothing
 ```
 
 Note that the actual CurseForge API calls are the one part of this repository that
