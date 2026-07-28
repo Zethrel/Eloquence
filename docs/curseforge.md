@@ -1,7 +1,11 @@
 # CurseForge page copy
 
-The text of the CurseForge project page, kept here so it does not drift from the
-README. Edit this file rather than the web form, then paste it across.
+The live project: https://www.curseforge.com/wow/addons/eloquence-revived
+(the slug is `eloquence-revived`, since the original addon's listing still holds
+`eloquence`).
+
+The text of that project page, kept here so it does not drift from the README.
+Edit this file rather than the web form, then paste it across.
 
 Nothing in this directory ships: `tools/package.sh` copies only the addon's Lua
 and TOC files plus the README and LICENSE.

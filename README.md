@@ -43,6 +43,14 @@ speaks, not just people in your group.
 
 ## Installing
 
+**From CurseForge**, which is the easiest route and what most people will want:
+[Eloquence on CurseForge](https://www.curseforge.com/wow/addons/eloquence-revived).
+Install it through the CurseForge app or any addon manager that can reach it, and
+updates take care of themselves.
+
+**By hand**, from a
+[GitHub release](https://github.com/Zethrel/Eloquence/releases):
+
 1. Copy the `Eloquence` folder into `World of Warcraft/_retail_/Interface/AddOns/`.
 2. Restart the game, or `/reload`.
 
@@ -486,15 +494,22 @@ git tag v2.0.0 && git push origin v2.0.0
 It runs the tests, builds the zip, and attaches it to a GitHub Release. That part
 needs no setup at all.
 
-The CurseForge step is skipped unless credentials exist, so it stays out of the
-way until you want it. To enable:
+The project is live at
+[curseforge.com/wow/addons/eloquence-revived](https://www.curseforge.com/wow/addons/eloquence-revived),
+and CurseForge's own GitHub integration imports each GitHub release on its own —
+so **nothing needs configuring here**. The workflow's CurseForge step stays
+skipped and logs a notice saying so; that is expected, not a missing step.
 
-1. Create the project on CurseForge (this part is manual and cannot be
-   automated — you need an account and a project page).
-2. Add a repository **secret** `CF_API_KEY` from CurseForge account settings →
+The workflow can push to CurseForge itself instead, if you ever want the upload to
+originate from CI rather than from CurseForge polling the repository. Two settings
+enable it:
+
+1. Add a repository **secret** `CF_API_KEY` from CurseForge account settings →
    API Tokens.
-3. Add a repository **variable** `CF_PROJECT_ID` — the numeric Project ID shown
+2. Add a repository **variable** `CF_PROJECT_ID` — the numeric Project ID shown
    on the project page.
+
+Do not enable both mechanisms at once, or a release lands on CurseForge twice.
 
 Or upload by hand, which is genuinely easy: drag `dist/Eloquence-<version>.zip`
 into the project's Upload File form and pick the game version.
