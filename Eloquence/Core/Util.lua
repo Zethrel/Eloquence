@@ -34,12 +34,33 @@ local PROTECTED = {
 
 	-- Roleplaying conventions. These are not speech and must never be dialected.
 	--
-	-- Double parentheses are the near-universal marker for an out-of-character
-	-- aside inside an in-character channel. Rendering "(( brb, the dog needs
-	-- out ))" as "(( brb, the dog needs oot ))" is precisely wrong: the player
-	-- has explicitly stepped outside their character to say it. Single
-	-- parentheses are deliberately not matched, since those are ordinary prose.
+	-- Parentheses mark an out-of-character aside inside an in-character channel.
+	-- Rendering "(brb, the dog needs out)" as "(brb, the dog needs oot)" is
+	-- precisely wrong: the player has explicitly stepped outside their character
+	-- to say it.
+	--
+	-- Both single and double count. Double is the older convention, but Total RP
+	-- 3 -- which most of the roleplaying population runs -- treats a single pair
+	-- as out of character, so a single pair is what people actually type.
+	--
+	-- The cost is that an in-character parenthetical stops being dialected, and
+	-- that is the right way round to fail: protecting too much passes the
+	-- player's own words through untouched, while protecting too little rewrites
+	-- something they explicitly stepped out of character to say. Live chat also
+	-- barely uses prose parentheticals -- an opening bracket in /say is nearly
+	-- always meta commentary.
+	--
+	-- The double-parenthesis pattern is kept even though the single one covers
+	-- the same text, because "%(.-%)" is non-greedy and stops at the first ")":
+	-- on "((...))" it protects all but the final character. That makes no
+	-- difference to any filter, since a stranded ")" has no letters to rewrite,
+	-- but it does leave the span structurally wrong -- E.SplitMessage treats
+	-- protected spans as atomic units, and an orphaned bracket could be split
+	-- away from its pair at a message boundary. Ties at the same offset are
+	-- broken by taking the longest match, so the double rule wins where both
+	-- apply and the span stays whole.
 	"%(%(.-%)%)",
+	"%(.-%)",
 	-- Square-bracketed tags mark the register or language of what follows --
 	-- "[low]" for quiet speech that passers-by may overhear, "[Thalassian]" for
 	-- the language being spoken. The tag is metadata about the line, not part of

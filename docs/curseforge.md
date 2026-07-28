@@ -68,7 +68,7 @@ On a roleplaying realm, how somebody spells things is a choice. Eloquence never 
 
 - **Names** -- `Zethrrel` and `Zettle` both survive exactly as written
 - **Deliberate accents** -- `no'` never becomes `nae'`
-- **OOC asides** -- anything in `(( double parentheses ))`
+- **OOC asides** -- anything in parentheses, `(single)` or `(( double ))`
 - **Register tags** -- `[low]`, `[Thalassian]`, `[to the crowd]`
 - **Links, colour codes and URLs** -- passed through intact
 

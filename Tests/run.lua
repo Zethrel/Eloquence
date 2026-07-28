@@ -1030,20 +1030,45 @@ do
 	onlyModules("spellbook", "decompression", "mouthwash", "fantasy", "dialect")
 	for key in pairs(E.db.modules) do E.db.modules[key].incoming = true end
 
-	-- Double parentheses mark an out-of-character aside. The player has stepped
-	-- outside their character to say it, so dialecting it is exactly backwards.
-	local ooc = "(( brb, the dog needs out ))"
-	eq("an OOC aside is left alone",
-		E.Pipeline.Run(ooc, "Player-1-DWARF", "Dwarf", "Common"), ooc)
+	-- Parentheses mark an out-of-character aside. The player has stepped outside
+	-- their character to say it, so dialecting it is exactly backwards.
+	--
+	-- Single and double both count: double is the older convention, but Total RP
+	-- 3 treats a single pair as OOC, so that is what most people type.
+	for _, ooc in ipairs({
+		"(( brb, the dog needs out ))",
+		"(brb, the dog needs out)",
+		"((brb, the dog needs out))",
+	}) do
+		eq("an OOC aside is left alone: " .. ooc,
+			E.Pipeline.Run(ooc, "Player-1-DWARF", "Dwarf", "Common"), ooc)
+	end
 
-	local mixed = "Aye, that I know. (( brb, the dog needs out ))"
-	local out = E.Pipeline.Run(mixed, "Player-1-DWARF", "Dwarf", "Common")
-	contains("the OOC half survives inside a mixed line", out, "(( brb, the dog needs out ))")
-	check("the in-character half is still dialected", out ~= mixed, out)
+	for _, aside in ipairs({ "(( brb, the dog needs out ))", "(brb, the dog needs out)" }) do
+		local mixed = "Aye, that I know. " .. aside
+		local out = E.Pipeline.Run(mixed, "Player-1-DWARF", "Dwarf", "Common")
+		contains("the OOC half survives inside a mixed line", out, aside)
+		check("the in-character half is still dialected", out ~= mixed, out)
+	end
 
-	-- Single parentheses are ordinary prose and stay in scope.
-	check("a single-parenthesised aside is still dialected",
-		dialectOnly("Dwarf", "(I don't know)") ~= "(I don't know)")
+	-- The accepted cost of covering single parentheses: an in-character
+	-- parenthetical is not dialected either. Passing the player's own words
+	-- through unchanged is the safe direction to fail in.
+	eq("an in-character parenthetical is passed through, not dialected",
+		dialectOnly("Dwarf", "(I don't know)"), "(I don't know)")
+
+	-- A double pair must tokenize as ONE protected span, not a span plus an
+	-- orphaned bracket. This has to be asserted against the tokenizer rather than
+	-- the pipeline: "%(.-%)" alone stops at the first ")" and leaves the last
+	-- character loose, which no filter would alter anyway -- so a pipeline test
+	-- passes with or without the double-parenthesis rule and proves nothing. The
+	-- span boundary is the observable difference, and it matters because
+	-- E.SplitMessage treats protected spans as atomic and could otherwise split a
+	-- bracket away from its pair.
+	local segs = E.Tokenize("((brb, the dog needs out))")
+	eq("a double pair is one protected span", #segs, 1)
+	eq("that span covers the whole aside", segs[1] and segs[1].text, "((brb, the dog needs out))")
+	check("and it is marked protected", segs[1] and segs[1].protected == true)
 
 	-- Square brackets tag the register or language of the line. The tag is
 	-- metadata; the speech after it is not.

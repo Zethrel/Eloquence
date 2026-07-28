@@ -259,15 +259,24 @@ Ah'm no' shuir aboot tha', laddie.   ->   Ah'm no' shuir aboot tha', laddie.
 in-character channels and must never be dialected:
 
 ```
+(brb, the dog needs out)       ->   (brb, the dog needs out)
 (( brb, the dog needs out ))   ->   (( brb, the dog needs out ))
 [low] I don't know, friend.    ->   [low] Ah dinnae ken, laddie.
 [to the crowd] Hello           ->   [to the crowd] Hail
 ```
 
-Double parentheses are the near-universal marker for an out-of-character aside —
-the player has explicitly stepped outside their character to say it, so rendering
-it as *"(( brb, the dog needs oot ))"* is precisely wrong. Single parentheses are
-deliberately *not* matched, since those are ordinary prose.
+Parentheses mark an out-of-character aside. The player has explicitly stepped
+outside their character to say it, so rendering it as *"(brb, the dog needs oot)"*
+is precisely wrong.
+
+**Single and double both count.** Double is the older convention, but Total RP 3 —
+which most of the roleplaying population runs — treats a single pair as out of
+character, so a single pair is what people actually type. The cost is that an
+in-character parenthetical is not dialected either, and that is the right way
+round to fail: protecting too much passes the player's own words through
+untouched, while protecting too little rewrites something they deliberately
+stepped out of character to say. Live chat barely uses prose parentheticals in any
+case — an opening bracket in `/say` is nearly always meta commentary.
 
 Square brackets tag the register or language of the line: `[low]` for quiet
 speech that passers-by may overhear, `[Thalassian]` for the language being
