@@ -31,9 +31,26 @@ cd "$(dirname "$0")/.."
 ADDON="Eloquence"
 TOC="$ADDON/$ADDON.toc"
 
-# Blizzard's TACT version endpoint. Public, unauthenticated, and the same source
-# the game client itself uses to discover builds.
-VERSIONS_URL="${VERSIONS_URL:-https://us.patch.battle.net:1119/wow/versions}"
+# Blizzard's TACT version feeds. Public, unauthenticated, and the same source the
+# game client itself uses to discover builds. All of these serve the identical
+# pipe-delimited payload.
+#
+# They are tried in order because reachability varies by network and the first
+# attempt at this got it wrong: the classic patch.battle.net endpoint listens on
+# port 1119 and speaks PLAIN HTTP, so pointing https:// at it fails the TLS
+# handshake -- which looks like "connection reset by peer" rather than anything
+# informative. The v2 host serves the same data over ordinary HTTPS on 443, which
+# also survives networks that block odd ports.
+#
+# Set VERSIONS_URL to override with a single source (the tests use file:// URLs).
+VERSIONS_URLS=(
+	"https://us.version.battle.net/v2/products/wow/versions"
+	"http://us.patch.battle.net:1119/wow/versions"
+	"https://eu.version.battle.net/v2/products/wow/versions"
+)
+if [[ -n "${VERSIONS_URL:-}" ]]; then
+	VERSIONS_URLS=( "$VERSIONS_URL" )
+fi
 
 #-------------------------------------------------------------------------------
 # Parsing
@@ -164,17 +181,36 @@ if [[ ! "$TOC_INTERFACE" =~ ^[0-9]+$ ]]; then
 	exit 1
 fi
 
-payload="$(curl -sS --max-time 30 "$VERSIONS_URL" 2>/dev/null || true)"
-if [[ -z "$payload" ]]; then
-	echo "could not reach $VERSIONS_URL -- nothing to compare." >&2
+# Try each source until one yields something parseable. A source that answers but
+# returns an unusable body is treated the same as one that does not answer -- an
+# error page is not a version feed -- so a single sick mirror cannot mask a real
+# patch. Which source won is logged, because "it worked" and "it worked via the
+# fallback" are different facts worth knowing.
+payload=""
+LIVE_NAME=""
+SOURCE=""
+for url in "${VERSIONS_URLS[@]}"; do
+	body="$(curl -sSL --max-time 30 "$url" 2>/dev/null || true)"
+	if [[ -z "$body" ]]; then
+		echo "  no answer from $url" >&2
+		continue
+	fi
+	name="$(printf '%s\n' "$body" | parse_versions_name || true)"
+	if [[ -z "$name" ]]; then
+		echo "  unusable response from $url" >&2
+		continue
+	fi
+	payload="$body"
+	LIVE_NAME="$name"
+	SOURCE="$url"
+	break
+done
+
+if [[ -z "$LIVE_NAME" ]]; then
+	echo "no version source could be read -- nothing to compare." >&2
 	exit 2
 fi
-
-LIVE_NAME="$(printf '%s\n' "$payload" | parse_versions_name || true)"
-if [[ -z "$LIVE_NAME" ]]; then
-	echo "error: could not find a VersionsName in the response." >&2
-	exit 1
-fi
+echo "source: $SOURCE"
 
 LIVE_INTERFACE="$(version_to_interface "$LIVE_NAME")" || {
 	echo "error: could not read a version out of '$LIVE_NAME'." >&2
