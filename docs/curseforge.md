@@ -52,13 +52,18 @@ Want your own speech to go out in dialect so others see it too? One opt-in setti
 
 ## Five filters
 
+Three run out of the box:
+
 - **Dialectician** -- the accents themselves, one per race
 - **The Spell Book** -- spelling, repetition, ALL-CAPS
 - **Decompression Engine** -- expands MMO and Warcraft acronyms
+
+Two are off until you want them, because they rewrite a lot and are a matter of taste:
+
 - **Mouthwash** -- profanity to euphemism
 - **Fantasy Writer** -- modern turns of phrase into something that belongs in Azeroth
 
-Each has light, medium and heavy settings, and each can be switched off.
+Each has light, medium and heavy settings, and each can be switched on or off independently.
 
 ---
 
@@ -76,11 +81,15 @@ The Spell Book stays off other people's chat unless you ask for it, because corr
 
 ---
 
-## Sensible defaults
+## What you get out of the box
 
-- Filters **say, yell and emote** only -- party, raid and guild stay readable
-- **Chat bubbles** above characters' heads are rewritten too, not just the chat frame
-- Four presets to start from: **Roleplay**, **Immersive**, **Clean chat**, **Off**
+- Dialects apply to **say, yell and emote**. Party, raid, instance and guild stay plain -- *"interrupt now, bloodlust on pull"* is not roleplay, and dialecting it just makes the useful chat harder to read.
+- **Whispers are left alone too.** In-character whispering is conventionally done in `/say` opened with a `[low]` tag, so nearby characters get the chance to overhear. That leaves the whisper channel itself carrying out-of-character talk.
+- **Chat bubbles** above characters' heads are rewritten as well, not just the chat frame.
+- **NPCs are not dialected** unless you ask -- the Immersive preset turns that on.
+- **Nothing you type is changed.** Sending in dialect is a separate opt-in.
+
+Four presets to start from: **Roleplay** (the default), **Immersive**, **Clean chat** and **Off**.
 
 ---
 
