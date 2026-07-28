@@ -105,7 +105,7 @@ Install and log in. The defaults are already the Roleplay preset.
 
 ## A note on Darnassian
 
-The Night Elf dialect carries a glossary of canon Darnassian -- *Ishnu-alah*, *Shaha lor'ma*, *Fandu-dath-belore?* -- drawn from the community-maintained translation list. Only the confirmed entries; nothing invented.
+The Night Elf dialect carries a glossary of canon Darnassian -- *Ishnu-alah*, *Shaha lor'ma*, *Fandu-dath-belore?* -- drawn from [Darnassian (Canon) Translation](https://docs.google.com/document/d/1bD2qSEdWweR7xfIqUx_Iewv_4F40gboM-6ViSgfn1O8), a community-maintained document collecting every attested word and phrase and keeping the confirmed translations separate from the speculative ones. Only the confirmed entries are used here; nothing was invented. Thanks to everyone who put that list together.
 
 ---
 
