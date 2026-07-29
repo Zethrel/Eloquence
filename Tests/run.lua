@@ -492,6 +492,50 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Dialect: Orcish glossary")
+--------------------------------------------------------------------------------
+
+do
+	contains("Throm-Ka for well met", dialectOnly("Orc", "well met", 3), "Throm-Ka")
+	excludes("but not at strength 2", dialectOnly("Orc", "well met", 2), "Throm-Ka")
+
+	contains("Lok'tar ogar for victory or death",
+		dialectOnly("Orc", "victory or death", 3), "Lok'tar ogar")
+	contains("Gol'Kosh for by my axe", dialectOnly("Orc", "by my axe", 3), "Gol'Kosh")
+	contains("Dabu for I obey", dialectOnly("Orc", "i obey", 3), "Dabu")
+	contains("Lok-Regar for ready for orders",
+		dialectOnly("Orc", "ready for orders", 3), "Lok-Regar")
+	contains("Mak'gora for duel of honour",
+		dialectOnly("Orc", "a duel of honor", 3), "Mak'gora")
+	contains("ur'gora for coward", dialectOnly("Orc", "he is a coward", 3), "ur'gora")
+	contains("zug zug for yes", dialectOnly("Orc", "yes", 3), "zug zug")
+
+	-- The longer phrase must beat the bare "victory" word rule.
+	local both = dialectOnly("Orc", "victory or death", 3)
+	excludes("victory or death is not shredded into lok'tar or death", both, "or death")
+
+	-- Aka'Magosh is attested ORCISH, not Draenei. It sat in the Draenei dialect
+	-- for several releases purely because it sounds like it belongs there.
+	contains("Aka'Magosh is Orcish",
+		dialectOnly("Orc", "a blessing on you and yours", 3), "Aka'Magosh")
+	excludes("and is no longer claimed by Draenei",
+		dialectOnly("Draenei", "a blessing on you and yours", 3), "Aka'Magosh")
+
+	-- Regression: "victory" mapped to "victory or death", so any line already
+	-- containing "or death" got it appended twice.
+	excludes("victory does not expand self-referentially",
+		dialectOnly("Orc", "victory or death", 2), "or death or death")
+
+	-- Regression: contempt for fleeing belonged on the phrase. As a bare word
+	-- rule it produced "flee like a coward away" and "I flee like a coward every
+	-- day" for a neutral use of "run".
+	local neutral = dialectOnly("Orc", "I run every day", 2)
+	excludes("a neutral run is not made contemptuous", neutral, "like a coward")
+	local flee = dialectOnly("Orc", "run away", 2)
+	excludes("and run away leaves no orphaned word", flee, "coward away")
+end
+
+--------------------------------------------------------------------------------
 section("Dialect: every registered dialect runs clean")
 --------------------------------------------------------------------------------
 

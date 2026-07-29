@@ -1,5 +1,11 @@
 -- Draenei: ancient, formal, unfailingly courteous, lit by the Light.
--- "Aka'Magosh."
+-- "Kurenai." "The Light be with you."
+--
+-- "Aka'Magosh" was here, and was wrong: it is attested ORCISH, glossed as "a
+-- blessing on you and yours", and it now lives in Dialects/Orc.lua. The mistake
+-- was easy to make -- it sounds Draenei and the apostrophe convention matches --
+-- which is the argument for verifying every entry against a source rather than
+-- trusting how a word feels.
 local ADDON, E = ...
 
 E.RegisterDialect("Draenei", {
@@ -70,7 +76,7 @@ E.RegisterDialect("Draenei", {
 
 	flavor = {
 		chance = 0.16,
-		prefix = { "Aka'Magosh.", "Be at peace.", "The Light be with you.", "Hear me, friend," },
+		prefix = { "Be at peace.", "The Light be with you.", "Hear me, friend,", "Peace be upon you." },
 		suffix = {
 			"the Light willing", "as the Naaru intend", "may it be so",
 			"friend", "in the Light's own time",

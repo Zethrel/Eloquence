@@ -306,7 +306,7 @@ roster rather than just the classic thirteen.
 | Dwarf | Dwarven | Broad Scots. *"Ah'm no' shuir if that wull wirk, laddie."* |
 | Night Elf | Darnassian | Formal, unhurried, canon Darnassian. *"Ishnu-alah."* |
 | Gnome | Gnomish | Over-precise technical vocabulary meeting folksy cliches. |
-| Draenei | Draenei | Ancient and courteous, blessings of the Light. *"Aka'Magosh."* |
+| Draenei | Draenei | Ancient and courteous, blessings of the Light. *"The Light be with you."* |
 | Worgen | Gilnean | Clipped aristocratic English, with a growl when riled. |
 | Void Elf | Ren'dorei | Elven composure, with Void whispers leaking through. |
 | Lightforged Draenei | Lightforged | Draenei courtesy welded onto a crusade. |
