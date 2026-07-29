@@ -28,9 +28,9 @@ E.RegisterDialect("ZandalariTroll", {
 		["no"] = "it is not so", ["nope"] = "it is not so", ["maybe"] = "perhaps",
 		["friend"] = "ally", ["friends"] = "kin", ["ally"] = "ally",
 		["guy"] = "one", ["guys"] = "kin", ["dude"] = "you",
-		["god"] = "the loa", ["gods"] = "the loa", ["spirit"] = "loa",
-		["spirits"] = "the loa", ["luck"] = "the loa's favor",
-		["magic"] = "the loa's gift", ["priest"] = "prelate", ["prophet"] = "prophet",
+		["god"] = "loa", ["gods"] = "loa", ["spirit"] = "loa",
+		["spirits"] = "loa", ["luck"] = "loa's favor",
+		["magic"] = "loa's gift", ["priest"] = "prelate", ["prophet"] = "prophet",
 		["king"] = "the King", ["queen"] = "the Queen", ["leader"] = "the King",
 		["empire"] = "the empire", ["city"] = "Dazar'alor", ["home"] = "Zuldazar",
 		["troll"] = "Zandalari", ["trolls"] = "the Zandalari",
@@ -43,7 +43,7 @@ E.RegisterDialect("ZandalariTroll", {
 		["huge"] = "vast", ["small"] = "lesser", ["old"] = "ancient",
 		["fight"] = "give battle", ["war"] = "war", ["kill"] = "strike down",
 		["killed"] = "struck down", ["die"] = "fall", ["died"] = "fell",
-		["dead"] = "fallen", ["death"] = "the loa's call",
+		["dead"] = "fallen", ["death"] = "loa's call",
 		["enemy"] = "foe", ["enemies"] = "our foes", ["coward"] = "one without honor",
 		["help"] = "aid", ["helped"] = "aided", ["helping"] = "aiding",
 		["think"] = "believe", ["want"] = "desire", ["need"] = "require",
@@ -53,14 +53,23 @@ E.RegisterDialect("ZandalariTroll", {
 		["problem"] = "difficulty", ["mistake"] = "misjudgment",
 	}),
 
+	-- Zandali proper, shared with Dialects/Troll.lua, where the sourcing and the
+	-- exclusions are documented. The Zandalari are the trolls least likely to use
+	-- the Common word when their own exists.
 	wordsAt = {
-		[3] = {
+		[3] = E.Engine.Extend({
+			["mother"] = "ma'da", ["mom"] = "ma'da", ["mum"] = "ma'da",
+			["fire"] = "dazdooga",
+			["charm"] = "juju", ["talisman"] = "juju", ["fetish"] = "juju",
+			["eagle"] = "akil",
+			["altar"] = "alor",
+		}, {
 			["history"] = "the long record", ["ancestor"] = "ancestor",
 			["ancestors"] = "those who came before", ["tradition"] = "our way",
 			["temple"] = "the great temple", ["throne"] = "the golden throne",
 			["gold"] = "gold, as is our due", ["pride"] = "rightful pride",
 			["young"] = "young, by our reckoning", ["time"] = "the long ages",
-		},
+		}),
 	},
 
 	phrases = {

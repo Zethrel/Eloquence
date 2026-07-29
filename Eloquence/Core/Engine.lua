@@ -244,6 +244,30 @@ local function ApplyFlavor(flavor, text, ctx)
 end
 
 -- Run a rule set over `text`. `ctx` must carry `rng` and `strength`.
+-- Many dialect entries legitimately expand a noun into an articled phrase --
+-- ["moon"] = "the Mother Moon", ["death"] = "da long sleep", ["gods"] = "the loa".
+-- That reads correctly until the source sentence supplies its own article, and
+-- then you get "the the Mother Moon" or "de da long sleep".
+--
+-- Auditing every entry across 26 dialects is the fragile fix: the next person to
+-- add ["sea"] = "the deep" reintroduces it. So the doubling is collapsed centrally
+-- instead, which also covers the Trollish "de"/"da" respellings of "the".
+--
+-- Only genuine duplicates are touched. "de da" is a doubling because both are
+-- Trollish "the"; "the loa" and "a juju" are left alone.
+local ARTICLES = { ["the"] = true, ["de"] = true, ["da"] = true }
+
+local function CollapseArticles(chunk)
+	return (gsub(chunk, "(%a+)(%s+)(%a+)", function(first, space, second)
+		if ARTICLES[lower(first)] and ARTICLES[lower(second)] then
+			-- Drop the trailing space too, or "the the Flame" collapses to
+			-- "the  Flame": the space before the next word is still there.
+			return first
+		end
+		return first .. space .. second
+	end))
+end
+
 function Engine.Apply(rules, text, ctx)
 	local compiled = Compile(rules, ctx.strength or 2)
 	local hasPhrases = #compiled.phrases > 0
@@ -267,7 +291,7 @@ function Engine.Apply(rules, text, ctx)
 			-- Accent transforms run over the reassembled chunk: a Dwarf drops
 			-- the g from an -ing that a phrase rule produced, too.
 			if post then chunk = post(chunk, ctx) end
-			return chunk
+			return CollapseArticles(chunk)
 		end)
 	end
 

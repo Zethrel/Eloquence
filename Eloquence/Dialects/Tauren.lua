@@ -1,5 +1,16 @@
 -- Tauren: unhurried, formal, reverent toward the Earth Mother.
 -- "Winds be at your back!"
+-- WHY THERE IS NO TAUR-AHE GLOSSARY HERE
+-- The attested Taur-ahe vocabulary is names, not words. Arikara ("Vengeance"),
+-- Echeyakee and Isha Awak are all creatures or spirits -- proper nouns identical
+-- to what an English speaker would already type -- and Blizzard's in-game
+-- translator only makes text look Taur-ahe rather than translating it. Taur-ahe is
+-- also described as partly pictographic and as varying by tribe, so there is no
+-- single lexicon to draw on even in principle.
+--
+-- Nothing here was invented to fill the gap; see Dialects/NightElf.lua for the
+-- rule. The unhurried, earth-minded register below is the dialect.
+
 local ADDON, E = ...
 
 E.RegisterDialect("Tauren", {

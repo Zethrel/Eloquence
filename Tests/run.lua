@@ -536,6 +536,62 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Dialect: Zandali glossary")
+--------------------------------------------------------------------------------
+
+do
+	-- Shared by both troll dialects, since they speak the same language.
+	for _, race in ipairs({ "Troll", "ZandalariTroll" }) do
+		contains(race .. ": loa for spirits",
+			dialectOnly(race, "the spirits are angry", 3), "loa")
+		contains(race .. ": ma'da for mother",
+			dialectOnly(race, "my mother waits", 3), "ma'da")
+		contains(race .. ": dazdooga for fire",
+			dialectOnly(race, "light the fire", 3), "dazdooga")
+		contains(race .. ": juju for charm",
+			dialectOnly(race, "she made a charm", 3), "juju")
+		excludes(race .. ": ma'da is gated to strength 3",
+			dialectOnly(race, "my mother waits", 2), "ma'da")
+
+		-- Regression: several entries embedded the article, so "the spirits"
+		-- became "the the loa" and "the gods" became "de da loa". The source
+		-- sentence supplies the article; a replacement must not bring its own.
+		for _, line in ipairs({ "the spirits are angry", "the gods watch us",
+		                        "the magic is strong", "the death of kings" }) do
+			local out = dialectOnly(race, line, 3)
+			excludes(race .. ": no doubled article in \"" .. line .. "\"", out, "the the")
+			excludes(race .. ": no de/da doubling in \"" .. line .. "\"", out, "de da")
+		end
+	end
+end
+
+--------------------------------------------------------------------------------
+section("Dialect: races with no attested vocabulary get no glossary")
+--------------------------------------------------------------------------------
+
+do
+	-- Four languages Blizzard never developed enough to draw on. The rule is
+	-- attested-only, so these carry register rather than lexicon, and nothing was
+	-- invented to fill the gap. Asserting it here keeps a well-meaning future
+	-- edit from quietly adding fan coinages.
+	--
+	-- The specific traps: "sha" is glossed as Draenei for "light" but only ever
+	-- appears inside compounds like Shattrath, and "modan" is Dwarven for
+	-- "mountain" on the same compound-only basis.
+	excludes("Draenei does not use the compound-only sha for light",
+		dialectOnly("Draenei", "the light guides us", 3), "sha ")
+	excludes("Dwarven does not use the compound-only modan for mountain",
+		dialectOnly("Dwarf", "over the mountain", 3), "modan")
+
+	-- Each still has to be a working dialect, not an empty one.
+	for _, race in ipairs({ "Draenei", "Dwarf", "Gnome", "Tauren" }) do
+		local out = dialectOnly(race, "I don't know if that will work, friend", 3)
+		check(race .. " still transforms text without a glossary",
+			type(out) == "string" and out ~= "I don't know if that will work, friend", out)
+	end
+end
+
+--------------------------------------------------------------------------------
 section("Dialect: every registered dialect runs clean")
 --------------------------------------------------------------------------------
 

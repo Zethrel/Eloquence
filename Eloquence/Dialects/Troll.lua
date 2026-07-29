@@ -1,6 +1,32 @@
 -- Trollish: thick Jamaican basilectic patois, with the odd bit of Zandali.
 -- "Tas'dingo!"
+--
+-- SOURCE
+-- The glossary below is attested Zandali, verified entry by entry against
+-- Warcraft Wiki and Wowpedia. Blizzard never released a full Zandali dictionary
+-- and the in-game translator only makes words look Zandali, so what exists is a
+-- short list of glossed terms rather than a language.
+--
+-- ADDING MORE
+-- Same discipline as the Darnassian, Thalassian and Orcish glossaries: attested
+-- only, nothing invented, nothing taken from another addon. Deliberately excluded:
+--   * Jin, which the wiki glosses as "possibly leader or elder" -- "possibly" is
+--     not a confirmation;
+--   * Atal'ai ("Devoted Ones") and Bwon'tulak ("Death singer"), which name a sect
+--     and a title rather than supplying vocabulary anyone types;
+--   * tribe and place names, which are proper nouns already identical to the
+--     English word.
 local ADDON, E = ...
+
+-- English trigger -> canon Zandali, applied at strength 3 only.
+local GLOSSARY_WORDS = {
+	["mother"] = "ma'da", ["mom"] = "ma'da", ["mum"] = "ma'da", ["mama"] = "ma'da",
+	["fire"] = "dazdooga",
+	["charm"] = "juju", ["charms"] = "juju", ["talisman"] = "juju",
+	["fetish"] = "juju", ["trinket"] = "juju",
+	["eagle"] = "akil",
+	["temple"] = "alor", ["altar"] = "alor",
+}
 
 local gsub = string.gsub
 
@@ -50,15 +76,15 @@ E.RegisterDialect("Troll", {
 		["want"] = "wan", ["wants"] = "wan",
 		["kill"] = "mash up", ["killed"] = "mash up", ["fight"] = "rumble",
 		["magic"] = "voodoo", ["spirit"] = "loa", ["spirits"] = "loa",
-		["god"] = "loa", ["gods"] = "da loa", ["death"] = "da long sleep",
+		["god"] = "loa", ["gods"] = "loa", ["death"] = "da long sleep",
 		["food"] = "grub", ["hungry"] = "hungry hungry", ["strange"] = "strange strange",
 		["crazy"] = "mad mon", ["stupid"] = "fool fool", ["tired"] = "weary",
 		["money"] = "coin", ["please"] = "please mon", ["sorry"] = "me bad",
-		["problem"] = "trouble", ["danger"] = "bad juju", ["luck"] = "da loa's favor",
+		["problem"] = "trouble", ["danger"] = "bad juju", ["luck"] = "loa's favor",
 	},
 
 	wordsAt = {
-		[3] = {
+		[3] = E.Engine.Extend(GLOSSARY_WORDS, {
 			["is"] = "be", ["are"] = "be", ["am"] = "be", ["was"] = "was",
 			["a"] = "a", ["for"] = "fo", ["her"] = "har", ["never"] = "neva",
 			["work"] = "wuk", ["working"] = "wukkin", ["walk"] = "wok",
@@ -66,7 +92,7 @@ E.RegisterDialect("Troll", {
 			["come"] = "come", ["coming"] = "comin", ["girl"] = "gyal",
 			["boy"] = "bwoy", ["child"] = "pickney", ["children"] = "pickney",
 			["head"] = "head top", ["eat"] = "nyam", ["eating"] = "nyammin",
-		},
+		}),
 	},
 
 	phrases = {

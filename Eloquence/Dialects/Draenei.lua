@@ -6,6 +6,25 @@
 -- was easy to make -- it sounds Draenei and the apostrophe convention matches --
 -- which is the argument for verifying every entry against a source rather than
 -- trusting how a word feels.
+-- WHY THERE IS NO DRAENEI GLOSSARY HERE
+-- Draenei vocabulary is attested as morphemes rather than words. Blizzard glossed
+-- draen ("exile"), ei ("one"), or ("refuge"), sha ("light"), tar ("born"), ttrath
+-- ("dwelling"), kure ("redeem") and nai (a past-tense marker) -- but every one of
+-- them is known only from inside a compound: Draenor, Shattrath, Sha'tar, Karabor,
+-- Kurenai, Auchenai. None is ever spoken alone, which is exactly the bare-fragment
+-- case Dialects/NightElf.lua excludes. "sha" for "light" is the tempting one, and
+-- the worst offender: it would fire on every "light" in a Draenei's mouth, a word
+-- they use constantly, and produce something no source ever says.
+--
+-- What is left is Krokul ("Broken"), which names a people rather than translating
+-- the adjective, and Draenei/Draenor themselves, which are proper nouns already
+-- identical to the English.
+--
+-- So the courtesy and the Light-touched formality below are the dialect. Compare
+-- Dialects/Orc.lua and Dialects/Troll.lua, which do have real glossaries, and
+-- Dialects/Dwarf.lua and Dialects/Gnome.lua, which are in the same position as
+-- this one.
+
 local ADDON, E = ...
 
 E.RegisterDialect("Draenei", {
