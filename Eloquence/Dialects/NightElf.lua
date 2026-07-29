@@ -37,8 +37,8 @@ local GLOSSARY_PHRASES = {
 	{ "%f[%a]may your troubles be diminished%f[%A]", "Ande'thoras-ethil" },
 	{ "%f[%a]elune be with you%f[%A]", "Elune-adore" },
 	{ "%f[%a]thank you%f[%A]", "Shaha lor'ma" },
-	{ "%f[%a]who goes there%f[%A]", "Fandu-dath-belore?" },
-	{ "%f[%a]who's there%f[%A]", "Fandu-dath-belore?" },
+	{ "%f[%a]who goes there%f[%A]", "Fandu-dath-belore" },
+	{ "%f[%a]who's there%f[%A]", "Fandu-dath-belore" },
 
 	-- War cries and declarations
 	{ "%f[%a]prepare to fight%f[%A]", "Bandu thoribas" },

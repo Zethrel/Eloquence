@@ -443,6 +443,52 @@ do
 	contains("an'da for father", dialectOnly("NightElf", "my father waits", 3), "an'da")
 	contains("Fandu-dath-belore for who goes there",
 		dialectOnly("NightElf", "who goes there", 3), "Fandu-dath-belore")
+
+	-- A replacement must not carry its own sentence punctuation. "Fandu-dath-belore?"
+	-- read correctly alone but produced "Fandu-dath-belore?, stranger?" the moment
+	-- anything followed it, because the source text supplies the punctuation.
+	excludes("a glossary phrase does not bring its own question mark",
+		dialectOnly("NightElf", "who goes there, stranger?", 3), "?,")
+end
+
+--------------------------------------------------------------------------------
+section("Dialect: Thalassian glossary")
+--------------------------------------------------------------------------------
+
+do
+	-- Attested Thalassian, gated behind strength 3 exactly like Darnassian.
+	contains("greeting is used at strength 3",
+		dialectOnly("BloodElf", "greetings traveler", 3), "Bal'a dash, malanore")
+	excludes("but not at strength 2",
+		dialectOnly("BloodElf", "greetings traveler", 2), "Bal'a dash")
+
+	contains("Al diel shala for safe travels",
+		dialectOnly("BloodElf", "safe travels", 3), "Al diel shala")
+	contains("Anar'alah belore for by the light of the sun",
+		dialectOnly("BloodElf", "by the light of the sun", 3), "Anar'alah belore")
+	contains("Doral ana'diel for how are you",
+		dialectOnly("BloodElf", "how are you", 3), "Doral ana'diel")
+	contains("Selama ashal'anore for justice for our people",
+		dialectOnly("BloodElf", "justice for our people", 3), "Selama ashal'anore")
+	contains("sin'dorei for blood elves",
+		dialectOnly("BloodElf", "the blood elves are here", 3), "sin'dorei")
+	contains("belore for sun", dialectOnly("BloodElf", "the sun is setting", 3), "belore")
+	contains("shorel'aran for farewell",
+		dialectOnly("BloodElf", "farewell", 3), "shorel'aran")
+
+	-- Same punctuation rule as Darnassian.
+	excludes("no doubled punctuation mid-sentence",
+		dialectOnly("BloodElf", "how are you, friend?", 3), "?,")
+
+	-- Longer phrases must beat the shorter ones they contain: "by the light of the
+	-- sun" must not be eaten by the bare "sun" word rule.
+	local full = dialectOnly("BloodElf", "by the light of the sun", 3)
+	excludes("the sun phrase is not shredded by the word rule", full, "the belore")
+
+	-- Nightborne speak Shalassian, a separate language. Thalassian must not leak
+	-- into their dialect just because both are elven.
+	excludes("Thalassian does not leak into Nightborne",
+		dialectOnly("Nightborne", "safe travels", 3), "Al diel shala")
 end
 
 --------------------------------------------------------------------------------
