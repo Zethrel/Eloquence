@@ -1,4 +1,22 @@
 -- Gnomish: over-precise technical vocabulary colliding with folksy cliches.
+--
+-- WHY THERE IS NO GNOMISH GLOSSARY HERE
+-- Darnassian and Thalassian carry glossaries of canon vocabulary. Gnomish has
+-- none to carry: Blizzard never wrote any. Not a thin list like Dwarven's three
+-- unusable entries -- nothing at all.
+--
+-- Blizzard's in-game translator generates syllables that merely look Gnomish,
+-- with no dictionary behind them, and the parser reportedly shares its word pool
+-- with Dwarven, Common and Gutterspeak. So the "Gnomish" a player sees in game is
+-- procedural noise rather than a language, and there is nothing to source.
+--
+-- Inventing a vocabulary would break the rule both real glossaries state: only
+-- attested material, nothing invented. Community addons do invent Gnomish words,
+-- which is their authors' writing rather than lore -- and unlicensed besides.
+--
+-- The register below is what makes a Gnome sound like a Gnome: engineering
+-- precision applied to everyday things, colliding with homely idiom. That is the
+-- character, and it needs no fictional dictionary.
 local ADDON, E = ...
 
 E.RegisterDialect("Gnome", {

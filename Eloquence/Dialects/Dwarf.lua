@@ -3,6 +3,30 @@
 --   "I'm not sure if that will work, friend."  ->
 --   "Ah'm no' shuir if that wull wirk, laddie."
 -- and the word list below is built to reproduce exactly that.
+--
+-- WHY THERE IS NO DWARVEN GLOSSARY HERE
+-- Darnassian and Thalassian carry glossaries of canon vocabulary. Dwarven cannot,
+-- because Blizzard never developed one. The complete attested list is three
+-- entries -- Draig'cyfaill ("Dragonheart", a title given to Rhonin), Dwyar'hun
+-- ("Star bow", a type of crossbow) and Gwyarbrawden (a warrior ritual) -- and all
+-- three are excluded on the grounds already set out in Dialects/NightElf.lua:
+-- they are proper nouns and artefact names nobody types in chat, so rules for
+-- them would never fire.
+--
+-- Blizzard's own in-game translator does not use a Dwarven dictionary either. It
+-- generates syllables that merely look Dwarven. So there is no canon source to
+-- draw on, and inventing words would break the rule both glossaries state: only
+-- attested material, nothing invented.
+--
+-- "Modan" was considered and rejected. Blizzard glossed Khaz Modan as "Mountains
+-- of Khaz" and Bael Modan as "the Red Mountain", so the reading is sound -- but
+-- the word only ever appears as a compound element inside a place name, never
+-- spoken on its own, which is exactly the bare-fragment case NightElf.lua rules
+-- out. "mountain" is already mapped to the Scots "ben" below, which suits the
+-- register far better anyway.
+--
+-- What makes a Dwarf sound like a Dwarf here is the accent, not vocabulary, and
+-- that is the whole point of this file.
 local ADDON, E = ...
 
 local gsub = string.gsub
