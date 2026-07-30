@@ -92,6 +92,24 @@ That discipline is also why some races have no glossary at all. Dwarves, Gnomes,
 
 ---
 
+## It knows an emote from speech
+
+An emote is narration with your character's speech quoted inside it, and only the quoted part is being said out loud:
+
+```
+/e holds out a flower. "I don't know if you will like it, friend."
+
+   holds out a flower. "Ah dinnae ken if ye wull like it, laddie."
+```
+
+The narration stays in plain English, because it is prose written *about* your character rather than *by* them -- accenting it reads as though the narrator had the accent. An emote with no quotes is pure action, and is left completely alone.
+
+Only the accent is held back that way. Spelling, acronyms and profanity still apply to narration, since a typo is a typo wherever it sits.
+
+Double quotes mark speech, curly ones included. Apostrophes are far too common in accented text -- *no'*, *dinnae*, *Lok'tar* -- to treat as delimiters.
+
+---
+
 ## It respects what other people wrote
 
 On a roleplaying realm, how somebody spells things is a choice. Eloquence never touches:
@@ -108,7 +126,7 @@ The Spell Book stays off other people's chat unless you ask for it, because corr
 
 ## What you get out of the box
 
-- Dialects apply to **say, yell and emote**. Party, raid, instance and guild stay plain -- *"interrupt now, bloodlust on pull"* is not roleplay, and dialecting it just makes the useful chat harder to read.
+- Dialects apply to **say, yell and emote**, with emotes handled as described above. Party, raid, instance and guild stay plain: *"interrupt now, bloodlust on pull"* is not roleplay, and dialecting it just makes the useful chat harder to read.
 - **Whispers are left alone too.** In-character whispering is conventionally done in `/say` opened with a `[low]` tag, so nearby characters get the chance to overhear. That leaves the whisper channel itself carrying out-of-character talk.
 - **Chat bubbles** above characters' heads are rewritten as well, not just the chat frame.
 - **NPCs are not dialected** unless you ask -- the Immersive preset turns that on.
