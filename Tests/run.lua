@@ -536,6 +536,71 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Emotes are narration with speech quoted inside")
+--------------------------------------------------------------------------------
+
+do
+	-- E.MapQuoted first, on its own.
+	local function up(s) return s:upper() end
+	eq("narration outside quotes is untouched",
+		E.MapQuoted('holds out a flower. "here you go."', up),
+		'holds out a flower. "HERE YOU GO."')
+	eq("several quoted spans are each transformed",
+		E.MapQuoted('"one." he nods. "two."', up), '"ONE." he nods. "TWO."')
+	eq("no quotes means no transformation",
+		E.MapQuoted("laughs heartily", up), "laughs heartily")
+	eq("an unclosed quote runs to the end",
+		E.MapQuoted('says "and then', up), 'says "AND THEN')
+
+	-- Apostrophes must never be read as delimiters. The dialects emit no',
+	-- dinnae, shan'do and Lok'tar constantly; treating ' as a quote would carve
+	-- speech spans out of the middle of words.
+	eq("apostrophes are not quote marks",
+		E.MapQuoted("no' dinnae shan'do Lok'tar", up), "no' dinnae shan'do Lok'tar")
+
+	-- Curly quotes, which some clients and copy-paste produce.
+	local curly = "nods. \226\128\156like this\226\128\157 and after"
+	eq("curly quotes are recognised",
+		E.MapQuoted(curly, up), "nods. \226\128\156LIKE THIS\226\128\157 and after")
+
+	check("HasQuotedSpeech finds a straight quote", E.HasQuotedSpeech('a "b"'))
+	check("and a curly one", E.HasQuotedSpeech("a \226\128\156b\226\128\157"))
+	check("and reports none when there is none", not E.HasQuotedSpeech("no quotes here"))
+	check("an apostrophe is not quoted speech", not E.HasQuotedSpeech("dinnae ken"))
+end
+
+do
+	-- Now through the pipeline, where only the Dialectician is restricted.
+	onlyModules("dialect")
+	E.db.modules.dialect.incoming = true
+	E.db.modules.dialect.strength = 2
+
+	local emote = 'holds out a flower. "I don\'t know if you will like it, friend."'
+
+	local out = E.Pipeline.Run(emote, "P-emote", "Dwarf", "Common", nil, "emote")
+	contains("the quoted speech is dialected", out, "dinnae ken")
+	contains("the narration keeps its plain English", out, "holds out a flower")
+	excludes("and is not accented", out, "haulds")
+	excludes("nor respelled", out, "oot a flooer")
+
+	-- The same text on /say is speech end to end, so quotes restrict nothing.
+	local said = E.Pipeline.Run(emote, "P-emote", "Dwarf", "Common", nil, "say")
+	contains("on /say the whole line is dialected", said, "dinnae ken")
+	check("including the part outside the quotes",
+		said:find("holds out a flower", 1, true) == nil, said)
+
+	-- A pure action emote has no speech in it at all.
+	local action = "laughs and holds out a flower"
+	eq("an emote with no quotes is left alone",
+		E.Pipeline.Run(action, "P-emote", "Dwarf", "Common", nil, "emote"), action)
+
+	-- A missing channel must not accidentally trigger the emote rule; the
+	-- doctor's pipeline test and the outgoing fallback both pass none.
+	check("no channel behaves like ordinary speech",
+		E.Pipeline.Run(emote, "P-emote", "Dwarf", "Common"):find("holds out a flower", 1, true) == nil)
+end
+
+--------------------------------------------------------------------------------
 section("Dialect: Zandali glossary")
 --------------------------------------------------------------------------------
 

@@ -109,13 +109,16 @@ end
 --   guid  - speaker GUID, used for race lookup and seeding
 --   race  - optional pre-resolved race (the outgoing path knows it already)
 -- `direction` is "incoming" or "outgoing" (default "incoming").
-function Pipeline.Run(text, guid, race, language, direction)
+-- `channel` is the settings key the message arrived on ("say", "emote", ...).
+-- Only the Dialectician uses it, to keep emote narration out of the accent.
+function Pipeline.Run(text, guid, race, language, direction, channel)
 	local db = E.db
 	if not db or not db.enabled then return text end
 	if ShouldSkip(text) then return text end
 	if not Understood(language) then return text end
 
 	local ctx = Pipeline.NewContext(text, guid, race)
+	ctx.channel = channel
 	local original = text
 
 	for _, key in ipairs(E.MODULE_ORDER) do

@@ -10,8 +10,29 @@ local module = E.RegisterModule("dialect", {
 	desc = "Each speaker talks in an accent or dialect based on their race.",
 })
 
+-- An emote is narration with the character's speech quoted inside it:
+--
+--   Zethrel holds out a flower. "Here you go, this is for you."
+--
+-- The narration is authorial prose, written about the character rather than by
+-- them, so accenting it is wrong -- "Zethrel haulds oot a flooer" reads as though
+-- the narrator were the Dwarf. Only the quoted spans are speech, so only those
+-- get the dialect. An emote with no quotes is pure action and is left alone.
+--
+-- This restriction is deliberately limited to the Dialectician. The other filters
+-- are still welcome in narration: a typo is a typo wherever it sits, and someone
+-- who turned Mouthwash on wants profanity handled in an emote too. It is the
+-- accent specifically that does not belong in prose about the character.
 function module.Filter(text, ctx)
 	local dialect = ctx.dialect
 	if not dialect then return text end
+
+	if ctx.channel == "emote" then
+		if not E.HasQuotedSpeech(text) then return text end
+		return E.MapQuoted(text, function(speech)
+			return E.Engine.Apply(dialect, speech, ctx)
+		end)
+	end
+
 	return E.Engine.Apply(dialect, text, ctx)
 end

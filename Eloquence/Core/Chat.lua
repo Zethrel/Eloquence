@@ -94,7 +94,7 @@ local function MakeFilter(settingKey)
 		end
 		local dialect = race and E.Race.DialectFor(race)
 
-		local result = E.Pipeline.Run(text, guid, race, language)
+		local result = E.Pipeline.Run(text, guid, race, language, nil, settingKey)
 		local changed = result and result ~= text
 		if changed then Chat.stats.changed = Chat.stats.changed + 1 end
 
@@ -176,7 +176,7 @@ local function TransformOutgoing(text, chatType)
 	if E.Pipeline.ShouldSkip(text) then return nil end
 
 	local race = E.Race.Player()
-	local result = E.Pipeline.Run(text, UnitGUID("player"), race, nil, "outgoing")
+	local result = E.Pipeline.Run(text, UnitGUID("player"), race, nil, "outgoing", settingKey)
 	if not result or result == text then return nil end
 	return result
 end

@@ -208,6 +208,80 @@ function E.PlainText(text)
 end
 
 --------------------------------------------------------------------------------
+-- Quoted speech
+--------------------------------------------------------------------------------
+
+-- An emote is narration, not speech. The convention is third-person prose for
+-- the action and quotation marks around anything the character actually says:
+--
+--   Zethrel holds out a flower. "Here you go, this is for you."
+--
+-- Accenting the narration is wrong -- it reads as though the narrator has the
+-- accent rather than the character -- so the dialect is confined to the quoted
+-- spans. See Modules/Dialectician.lua.
+--
+-- ONLY DOUBLE QUOTES COUNT. A single quote is an apostrophe far more often than a
+-- quotation mark in this domain: the dialects emit "no'", "dinnae", "shan'do",
+-- "Al diel shala" and "Lok'tar" constantly, and treating ' as a delimiter would
+-- carve speech spans out of the middle of words.
+local CURLY_OPEN, CURLY_CLOSE = "\226\128\156", "\226\128\157"
+
+-- Find the next opening quote at or after `pos`. Returns its start, its end, and
+-- the closing delimiter to look for.
+local function NextQuote(text, pos)
+	local sStraight = find(text, '"', pos, true)
+	local sCurly = find(text, CURLY_OPEN, pos, true)
+	if sStraight and (not sCurly or sStraight < sCurly) then
+		return sStraight, sStraight, '"'
+	elseif sCurly then
+		return sCurly, sCurly + #CURLY_OPEN - 1, CURLY_CLOSE
+	end
+	return nil
+end
+
+-- Run `fn` over the interior of each quoted span and reassemble. Text outside
+-- quotes, and the quote marks themselves, pass through untouched.
+--
+-- An unclosed quote is treated as running to the end of the message, since a
+-- player who opened one and got cut off by the 255-byte limit still meant the
+-- rest as speech.
+function E.MapQuoted(text, fn)
+	local out, pos, len = {}, 1, #text
+	while pos <= len do
+		local openS, openE, closer = NextQuote(text, pos)
+		if not openS then break end
+
+		-- Everything before the quote is narration.
+		if openS > pos then
+			out[#out + 1] = sub(text, pos, openS - 1)
+		end
+		out[#out + 1] = sub(text, openS, openE)
+
+		local closeS = find(text, closer, openE + 1, true)
+		local speech = sub(text, openE + 1, closeS and closeS - 1 or len)
+		if speech ~= "" then
+			out[#out + 1] = fn(speech) or speech
+		end
+
+		if closeS then
+			out[#out + 1] = sub(text, closeS, closeS + #closer - 1)
+			pos = closeS + #closer
+		else
+			pos = len + 1
+		end
+	end
+	if pos <= len then
+		out[#out + 1] = sub(text, pos)
+	end
+	return table.concat(out)
+end
+
+-- True when `text` contains a quoted span at all.
+function E.HasQuotedSpeech(text)
+	return NextQuote(text, 1) ~= nil
+end
+
+--------------------------------------------------------------------------------
 -- Run-length collapsing
 --------------------------------------------------------------------------------
 
