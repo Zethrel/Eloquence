@@ -38,7 +38,7 @@ Eloquence reads the race of whoever is talking and renders their chat to match. 
 > *I don't know if that will work, friend.*
 > **-> Och, whit noo. Ah dinnae ken if that wull wirk, laddie.**
 
-26 dialects, covering the full modern roster rather than just the classic thirteen.
+26 dialects, covering the full modern roster rather than just the classic thirteen -- and at heavy strength, six of them speak real Warcraft languages.
 
 ---
 
@@ -54,7 +54,7 @@ Want your own speech to go out in dialect so others see it too? One opt-in setti
 
 Three run out of the box:
 
-- **Dialectician** -- the accents themselves, one per race
+- **Dialectician** -- the accents themselves, one per race, plus canon vocabulary at heavy strength
 - **The Spell Book** -- spelling, repetition, ALL-CAPS
 - **Decompression Engine** -- expands MMO and Warcraft acronyms
 
@@ -66,6 +66,29 @@ Two are off until you want them, because they rewrite a lot and are a matter of 
 Each has light, medium and heavy settings, and each can be switched on or off independently.
 
 ---
+
+## Canon languages
+
+Turn the Dialectician up to **heavy** and six races start salting their speech with their own language:
+
+| Language | Spoken by | For instance |
+| --- | --- | --- |
+| **Darnassian** | Night Elf | *Ishnu-alah*, *Shaha lor'ma*, *Fandu-dath-belore* |
+| **Thalassian** | Blood Elf | *Bal'a dash, malanore*, *Al diel shala*, *Anar'alah belore* |
+| **Orcish** | Orc, Mag'har Orc | *Throm-Ka*, *Lok'tar ogar*, *Gol'Kosh*, *Dabu* |
+| **Zandali** | Troll, Zandalari Troll | *ma'da*, *dazdooga*, *juju*, *loa* |
+
+```
+Well met, friend.          ->  Throm-Ka, brother.
+Safe travels.              ->  Al diel shala.
+The spirits are angry.     ->  De loa be angry.
+```
+
+These sit behind **heavy** deliberately. A whole message peppered with untranslated words stops being flavour and starts being unreadable, so at light and medium strength you get the accent without the vocabulary. Pick the **Immersive** preset, or set the Dialectician to heavy yourself.
+
+**Every entry is attested.** Each one traces to Blizzard's own material -- quest text, NPC voice lines, Warcraft III -- and nothing has been invented to pad a list out. The Darnassian glossary comes from [Darnassian (Canon) Translation](https://docs.google.com/document/d/1bD2qSEdWweR7xfIqUx_Iewv_4F40gboM-6ViSgfn1O8), a community-maintained document that keeps confirmed translations separate from speculative ones; only the confirmed side is used. Thanks to everyone who compiled it.
+
+That discipline is also why some races have no glossary at all. Dwarves, Gnomes, Draenei and Tauren get none, because Blizzard never wrote enough of those languages to draw on -- Gnomish has no attested vocabulary whatsoever, and the Draenei words that do exist only ever appear inside place names like Shattrath. Inventing some would have been easy and would have made them no more canon than a fan dictionary. Their accents carry them instead.
 
 ## It respects what other people wrote
 
@@ -100,12 +123,6 @@ Install and log in. The defaults are already the Roleplay preset.
 - `/elo` -- open the options
 - `/elo preset rp` -- apply a preset
 - `/elo doctor` -- diagnose anything that looks wrong
-
----
-
-## A note on Darnassian
-
-The Night Elf dialect carries a glossary of canon Darnassian -- *Ishnu-alah*, *Shaha lor'ma*, *Fandu-dath-belore?* -- drawn from [Darnassian (Canon) Translation](https://docs.google.com/document/d/1bD2qSEdWweR7xfIqUx_Iewv_4F40gboM-6ViSgfn1O8), a community-maintained document collecting every attested word and phrase and keeping the confirmed translations separate from the speculative ones. Only the confirmed entries are used here; nothing was invented. Thanks to everyone who put that list together.
 
 ---
 
