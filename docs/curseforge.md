@@ -90,6 +90,8 @@ These sit behind **heavy** deliberately. A whole message peppered with untransla
 
 That discipline is also why some races have no glossary at all. Dwarves, Gnomes, Draenei and Tauren get none, because Blizzard never wrote enough of those languages to draw on -- Gnomish has no attested vocabulary whatsoever, and the Draenei words that do exist only ever appear inside place names like Shattrath. Inventing some would have been easy and would have made them no more canon than a fan dictionary. Their accents carry them instead.
 
+---
+
 ## It respects what other people wrote
 
 On a roleplaying realm, how somebody spells things is a choice. Eloquence never touches:
