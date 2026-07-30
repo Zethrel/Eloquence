@@ -188,6 +188,15 @@ local function Doctor()
 		print(format("  %s   languages understood: %s", ok, table.concat(languages, ", ")))
 	end
 
+	-- Secret values: names the client will not let an addon inspect. Harmless in
+	-- itself -- those speakers fall back to GUID lookup -- but worth showing,
+	-- since a sudden count means the client changed what it hands out.
+	local secrets = E.Race.secretsSkipped or 0
+	if secrets > 0 then
+		print(format("  %s   names the client kept secret: %d (resolved by GUID instead)",
+			warn, secrets))
+	end
+
 	-- 3. Who are we, and does that resolve to a dialect?
 	local race = E.Race.Player()
 	local dialect = race and E.Race.DialectFor(race)

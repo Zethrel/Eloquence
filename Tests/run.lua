@@ -891,6 +891,37 @@ do
 	eq("creature GUIDs resolve to nothing", E.Race.Resolve("Creature-0-1-2-3-4-5", "Kobold"), nil)
 	eq("an unknown GUID resolves to nothing", E.Race.Resolve("Player-1-NOBODY", "Nobody"), nil)
 
+	-- SECRET VALUES
+	-- Modern clients hand addons values that may be held but not inspected. Using
+	-- one as a table key raises "attempted to perform indexed assignment on a
+	-- table that cannot be indexed with secret keys", which is what a raid roster
+	-- scan hit on a boss kill. Race.Resolve runs for every chat message, so if it
+	-- raises, the message disappears instead of merely going undialected.
+	--
+	-- Real secret values cannot be constructed here, so this stands in for one:
+	-- a value that throws the moment anything inspects it, which is the property
+	-- that matters.
+	local secret = setmetatable({}, {
+		__index = function() error("attempt to inspect a secret value", 2) end,
+		__concat = function() error("attempt to concatenate a secret value", 2) end,
+		__tostring = function() error("attempt to inspect a secret value", 2) end,
+	})
+
+	local before = E.Race.secretsSkipped
+	local ok, result = pcall(E.Race.Resolve, "Player-1-VOID", secret)
+	check("a secret name does not take Race.Resolve down with it", ok, tostring(result))
+	eq("and the GUID still resolves the race", result, "VoidElf")
+
+	ok = pcall(E.Race.Resolve, nil, secret)
+	check("nor when there is no GUID to fall back on", ok)
+	check("and the occurrence is counted for /elo doctor",
+		E.Race.secretsSkipped > before,
+		"before=" .. tostring(before) .. " after=" .. tostring(E.Race.secretsSkipped))
+
+	-- A message from a secret-named speaker must still come out the other side.
+	local out = E.Pipeline.Run("I don't know, friend", "Player-1-VOID", nil, "Common")
+	check("chat from such a speaker still gets through", type(out) == "string" and out ~= "")
+
 	-- Every playable race speaks for itself now; only token spelling variants
 	-- are aliased.
 	eq("void elves have their own dialect", E.Race.Canonical("VoidElf"), "VoidElf")

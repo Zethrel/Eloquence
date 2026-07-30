@@ -60,11 +60,42 @@ end
 local guidCache = {}  -- guid -> englishRace
 local nameCache = {}  -- name (with realm stripped) or full name -> englishRace
 
-local function Remember(name, race)
-	if not name or not race then return end
+-- SECRET VALUES
+-- Modern clients hand addons "secret" strings in some content: values that may
+-- be held and passed along but not inspected. Using one as a table key raises
+--
+--   attempted to perform indexed assignment on a table that cannot be indexed
+--   with secret keys
+--
+-- and a raid roster scan walks into one the moment a boss dies. String methods
+-- on such a value are no safer.
+--
+-- There is no detection call this addon can rely on across client versions, so
+-- every operation that touches an untrusted name or GUID runs inside pcall and
+-- degrades to "not cached" rather than throwing. That costs nothing worth
+-- measuring and cannot break: GUID lookup via GetPlayerInfoByGUID is the primary
+-- path anyway, so a name we cannot key on simply goes unremembered.
+--
+-- Race.secretsSkipped counts them, and /elo doctor reports it, so this stays
+-- visible instead of silently degrading.
+Race.secretsSkipped = 0
+
+-- Hoisted rather than written as a closure at each call site: the roster scan
+-- runs this forty times on every GROUP_ROSTER_UPDATE.
+local function WriteNames(name, realm, race)
 	nameCache[name] = race
 	local short = name:match("^([^-]+)")
 	if short then nameCache[short] = race end
+	if realm and realm ~= "" then
+		nameCache[name .. "-" .. realm] = race
+	end
+end
+
+local function Remember(name, race, realm)
+	if not name or not race then return end
+	if not pcall(WriteNames, name, realm, race) then
+		Race.secretsSkipped = Race.secretsSkipped + 1
+	end
 end
 
 -- Cache whatever the player happens to be looking at. Cheap, and it fills in
@@ -75,10 +106,15 @@ local function ScanUnit(unit)
 	if not race then return end
 	local name, realm = UnitName(unit)
 	if not name then return end
-	Remember(name, race)
-	if realm and realm ~= "" then Remember(name .. "-" .. realm, race) end
+	Remember(name, race, realm)
 	local guid = UnitGUID(unit)
-	if guid then guidCache[guid] = race end
+	if guid then
+		-- A GUID has never been observed to be secret, but it arrives from the
+		-- same place as the name and costs nothing to guard.
+		if not pcall(function() guidCache[guid] = race end) then
+			Race.secretsSkipped = Race.secretsSkipped + 1
+		end
+	end
 end
 
 local function ScanGroup()
@@ -91,7 +127,7 @@ end
 
 -- Resolve the speaker's race. `guid` is arg12 of the chat event; `name` is the
 -- sender name (which may or may not carry a realm suffix).
-function Race.Resolve(guid, name)
+local function ResolveInner(guid, name)
 	if guid and guid ~= "" then
 		local cached = guidCache[guid]
 		if cached then return cached end
@@ -111,6 +147,17 @@ function Race.Resolve(guid, name)
 		if cached then return cached end
 	end
 
+	return nil
+end
+
+-- Resolve the speaker's race. Runs for every chat message, so it must never
+-- raise: a secret name would otherwise take the whole filter down with it and
+-- the message would vanish rather than merely go undialected. See the note on
+-- secret values above.
+function Race.Resolve(guid, name)
+	local ok, result = pcall(ResolveInner, guid, name)
+	if ok then return result end
+	Race.secretsSkipped = Race.secretsSkipped + 1
 	return nil
 end
 
