@@ -129,22 +129,44 @@ E.FindProperNouns = FindProperNouns
 
 --------------------------------------------------------------------------------
 
+-- An action wrapped in asterisks inside an otherwise spoken line:
+--
+--   Here, this is for you *pulls out a flower* hope you like it.
+--
+-- Same principle as an emote -- the starred part is narration, not speech, so it
+-- must not be accented. Unlike the entries in PROTECTED this is not applied to
+-- every filter: it is passed in by Modules/Dialectician.lua alone, because a typo
+-- or a modernism inside an action is still worth fixing. It is the accent
+-- specifically that does not belong in prose about the character.
+--
+-- Requires a matched pair with something between them, so a lone asterisk or a
+-- stray "2*3" is left as ordinary text.
+E.ACTION_SPAN = "%*[^%*]+%*"
+
+-- Earliest match wins; ties at the same offset go to the longest.
+local function BestMatch(text, pos, patterns, bestS, bestE)
+	for i = 1, #patterns do
+		local s, e = find(text, patterns[i], pos)
+		if s and (not bestS or s < bestS or (s == bestS and e > bestE)) then
+			bestS, bestE = s, e
+		end
+	end
+	return bestS, bestE
+end
+
 -- Split `text` into a list of { text = string, protected = boolean } segments.
 -- With `protectNames`, mid-sentence capitalised words are protected too.
-function E.Tokenize(text, protectNames)
+-- `extra` is an optional list of additional protected patterns, for callers that
+-- need spans protected from themselves but not from every filter.
+function E.Tokenize(text, protectNames, extra)
 	-- Collect every protected range first, then emit segments around them. Doing
 	-- it in two passes keeps the escape-sequence scan and the proper-noun scan
 	-- independent of each other.
 	local ranges = {}
 	local pos, len = 1, #text
 	while pos <= len do
-		local bestS, bestE
-		for i = 1, #PROTECTED do
-			local s, e = find(text, PROTECTED[i], pos)
-			if s and (not bestS or s < bestS or (s == bestS and e > bestE)) then
-				bestS, bestE = s, e
-			end
-		end
+		local bestS, bestE = BestMatch(text, pos, PROTECTED)
+		if extra then bestS, bestE = BestMatch(text, pos, extra, bestS, bestE) end
 		if not bestS then break end
 		ranges[#ranges + 1] = { s = bestS, e = bestE }
 		pos = bestE + 1
@@ -181,8 +203,8 @@ end
 
 -- Run `fn(plainChunk)` over every unprotected segment and reassemble. Proper
 -- nouns count as protected, so no filter can rewrite somebody's name.
-function E.MapPlain(text, fn)
-	local segs = E.Tokenize(text, true)
+function E.MapPlain(text, fn, extra)
+	local segs = E.Tokenize(text, true, extra)
 	local parts = {}
 	for i = 1, #segs do
 		local seg = segs[i]

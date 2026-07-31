@@ -268,7 +268,16 @@ local function CollapseArticles(chunk)
 	end))
 end
 
-function Engine.Apply(rules, text, ctx)
+-- `extraProtected` is an optional list of patterns to leave alone in addition to
+-- the usual escape sequences. The Dialectician passes the asterisk-action span
+-- through it: those must escape the accent but stay exposed to the other filters,
+-- so protecting them here rather than in the shared PROTECTED list keeps the
+-- restriction local to the caller that wants it.
+--
+-- It matters that this happens inside Apply rather than by splitting the text and
+-- calling Apply per fragment: flavour is added once to the finished line, and
+-- fragmenting would let a prefix land in the middle of a sentence.
+function Engine.Apply(rules, text, ctx, extraProtected)
 	local compiled = Compile(rules, ctx.strength or 2)
 	local hasPhrases = #compiled.phrases > 0
 	local hasWords = compiled.hasWords
@@ -292,7 +301,7 @@ function Engine.Apply(rules, text, ctx)
 			-- the g from an -ing that a phrase rule produced, too.
 			if post then chunk = post(chunk, ctx) end
 			return CollapseArticles(chunk)
-		end)
+		end, extraProtected)
 	end
 
 	if rules.flavor then

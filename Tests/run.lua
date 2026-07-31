@@ -600,6 +600,55 @@ do
 		E.Pipeline.Run(emote, "P-emote", "Dwarf", "Common"):find("holds out a flower", 1, true) == nil)
 end
 
+do
+	-- Asterisks mark an action inside an otherwise spoken line. Same principle as
+	-- an emote: the starred part is narration and must not be accented.
+	onlyModules("dialect")
+	E.db.modules.dialect.incoming = true
+	E.db.modules.dialect.strength = 2
+
+	local function say(text)
+		return E.Pipeline.Run(text, "P-star", "Dwarf", "Common", nil, "say")
+	end
+
+	local mixed = say("Here this is for you *pulls out a flower* hope you like it.")
+	contains("the action survives verbatim", mixed, "*pulls out a flower*")
+	check("while the speech around it is dialected", mixed:find("fer ye", 1, true) ~= nil, mixed)
+
+	contains("several actions in one line all survive",
+		say("*one* and *two* and you know"), "*one* and *two*")
+
+	-- An unmatched asterisk is ordinary text, not an unterminated action.
+	check("an unmatched asterisk does not swallow the rest",
+		say("unmatched *asterisk here and you know"):find("ye ken", 1, true) ~= nil)
+
+	-- A lone asterisk between digits is arithmetic, not an action, and needs no
+	-- special handling as long as a span requires a matched pair.
+	contains("arithmetic is left intact", say("you know 2*3 is six"), "2*3")
+
+	-- Flavour must be added once to the finished line. Splitting the text around
+	-- the action and dialecting each fragment separately would let a prefix land
+	-- in the middle of a sentence.
+	for i = 1, 30 do
+		local out = E.Pipeline.Run("this is for you *pulls out a flower* hope you like it",
+			"P-flavour-" .. i, "Dwarf", "Common", nil, "say")
+		local n = select(2, out:gsub("Och,", "")) + select(2, out:gsub("Aye,", ""))
+			+ select(2, out:gsub("Weel noo,", "")) + select(2, out:gsub("Hoots!", ""))
+		if n > 1 then
+			check("flavour is not applied per fragment", false, out)
+			break
+		end
+	end
+	check("flavour is not applied per fragment", true)
+
+	-- The two rules compose: an action inside quoted speech inside an emote.
+	local both = E.Pipeline.Run('nods. "I do not know *shrugs* friend."',
+		"P-star", "Dwarf", "Common", nil, "emote")
+	contains("narration outside the quotes is untouched", both, "nods.")
+	contains("the action inside the quotes is untouched", both, "*shrugs*")
+	check("and the speech around it is still dialected", both:find("ken", 1, true) ~= nil, both)
+end
+
 --------------------------------------------------------------------------------
 section("Dialect: Zandali glossary")
 --------------------------------------------------------------------------------

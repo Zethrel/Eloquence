@@ -27,12 +27,17 @@ function module.Filter(text, ctx)
 	local dialect = ctx.dialect
 	if not dialect then return text end
 
+	-- An action in asterisks is narration wherever it appears, including inside
+	-- a spoken line: "this is for you *pulls out a flower* hope you like it".
+	-- Protected from the accent only; see E.ACTION_SPAN.
+	local actions = { E.ACTION_SPAN }
+
 	if ctx.channel == "emote" then
 		if not E.HasQuotedSpeech(text) then return text end
 		return E.MapQuoted(text, function(speech)
-			return E.Engine.Apply(dialect, speech, ctx)
+			return E.Engine.Apply(dialect, speech, ctx, actions)
 		end)
 	end
 
-	return E.Engine.Apply(dialect, text, ctx)
+	return E.Engine.Apply(dialect, text, ctx, actions)
 end
