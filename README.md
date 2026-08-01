@@ -85,6 +85,7 @@ TOC — see [Keeping up with patches](#keeping-up-with-patches).
 /elo <filter> 1|2|3       filter strength: light, medium, heavy
 /elo race <race> on|off   mute or unmute one race's dialect
 /elo races                list every dialect
+/elo class on|off         class flavour (a death knight will not invoke the Light)
 /elo preset [name]        apply a bundle of settings, or list them
 /elo out on|off           rewrite your outgoing chat
 /elo reset                restore defaults
@@ -126,6 +127,29 @@ Dragonflight-era guide tells you to do `category.ID = addonName` after
 addon name throws `bad argument #1 to 'OpenSettingsPanel' (outside of expected
 range …)` and the panel silently never opens. Leave the numeric ID the Settings
 system assigns alone.
+
+### Class flavour
+
+Race decides how a character sounds. Class decides what they would never say.
+
+The Human dialect offers *"By the Light,"* as an interjection, which is right for a
+farmer from Elwynn and absurd for a knight of the Ebon Blade. So a class layer
+sits on top of the race dialect, defined in `Classes/*.lua` and applied by
+`Core/Class.lua`.
+
+It **removes** racial flavour rather than replacing it. A layer that swapped out
+the whole table would flatten every death knight into one voice regardless of who
+they were before they died; instead the clashing lines are dropped by pattern and
+the class adds its own. A Dwarf death knight stops invoking the Light and keeps
+speaking broad Scots.
+
+Four layers so far — **Death Knight**, **Warlock** and **Demon Hunter**, which all
+have reason to avoid the Light, and **Paladin**, which leans into it. Every other
+class speaks purely as its race does, because a warrior says nothing a race would
+not. `/elo class off` disables the whole layer.
+
+The class token comes back from `GetPlayerInfoByGUID` alongside the race, so
+incoming costs no extra call.
 
 ### Presets
 
@@ -662,6 +686,11 @@ a community-maintained document collecting every attested Darnassian word and
 phrase from quest text, unit voice lines and Warcraft III, with the confirmed
 translations kept separate from the speculative ones. Only the confirmed entries
 were used here. Thanks to everyone who put that list together.
+
+**Môrgrith — Argent Dawn (EU)** reported that his Human death knight had no
+business saying "By the Light", which is what prompted the class flavour layer in
+`Core/Class.lua`. Race decides how a character sounds; class decides what they
+would never say, and nothing had modelled the second until he said so.
 
 Modern addons in the same tradition, worth knowing about: **AccentChat**,
 **Tongues** and **Dialect**.

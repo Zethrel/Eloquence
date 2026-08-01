@@ -92,6 +92,24 @@ That discipline is also why some races have no glossary at all. Dwarves, Gnomes,
 
 ---
 
+## Your class has opinions too
+
+Race decides how a character sounds. Class decides what they would never say.
+
+A Human farmer saying *"By the Light"* is fine. A Human death knight saying it is not -- they are a corpse that kept its will, and the Light is the thing that burns. So a class layer sits on top of the race:
+
+| | Human | Human Death Knight |
+| --- | --- | --- |
+| *Goodbye, friend.* | King's honor, friend. | **Suffer well, friend.** |
+| *Good luck out there.* | Fortune favor you. | **Die well out there.** |
+| *Thank you.* | My thanks to you. | **You have my debt.** |
+
+It removes rather than replaces. A **Dwarf** death knight stops invoking the Light and carries on speaking broad Scots -- the accent still belongs to the race, and only what clashes is gone.
+
+Four classes so far: **Death Knight**, **Warlock** and **Demon Hunter**, who all have reason to avoid the Light, and **Paladin**, who leans into it. Every other class speaks purely as its race does. `/elo class off` if you would rather they all did.
+
+---
+
 ## It knows an emote from speech
 
 An emote is narration with your character's speech quoted inside it, and only the quoted part is being said out loud:
@@ -147,6 +165,8 @@ Install and log in. The defaults are already the Roleplay preset.
 ---
 
 Free and open source (MIT): **[github.com/Zethrel/Eloquence](https://github.com/Zethrel/Eloquence)**
+
+Class flavour exists because **Môrgrith -- Argent Dawn (EU)** pointed out that his death knight had no business invoking the Light. Feedback like that is welcome.
 
 A revival of the classic Vanilla-era RP chat addon, by **Zethrel -- Argent Dawn EU**.
 If you'd like to support further work: **[ko-fi.com/zethrel](https://ko-fi.com/zethrel)**

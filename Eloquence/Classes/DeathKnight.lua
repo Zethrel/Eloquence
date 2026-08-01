@@ -1,10 +1,13 @@
 -- Death Knight.
 --
--- The reported case, and the clearest one. A knight of the Ebon Blade is a
--- corpse that kept its will: raised by the Lich King, freed at Light's Hope, and
--- carrying the rune blade that did the killing. They do not invoke the Light --
--- for most of them the Light actively hurts -- and they do not wish anyone well
--- in the ordinary way.
+-- Reported by Môrgrith of Argent Dawn (EU), who plays one and pointed out that
+-- his character had no business invoking the Light. The clearest case of the
+-- problem, and the one that prompted the whole class layer.
+--
+-- A knight of the Ebon Blade is a corpse that kept its will: raised by the Lich
+-- King, freed at Light's Hope, carrying the rune blade that did the killing.
+-- They do not invoke the Light -- for most of them it actively hurts -- and they
+-- do not wish anyone well in the ordinary way.
 --
 -- "Suffer well" is the Ebon Blade's own farewell, which is why it stands in for
 -- goodbye rather than anything gentler.
