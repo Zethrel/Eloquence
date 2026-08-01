@@ -149,6 +149,10 @@ function Pipeline.Run(text, guid, race, language, direction, channel)
 		end
 	end
 
+	-- Filters cannot see each other's output, so two of them can each add a term
+	-- of address to the same line. See E.CollapseVocatives.
+	text = E.CollapseVocatives(text)
+
 	if text ~= original then
 		E.Debug(original, "->", text)
 	end

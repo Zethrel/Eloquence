@@ -222,6 +222,15 @@ local function Pick(list, rng)
 	return list[floor(rng() * #list) + 1]
 end
 
+-- Terms of address live in Core/Util.lua as E.VOCATIVES, since both this file
+-- and the pipeline's final tidy-up need them.
+local function EndsWithVocative(body)
+	local one = body:match("([%a']+)%s*$")
+	if one and E.VOCATIVES[lower(one)] then return true end
+	local two = body:match("([%a']+%s+[%a']+)%s*$")
+	return two ~= nil and E.VOCATIVES[lower(two)] == true
+end
+
 local function ApplyFlavor(flavor, text, ctx)
 	local chance = (flavor.chance or 0.12) * (ctx.strength / 2)
 	if flavor.prefix and #flavor.prefix > 0 and ctx.rng() < chance then
@@ -233,10 +242,14 @@ local function ApplyFlavor(flavor, text, ctx)
 		local body, tail = text:match("^(.-)([%p%s]*)$")
 		if body == "" then body, tail = text, "" end
 		local suffix = Pick(flavor.suffix, ctx.rng)
-		-- Skip it when the sentence already ends on those words, which otherwise
-		-- produces "...work, friend, friend".
 		local lowerBody, lowerSuffix = lower(body), lower(suffix)
-		if sub(lowerBody, -#lowerSuffix) ~= lowerSuffix then
+		-- Skip when the sentence already ends on the same words, which otherwise
+		-- produces "...work, friend, friend".
+		local repeated = sub(lowerBody, -#lowerSuffix) == lowerSuffix
+		-- And when it already ends on a different term of address, which is the
+		-- "companion, friend" case above.
+		local stacked = E.VOCATIVES[lowerSuffix] and EndsWithVocative(body)
+		if not repeated and not stacked then
 			text = body .. ", " .. suffix .. tail
 		end
 	end

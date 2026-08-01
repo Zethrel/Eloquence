@@ -712,6 +712,60 @@ do
 	E.db.dialect.classFlavor = true
 	check("and back on", speak("Goodbye, friend.", "DEATHKNIGHT"):find("Suffer well") ~= nil)
 
+	-- Reported from a Human Death Knight: "Goodbye, friend." came out as
+	-- "Suffer well, companion, friend". Two different words doing the same job.
+	--
+	-- The cause is a module interaction rather than the class layer. The Fantasy
+	-- Writer maps "friend" to "companion" and runs before the Dialectician, so
+	-- the exact-match guard in ApplyFlavor saw "companion" and appended its own
+	-- "friend" on top.
+	do
+		local saved = E.db.modules.fantasy.enabled
+		E.db.modules.fantasy.enabled = true
+		E.db.modules.fantasy.incoming = true
+
+		local doubled = 0
+		for i = 1, 60 do
+			local out = E.Pipeline.Run("Goodbye, friend.", "P-voc-" .. i, "Human", "Common")
+			-- Any two terms of address in one line is one too many.
+			local n = 0
+			for _, word in ipairs({ "friend", "companion", "laddie", "lassie", "comrade" }) do
+				for _ in out:lower():gmatch("%f[%a]" .. word .. "%f[%A]") do n = n + 1 end
+			end
+			if n > 1 then doubled = doubled + 1 end
+		end
+		eq("a line never carries two terms of address", doubled, 0)
+
+		E.db.modules.fantasy.enabled = saved
+	end
+
+	-- Two mechanisms guard this, and they are not redundant.
+	--
+	-- E.CollapseVocatives works on comma-separated parts, so it cannot see a
+	-- vocative that is simply the last word of a clause. The guard inside
+	-- ApplyFlavor covers that case by declining to add the suffix at all. If
+	-- either is deleted as dead code, one of these fails.
+	eq("the collapse handles comma-separated pairs",
+		E.CollapseVocatives("King's honor, friend, companion."), "King's honor, friend.")
+	eq("but cannot see a vocative that ends a clause without one",
+		E.CollapseVocatives("Hello friend, laddie."), "Hello friend, laddie.")
+	eq("and leaves an ordinary trailing tag alone",
+		E.CollapseVocatives("Suffer well, companion, aye."), "Suffer well, companion, aye.")
+	eq("a single vocative is untouched",
+		E.CollapseVocatives("Goodbye, friend."), "Goodbye, friend.")
+	eq("text without commas is returned as is",
+		E.CollapseVocatives("Goodbye friend"), "Goodbye friend")
+
+	-- The flavour suffix is still added when there is no vocative to clash with.
+	do
+		local added = false
+		for i = 1, 60 do
+			local out = E.Pipeline.Run("I do not know", "P-suf-" .. i, "Human", "Common")
+			if out:find(",") then added = true break end
+		end
+		check("but a suffix is still added when nothing clashes", added)
+	end
+
 	-- Every registered layer must produce a usable rule set for every race,
 	-- which is where a typo in one of the Classes files would surface.
 	for token in pairs(E.CLASSES) do

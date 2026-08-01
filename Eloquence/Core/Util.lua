@@ -304,6 +304,52 @@ function E.HasQuotedSpeech(text)
 end
 
 --------------------------------------------------------------------------------
+-- Terms of address
+--------------------------------------------------------------------------------
+
+-- Reported from a Human Death Knight: "Goodbye, friend." came out as
+-- "Suffer well, companion, friend" -- two different words doing the same job.
+--
+-- It happens because the filters run in sequence and none of them can see what
+-- the others did. The Fantasy Writer maps "friend" to "companion", then the
+-- dialect either appends its own vocative as flavour or expands an idiom whose
+-- replacement already contains one, as Human's "goodbye" does with "King's
+-- honor, friend". Neither step is wrong on its own.
+E.VOCATIVES = {}
+for _, word in ipairs({
+	"friend", "friends", "companion", "companions", "comrade", "comrades",
+	"laddie", "lassie", "lad", "lass", "lads", "brother", "sister", "kin",
+	"mate", "associate", "stranger", "youngling", "child", "mon", "bruddah",
+	"shan'do", "thero'shan", "young one", "old chap", "one",
+}) do E.VOCATIVES[word] = true end
+
+-- Drop a term of address that immediately follows another. The first is kept:
+-- it is the one the dialect chose deliberately, while the later is the vestige
+-- of whatever the earlier filters left behind.
+function E.CollapseVocatives(text)
+	if not text:find(",") then return text end
+	local body, tail = text:match("^(.-)([%p%s]*)$")
+	if body == "" then return text end
+
+	local parts = {}
+	for part in (body .. ","):gmatch("(.-),") do parts[#parts + 1] = part end
+	if #parts < 2 then return text end
+
+	local kept = {}
+	for _, part in ipairs(parts) do
+		local previous = kept[#kept]
+		local isVocative = E.VOCATIVES[lower(E.Trim(part))] == true
+		local afterVocative = previous ~= nil
+			and E.VOCATIVES[lower(E.Trim(previous))] == true
+		if not (isVocative and afterVocative) then
+			kept[#kept + 1] = part
+		end
+	end
+	if #kept == #parts then return text end
+	return table.concat(kept, ",") .. tail
+end
+
+--------------------------------------------------------------------------------
 -- Run-length collapsing
 --------------------------------------------------------------------------------
 
