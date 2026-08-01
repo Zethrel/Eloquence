@@ -73,6 +73,13 @@ function stub.install(env)
 	env.UnitRace = function(unit)
 		if unit == "player" then return env._playerRace, env._playerRace end
 	end
+	-- Second return is the unlocalised class token, which is what the class
+	-- flavour layer keys on.
+	env.UnitClass = function(unit)
+		if unit == "player" then
+			return env._playerClass or "Warrior", env._playerClassToken or "WARRIOR"
+		end
+	end
 	env.UnitName = function() return nil end
 	env.UnitExists = function() return false end
 	env.UnitIsPlayer = function() return false end
@@ -223,29 +230,35 @@ end
 -- The load order, which must match Eloquence.toc exactly. Tests/run.lua asserts
 -- that it does: a file that exists and loads here but is missing from the TOC
 -- would pass every test and then not load in the game at all.
-stub.FILES = {
-	"Core/Init.lua", "Core/Util.lua", "Core/Engine.lua", "Core/Race.lua",
-	"Dialects/Human.lua", "Dialects/Dwarf.lua", "Dialects/Gnome.lua",
-	"Dialects/NightElf.lua", "Dialects/Draenei.lua", "Dialects/Worgen.lua",
-	"Dialects/Orc.lua", "Dialects/Troll.lua", "Dialects/Tauren.lua",
-	"Dialects/Scourge.lua", "Dialects/BloodElf.lua", "Dialects/Goblin.lua",
-	"Dialects/Pandaren.lua", "Dialects/ZandalariTroll.lua",
-	"Dialects/Nightborne.lua", "Dialects/VoidElf.lua", "Dialects/KulTiran.lua",
-	"Dialects/Vulpera.lua", "Dialects/Dracthyr.lua", "Dialects/EarthenDwarf.lua",
-	"Dialects/Harronir.lua",
-	"Dialects/Variants.lua",
-	"Modules/SpellBook.lua", "Modules/Decompression.lua", "Modules/Mouthwash.lua",
-	"Modules/FantasyWriter.lua", "Modules/Dialectician.lua",
-	"Core/Pipeline.lua", "Core/Bubbles.lua", "Core/Chat.lua", "Core/Cleanup.lua",
-	"Core/Options.lua", "Core/Presets.lua", "Core/Commands.lua",
-}
+-- The file list is read from the TOC rather than duplicated here.
+--
+-- It was duplicated once, and adding Core/Class.lua plus the Classes/ layer to
+-- the TOC left the suite loading the old set: every test passed while the new
+-- code was never loaded at all. tools/package.sh already treats the TOC as the
+-- single source of truth for what ships; the tests now agree with it, and load
+-- in the same order the game does.
+local function ReadTOC(root)
+	local files = {}
+	local toc = assert(io.open(root .. "/Eloquence.toc"),
+		"cannot open " .. root .. "/Eloquence.toc")
+	for line in toc:lines() do
+		line = line:gsub("\r$", "")
+		if line:match("^%a") and line:match("%.lua%s*$") then
+			files[#files + 1] = (line:gsub("\\", "/"):gsub("%s+$", ""))
+		end
+	end
+	toc:close()
+	assert(#files > 0, "no Lua files listed in the TOC")
+	return files
+end
+stub.ReadTOC = ReadTOC
 
 -- Load the addon files in TOC order and return the private namespace.
 function stub.loadAddon(root)
 	root = root or "Eloquence"
 	local E = {}
 
-	for _, relative in ipairs(stub.FILES) do
+	for _, relative in ipairs(ReadTOC(root)) do
 		local path = root .. "/" .. relative
 		local chunk, err = loadfile(path)
 		if not chunk then

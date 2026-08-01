@@ -13,6 +13,7 @@ Core\Init.lua
 Core\Util.lua
 Core\Engine.lua
 Core\Race.lua
+Core\Class.lua
 
 # Base dialects
 Dialects\Human.lua
@@ -39,6 +40,12 @@ Dialects\Harronir.lua
 
 # Cultural variants -- must load last, they read the dialects above
 Dialects\Variants.lua
+
+# Class layers -- must load after Core\Class.lua, before the modules
+Classes\DeathKnight.lua
+Classes\Warlock.lua
+Classes\DemonHunter.lua
+Classes\Paladin.lua
 
 Modules\SpellBook.lua
 Modules\Decompression.lua

@@ -94,13 +94,20 @@ Pipeline.Understood = Understood
 -- Build the per-message context. Everything random downstream is driven from
 -- `rng`, which is seeded from the speaker and the message so the same line
 -- always renders identically.
-function Pipeline.NewContext(text, guid, race, extraSeed)
+function Pipeline.NewContext(text, guid, race, extraSeed, classToken)
 	local seed = E.Hash((guid or "") .. "\0" .. text .. "\0" .. (extraSeed or ""))
+	local dialect = race and E.Race.DialectFor(race) or nil
+	-- Class sits on top of race: it decides what this speaker would never say.
+	-- See Core/Class.lua.
+	if dialect and classToken then
+		dialect = E.Class.Apply(dialect, classToken)
+	end
 	return {
 		rng = E.NewRNG(seed),
 		excitement = E.Excitement(text),
 		race = race,
-		dialect = race and E.Race.DialectFor(race) or nil,
+		class = classToken,
+		dialect = dialect,
 		strength = 2,
 	}
 end
@@ -117,7 +124,9 @@ function Pipeline.Run(text, guid, race, language, direction, channel)
 	if ShouldSkip(text) then return text end
 	if not Understood(language) then return text end
 
-	local ctx = Pipeline.NewContext(text, guid, race)
+	local classToken = (direction == "outgoing")
+		and E.Class.Player() or E.Race.ClassOf(guid)
+	local ctx = Pipeline.NewContext(text, guid, race, nil, classToken)
 	ctx.channel = channel
 	local original = text
 

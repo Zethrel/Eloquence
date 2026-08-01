@@ -197,6 +197,18 @@ local function Doctor()
 			warn, secrets))
 	end
 
+	-- Class layer, which decides what this character would never say.
+	local classToken = E.Class.Player()
+	local layer = classToken and E.CLASSES[classToken]
+	if E.db.dialect.classFlavor == false then
+		print(format("  %s   class flavour is off -- everyone speaks purely by race", warn))
+	elseif layer then
+		print(format("  %s   class layer: %s", ok, layer.name))
+	else
+		print(format("  %s   no class layer for %s (its race dialect is used as is)",
+			ok, tostring(classToken)))
+	end
+
 	-- 3. Who are we, and does that resolve to a dialect?
 	local race = E.Race.Player()
 	local dialect = race and E.Race.DialectFor(race)
@@ -292,6 +304,17 @@ local function Handler(input)
 		E.OpenOptions() return
 	end
 	if command == "races" then Races() return end
+	if command == "class" or command == "classflavor" then
+		local want = lower(E.Trim(rest))
+		if want == "on" then E.db.dialect.classFlavor = true
+		elseif want == "off" then E.db.dialect.classFlavor = false
+		else E.db.dialect.classFlavor = not E.db.dialect.classFlavor end
+		if E.RefreshOptions then E.RefreshOptions() end
+		E.Print("class flavour " .. (E.db.dialect.classFlavor
+			and "|cff40ff40on|r -- a Death Knight will not invoke the Light"
+			or "off -- everyone speaks purely by race"))
+		return
+	end
 	if command == "preset" or command == "presets" then
 		local wanted = lower(E.Trim(rest))
 		if wanted ~= "" and E.Presets.Apply(wanted) then

@@ -650,6 +650,80 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Class decides what a speaker would never say")
+--------------------------------------------------------------------------------
+
+do
+	-- Reported by a player of a Human Death Knight: the Human dialect offers
+	-- "By the Light," as an interjection, which is fine from a farmer in Elwynn
+	-- and absurd from a risen knight of the Ebon Blade.
+	onlyModules("dialect")
+	E.db.modules.dialect.incoming = true
+
+	local function speak(text, class, race, strength)
+		local ctx = E.Pipeline.NewContext(text, "P-class", race or "Human", nil, class)
+		ctx.strength = strength or 2
+		return E.MODULES.dialect.Filter(text, ctx)
+	end
+
+	-- The reported line.
+	local human = E.DIALECTS["Human"]
+	local dk = E.Class.Apply(human, "DEATHKNIGHT")
+	local function has(list, needle)
+		for _, line in ipairs(list or {}) do
+			if line:find(needle, 1, true) then return true end
+		end
+		return false
+	end
+
+	check("the Human dialect does offer the Light", has(human.flavor.prefix, "By the Light"))
+	check("a Death Knight never does", not has(dk.flavor.prefix, "Light"))
+	check("nor in the suffixes", not has(dk.flavor.suffix, "Light"))
+
+	-- The racial voice must survive. Stripping the whole flavour table would
+	-- flatten every Death Knight into the same person regardless of their race.
+	check("but keeps the racial flavour that does not clash",
+		has(dk.flavor.prefix, "Well met.") and has(dk.flavor.prefix, "Ho there,"))
+	check("and adds its own", has(dk.flavor.prefix, "Suffer well."))
+
+	-- The Ebon Blade's own farewell.
+	contains("goodbye becomes suffer well", speak("Goodbye, friend.", "DEATHKNIGHT"), "Suffer well")
+	contains("good luck becomes die well", speak("Good luck out there.", "DEATHKNIGHT"), "Die well")
+
+	-- The same mechanism runs the other way: a paladin leans in.
+	local pal = E.Class.Apply(human, "PALADIN")
+	check("a Paladin keeps the Light", has(pal.flavor.prefix, "By the Light,"))
+	contains("and invokes it where a plain Human would not",
+		speak("Good luck out there.", "PALADIN"), "the Light watch over you")
+
+	-- A class with no layer changes nothing.
+	eq("an unlayered class is left to the race",
+		speak("Goodbye, friend.", "WARRIOR"), speak("Goodbye, friend.", nil))
+
+	-- The accent still belongs to the race. A Dwarf Death Knight stops invoking
+	-- the Light but keeps speaking Scots.
+	local dwarfDK = speak("I don't know, friend.", "DEATHKNIGHT", "Dwarf")
+	contains("a Dwarf Death Knight still speaks Scots", dwarfDK, "dinnae")
+
+	-- Off by setting.
+	E.db.dialect.classFlavor = false
+	eq("the layer can be switched off",
+		speak("Goodbye, friend.", "DEATHKNIGHT"), speak("Goodbye, friend.", nil))
+	E.db.dialect.classFlavor = true
+	check("and back on", speak("Goodbye, friend.", "DEATHKNIGHT"):find("Suffer well") ~= nil)
+
+	-- Every registered layer must produce a usable rule set for every race,
+	-- which is where a typo in one of the Classes files would surface.
+	for token in pairs(E.CLASSES) do
+		for race in pairs(E.DIALECTS) do
+			local out = speak("Hello there, I don't know if that will work, friend.", token, race, 3)
+			check(token .. " on " .. race .. " produces text",
+				type(out) == "string" and out ~= "", tostring(out))
+		end
+	end
+end
+
+--------------------------------------------------------------------------------
 section("Dialect: Zandali glossary")
 --------------------------------------------------------------------------------
 
@@ -1751,9 +1825,14 @@ section("Packaging: the TOC is the single source of truth")
 --------------------------------------------------------------------------------
 
 do
-	-- The game loads exactly what the TOC lists, in that order. This harness has
-	-- its own list. If the two drift, every test here still passes while the
-	-- addon fails to load a file in the actual game -- so tie them together.
+	-- The game loads exactly what the TOC lists, in that order, and so does this
+	-- harness -- stub.ReadTOC parses the same file. The two therefore cannot
+	-- drift, which is the point: they used to be separate lists, and adding
+	-- Core/Class.lua to the TOC left the suite silently loading the old set.
+	--
+	-- What is still worth asserting is that the TOC parses to something sane,
+	-- that everything it names exists, and that the order satisfies the
+	-- dependencies files have on each other.
 	local tocPath = "Eloquence/Eloquence.toc"
 	local handle = io.open(tocPath, "r")
 	check("the TOC is readable", handle ~= nil, tocPath)
@@ -1771,19 +1850,18 @@ do
 		end
 		handle:close()
 
-		eq("the TOC lists as many files as the harness loads", #tocFiles, #stub.FILES)
-
+		-- The harness reads the same file; this proves the parser agrees with the
+		-- one written independently above.
+		local harnessFiles = stub.ReadTOC("Eloquence")
+		eq("the harness loads exactly what the TOC lists", #harnessFiles, #tocFiles)
 		local harnessSeen = {}
-		for _, file in ipairs(stub.FILES) do harnessSeen[file] = true end
+		for _, file in ipairs(harnessFiles) do harnessSeen[file] = true end
 
 		for _, file in ipairs(tocFiles) do
 			check("TOC entry is loaded by the harness: " .. file, harnessSeen[file] == true)
 			local f = io.open("Eloquence/" .. file, "r")
 			check("TOC entry exists on disk: " .. file, f ~= nil)
 			if f then f:close() end
-		end
-		for _, file in ipairs(stub.FILES) do
-			check("harness file is listed in the TOC: " .. file, seen[file] == true)
 		end
 
 		-- Load order matters: Variants.lua derives from the base dialects, so it
@@ -1803,6 +1881,18 @@ do
 			check("Variants.lua loads after every dialect it derives from",
 				variants > latestParent,
 				string.format("Variants at %d, last parent at %d", variants, latestParent))
+		end
+
+		-- Every class layer calls E.RegisterClass, defined in Core/Class.lua.
+		local classCore = indexOf(tocFiles, "Core/Class.lua")
+		check("Core/Class.lua is in the TOC", classCore ~= nil)
+		if classCore then
+			for _, file in ipairs(tocFiles) do
+				if file:match("^Classes/") then
+					check(file .. " loads after Core/Class.lua",
+						indexOf(tocFiles, file) > classCore)
+				end
+			end
 		end
 
 		-- Core/Init.lua defines the namespace everything else uses.

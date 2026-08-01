@@ -118,6 +118,10 @@ E.DEFAULTS = {
 	dialect = {
 		races      = {},     -- englishRace -> false to mute a single race
 		selfRace   = false,  -- override the dialect used for your own outgoing text
+		selfClass  = false,  -- override the class layer used for your own text
+		-- Class decides what a speaker would never say: a Death Knight does not
+		-- invoke the Light, whatever their race offers. See Core/Class.lua.
+		classFlavor = true,
 		applyToSelf = false, -- also dialect your own messages in your chat frame
 	},
 

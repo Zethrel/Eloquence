@@ -57,7 +57,8 @@ function Race.Canonical(race)
 	return ALIAS[race] or race
 end
 
-local guidCache = {}  -- guid -> englishRace
+local guidCache = {}   -- guid -> englishRace
+local classCache = {}  -- guid -> upper-case class token ("DEATHKNIGHT")
 local nameCache = {}  -- name (with realm stripped) or full name -> englishRace
 
 -- SECRET VALUES
@@ -133,9 +134,12 @@ local function ResolveInner(guid, name)
 		if cached then return cached end
 		-- Only player GUIDs are useful here; creature GUIDs return nil.
 		if guid:find("^Player%-") then
-			local _, _, _, englishRace = GetPlayerInfoByGUID(guid)
+			-- The second return is the unlocalised class token, which the class
+			-- flavour layer needs and which costs nothing extra to keep.
+			local _, classToken, _, englishRace = GetPlayerInfoByGUID(guid)
 			if englishRace and englishRace ~= "" then
 				guidCache[guid] = englishRace
+				if classToken and classToken ~= "" then classCache[guid] = classToken end
 				Remember(name, englishRace)
 				return englishRace
 			end
@@ -159,6 +163,14 @@ function Race.Resolve(guid, name)
 	if ok then return result end
 	Race.secretsSkipped = Race.secretsSkipped + 1
 	return nil
+end
+
+-- The speaker's class token, if the client has told us. Nil is normal and simply
+-- means no class layer is applied.
+function Race.ClassOf(guid)
+	if not guid then return nil end
+	local ok, token = pcall(function() return classCache[guid] end)
+	return ok and token or nil
 end
 
 function Race.Player()
