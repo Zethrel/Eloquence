@@ -692,9 +692,6 @@ business saying "By the Light", which is what prompted the class flavour layer i
 `Core/Class.lua`. Race decides how a character sounds; class decides what they
 would never say, and nothing had modelled the second until he said so.
 
-Modern addons in the same tradition, worth knowing about: **AccentChat**,
-**Tongues** and **Dialect**.
-
 MIT licensed — see [LICENSE](LICENSE).
 
 ### Supporting it
