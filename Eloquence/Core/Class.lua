@@ -103,6 +103,49 @@ function Class.Apply(dialect, token)
 	return merged
 end
 
+-- The idiom patterns this class has an opinion about.
+--
+-- A class layer only gets to speak if the idiom survives long enough to reach
+-- the Dialectician, and it often does not. The Fantasy Writer runs earlier and
+-- rewrites "good luck" into "fortune favour you", so a Death Knight's "die well"
+-- found nothing left to match and wished people well like anyone else -- the
+-- same failure as "By the Light", arriving by a different route.
+--
+-- These patterns are handed to the Fantasy Writer as spans to leave alone, so
+-- the idiom reaches the class that has something to say about it. Nine idioms
+-- were being consumed this way, not just the one that was noticed.
+--
+-- Cached per class, since it is computed from a fixed table.
+local claims = {}
+
+function Class.Claims(token)
+	if not token then return nil end
+	if E.db and E.db.dialect.classFlavor == false then return nil end
+	local overrides = E.CLASSES[token]
+	if not overrides then return nil end
+
+	local cached = claims[token]
+	if cached then return cached end
+
+	-- Phrase patterns are authored in lower case and made case-insensitive when
+	-- the engine compiles them. These never go through that step, so they have to
+	-- be converted here or "good luck" would fail to protect "Good luck".
+	local insensitive = E.Engine.CaseInsensitive
+
+	cached = {}
+	for _, entry in ipairs(overrides.phrases or {}) do
+		cached[#cached + 1] = insensitive(entry[1])
+	end
+	for level = 1, 3 do
+		for _, entry in ipairs((overrides.phrasesAt and overrides.phrasesAt[level]) or {}) do
+			cached[#cached + 1] = insensitive(entry[1])
+		end
+	end
+	if #cached == 0 then cached = false end
+	claims[token] = cached
+	return cached or nil
+end
+
 -- The player's own class token, for the outgoing path.
 function Class.Player()
 	if E.db and E.db.dialect.selfClass then

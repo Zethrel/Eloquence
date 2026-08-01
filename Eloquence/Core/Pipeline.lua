@@ -108,6 +108,9 @@ function Pipeline.NewContext(text, guid, race, extraSeed, classToken)
 		race = race,
 		class = classToken,
 		dialect = dialect,
+		-- Idioms this class has its own answer for, which earlier filters must
+		-- leave intact. See Class.Claims.
+		classClaims = dialect and E.Class.Claims(classToken) or nil,
 		strength = 2,
 	}
 end

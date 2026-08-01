@@ -106,7 +106,10 @@ local RULES = {
 }
 
 function module.Filter(text, ctx)
-	return E.Engine.Apply(RULES, text, ctx)
+	-- An idiom the speaker's class has its own answer for is left alone here, so
+	-- it survives to the Dialectician. Otherwise a Death Knight's "good luck"
+	-- became "fortune favour you" before the class could turn it into "die well".
+	return E.Engine.Apply(RULES, text, ctx, ctx.classClaims)
 end
 
 module.RULES = RULES

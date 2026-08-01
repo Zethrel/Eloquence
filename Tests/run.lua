@@ -751,6 +751,12 @@ do
 		E.CollapseVocatives("Hello friend, laddie."), "Hello friend, laddie.")
 	eq("and leaves an ordinary trailing tag alone",
 		E.CollapseVocatives("Suffer well, companion, aye."), "Suffer well, companion, aye.")
+	-- "thank you" became "my thanks to you" in the Fantasy Writer, then the Human
+	-- dialect's ["thanks"] = "my thanks" fired on that, giving "My my thanks to
+	-- you". Same shape as the doubled articles, so the same collapse handles it.
+	eq("a repeated possessive collapses",
+		dialectOnly("Human", "thank you", 2):find("My my") == nil and "ok" or "doubled", "ok")
+
 	eq("a single vocative is untouched",
 		E.CollapseVocatives("Goodbye, friend."), "Goodbye, friend.")
 	eq("text without commas is returned as is",
@@ -764,6 +770,47 @@ do
 			if out:find(",") then added = true break end
 		end
 		check("but a suffix is still added when nothing clashes", added)
+	end
+
+	-- A class only gets to speak if its idiom survives long enough to reach the
+	-- Dialectician, and the Fantasy Writer runs first. It was rewriting
+	-- "good luck" into "fortune favour you", so a Death Knight wished people well
+	-- like anyone else -- the same failure as "By the Light", by another route.
+	do
+		local saved = E.db.modules.fantasy.enabled
+		E.db.modules.fantasy.enabled = true
+		E.db.modules.fantasy.incoming = true
+		onlyModules("fantasy", "dialect")
+
+		local function full(text, class)
+			local ctx = E.Pipeline.NewContext(text, "P-prec", "Human", nil, class)
+			local out = text
+			for _, key in ipairs(E.MODULE_ORDER) do
+				local m, st = E.MODULES[key], E.db.modules[key]
+				if m and st.enabled then ctx.strength = st.strength; out = m.Filter(out, ctx) or out end
+			end
+			return out
+		end
+
+		contains("a Death Knight's idiom beats the Fantasy Writer",
+			full("Good luck out there.", "DEATHKNIGHT"), "Die well")
+		excludes("and the generic version does not survive",
+			full("Good luck out there.", "DEATHKNIGHT"), "Fortune favour")
+		contains("while a speaker with no layer still gets the fantasy version",
+			full("Good luck out there.", nil), "Fortune favour")
+
+		-- The claim patterns are authored in lower case; the text is not.
+		contains("a claim matches regardless of capitalisation",
+			full("GOOD LUCK out there.", "DEATHKNIGHT"), "well")
+
+		-- Switching the layer off returns the idiom to the Fantasy Writer.
+		E.db.dialect.classFlavor = false
+		contains("with class flavour off the Fantasy Writer keeps it",
+			full("Good luck out there.", "DEATHKNIGHT"), "Fortune favour")
+		E.db.dialect.classFlavor = true
+
+		E.db.modules.fantasy.enabled = saved
+		onlyModules("dialect")
 	end
 
 	-- Every registered layer must produce a usable rule set for every race,

@@ -257,22 +257,36 @@ local function ApplyFlavor(flavor, text, ctx)
 end
 
 -- Run a rule set over `text`. `ctx` must carry `rng` and `strength`.
--- Many dialect entries legitimately expand a noun into an articled phrase --
--- ["moon"] = "the Mother Moon", ["death"] = "da long sleep", ["gods"] = "the loa".
--- That reads correctly until the source sentence supplies its own article, and
--- then you get "the the Mother Moon" or "de da long sleep".
+-- Many entries legitimately expand a word into a phrase that begins with a
+-- function word -- ["moon"] = "the Mother Moon", ["gods"] = "the loa",
+-- ["thanks"] = "my thanks". That reads correctly until an earlier filter has
+-- already supplied the same word, and then you get "the the Mother Moon" or,
+-- as the Fantasy Writer and the Human dialect between them managed,
+-- "My my thanks to you".
 --
--- Auditing every entry across 26 dialects is the fragile fix: the next person to
--- add ["sea"] = "the deep" reintroduces it. So the doubling is collapsed centrally
--- instead, which also covers the Trollish "de"/"da" respellings of "the".
+-- Auditing every entry across 26 dialects and 5 modules is the fragile fix: the
+-- next ["sea"] = "the deep" reintroduces it. So the doubling is collapsed
+-- centrally instead, which also covers the Trollish "de"/"da" respellings of
+-- "the".
 --
--- Only genuine duplicates are touched. "de da" is a doubling because both are
--- Trollish "the"; "the loa" and "a juju" are left alone.
-local ARTICLES = { ["the"] = true, ["de"] = true, ["da"] = true }
+-- Only function words are listed. Collapsing any repeated word would eat
+-- deliberate English like "he had had enough".
+-- Forms of "the", including the Trollish respellings. Any two of these in a row
+-- are a doubling even when they are not the same word: "de da long sleep".
+local DEFINITE = {}
+for _, word in ipairs({ "the", "de", "da" }) do DEFINITE[word] = true end
+
+-- Other function words, which only count when literally repeated. "my your" is
+-- not a doubling; "my my" is.
+local REPEATABLE = {}
+for _, word in ipairs({
+	"a", "an", "my", "your", "his", "her", "its", "our", "their",
+}) do REPEATABLE[word] = true end
 
 local function CollapseArticles(chunk)
 	return (gsub(chunk, "(%a+)(%s+)(%a+)", function(first, space, second)
-		if ARTICLES[lower(first)] and ARTICLES[lower(second)] then
+		local a, b = lower(first), lower(second)
+		if (DEFINITE[a] and DEFINITE[b]) or (REPEATABLE[a] and a == b) then
 			-- Drop the trailing space too, or "the the Flame" collapses to
 			-- "the  Flame": the space before the next word is still there.
 			return first
