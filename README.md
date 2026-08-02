@@ -81,11 +81,13 @@ TOC — see [Keeping up with patches](#keeping-up-with-patches).
 /elo config               open the options panel (same as bare /elo)
 /elo test <text>          preview your own dialect
 /elo test <race> <text>   preview a specific dialect
-/elo <filter> on|off      spellbook, decomp, mouthwash, fantasy, dialect
+/elo <filter> on|off      spellbook, decomp, mouthwash, fantasy, dialect, lisp, muffle
 /elo <filter> 1|2|3       filter strength: light, medium, heavy
 /elo race <race> on|off   mute or unmute one race's dialect
 /elo races                list every dialect
 /elo class on|off         class flavour (a death knight will not invoke the Light)
+/elo lisp on|off          your own speech is lisped
+/elo muffle on|off        your own speech is muffled, as through a helm
 /elo preset [name]        apply a bundle of settings, or list them
 /elo out on|off           rewrite your outgoing chat
 /elo reset                restore defaults
@@ -150,6 +152,31 @@ not. `/elo class off` disables the whole layer.
 
 The class token comes back from `GetPlayerInfoByGUID` alongside the race, so
 incoming costs no extra call.
+
+### Personal speech effects
+
+Two filters describe your own character's mouth rather than anyone else's:
+**Lisp** and **Muffle**, the latter for a closed helm, a diving suit, or anything
+else that gets between you and the air.
+
+Both are **self only**, and that is enforced by the pipeline rather than left to a
+setting. Lisping a stranger's chat would be putting words in their mouth, and you
+cannot see what anyone else is wearing, so guessing would garble their words on a
+hunch. `module.selfOnly` stops `Pipeline.Run` applying them to incoming text even
+if the `incoming` flag is set explicitly.
+
+They run **after** the Dialectician, because they belong to the mouth rather than
+the language: whatever words come out, and in whatever accent, these are what
+sits over them on the way.
+
+Both **need outgoing rewriting on** (`/elo out on`) to reach anyone, since they
+change what you send. Turning one on without it prints a warning, and `/elo
+doctor` reports it as a failure — an effect that silently does nothing is how
+people conclude an addon is broken.
+
+Muffling keeps the shape and length of each word. Collapsing everything to *mmmph*
+would be more realistic and impossible to roleplay against; this way the rhythm of
+the sentence survives and a patient listener can still follow.
 
 ### Presets
 
@@ -686,6 +713,9 @@ a community-maintained document collecting every attested Darnassian word and
 phrase from quest text, unit voice lines and Warcraft III, with the confirmed
 translations kept separate from the speculative ones. Only the confirmed entries
 were used here. Thanks to everyone who put that list together.
+
+**Sleat — Argent Dawn (EU)** asked for the muffle and lisp filters, for
+characters in closed helms and characters who want the impediment.
 
 **Trustbough — Argent Dawn (EU)** reported that the Darnassian dialect greeted
 people with a farewell, that every Night Elf greeted identically when three

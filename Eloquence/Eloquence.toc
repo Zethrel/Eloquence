@@ -53,6 +53,10 @@ Modules\Mouthwash.lua
 Modules\FantasyWriter.lua
 Modules\Dialectician.lua
 
+# Personal speech effects -- self only, applied after the dialect
+Modules\Lisp.lua
+Modules\Muffle.lua
+
 Core\Pipeline.lua
 Core\Bubbles.lua
 Core\Chat.lua

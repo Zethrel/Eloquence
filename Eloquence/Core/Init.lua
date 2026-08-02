@@ -13,7 +13,12 @@ E.CREDIT = E.AUTHOR .. " - " .. E.REALM
 
 -- Ordered list of the linguistic filters. The pipeline runs them in this order:
 -- normalise the text first, then layer flavour on top.
-E.MODULE_ORDER = { "spellbook", "decompression", "mouthwash", "fantasy", "dialect" }
+-- Lisp and Muffle come last: they are properties of the speaker's mouth rather
+-- than of the language, so they distort whatever the dialect produced.
+E.MODULE_ORDER = {
+	"spellbook", "decompression", "mouthwash", "fantasy", "dialect",
+	"lisp", "muffle",
+}
 
 E.MODULES = {}   -- key -> module table (populated by Modules\*.lua)
 E.DIALECTS = {}  -- englishRace -> dialect definition (populated by Dialects\*.lua)
@@ -113,6 +118,11 @@ E.DEFAULTS = {
 		mouthwash     = { enabled = false, strength = 2 },
 		fantasy       = { enabled = false, strength = 2 },
 		dialect       = { enabled = true,  strength = 2 },
+		-- Personal speech effects. Off by default and self only: they describe
+		-- how your character speaks, so they are applied to your outgoing text
+		-- and never to anyone else's. See Modules/Lisp.lua.
+		lisp          = { enabled = false, strength = 2 },
+		muffle        = { enabled = false, strength = 2 },
 	},
 
 	dialect = {

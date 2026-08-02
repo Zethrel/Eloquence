@@ -25,6 +25,8 @@ local MODULE_ALIASES = {
 	mouthwash = "mouthwash", mouth = "mouthwash", profanity = "mouthwash",
 	fantasy = "fantasy", fantasywriter = "fantasy", writer = "fantasy",
 	dialect = "dialect", dialects = "dialect", dialectician = "dialect", accent = "dialect",
+	lisp = "lisp", lisping = "lisp",
+	muffle = "muffle", muffled = "muffle", helm = "muffle",
 }
 
 local function Boolean(word)
@@ -195,6 +197,19 @@ local function Doctor()
 	if secrets > 0 then
 		print(format("  %s   names the client kept secret: %d (resolved by GUID instead)",
 			warn, secrets))
+	end
+
+	-- Self-only filters need the outgoing path to reach anyone at all.
+	local stranded = {}
+	for _, key in ipairs(E.MODULE_ORDER) do
+		local m, settings = E.MODULES[key], E.db.modules[key]
+		if m and m.selfOnly and settings and settings.enabled and not E.db.outgoing.enabled then
+			stranded[#stranded + 1] = m.name
+		end
+	end
+	if #stranded > 0 then
+		print(format("  %s   %s on, but outgoing rewriting is off -- nothing you type changes",
+			bad, table.concat(stranded, " and ")))
 	end
 
 	-- Class layer, which decides what this character would never say.
@@ -411,6 +426,13 @@ local function Handler(input)
 			if E.RefreshOptions then E.RefreshOptions() end
 			E.Print(format("%s on other people's chat: %s",
 				E.MODULES[moduleKey].name, value and "on" or "off"))
+		-- A self-only filter rewrites what you send. With outgoing off it has
+		-- nowhere to go, and silently doing nothing is how people conclude an
+		-- addon is broken.
+		if value and E.MODULES[moduleKey].selfOnly and not E.db.outgoing.enabled then
+			E.Print("|cffffcc00but outgoing rewriting is off, so nothing you type will change.|r "
+				.. "Turn it on with |cffffff80/elo out on|r.")
+		end
 			return
 		end
 		local value = Boolean(word)

@@ -136,8 +136,13 @@ function Pipeline.Run(text, guid, race, language, direction, channel)
 	for _, key in ipairs(E.MODULE_ORDER) do
 		local settings = db.modules[key]
 		local module = E.MODULES[key]
+		-- A self-only filter describes the speaker's own mouth -- a lisp, a closed
+		-- helm -- so it applies to what you send and never to what you receive.
+		-- Unlike the `incoming` setting this is not the user's to change:
+		-- lisping a stranger's chat would be putting words in their mouth.
+		local selfOnly = module and module.selfOnly
 		local allowedHere = settings
-			and (direction == "outgoing" or settings.incoming ~= false)
+			and (direction == "outgoing" or (not selfOnly and settings.incoming ~= false))
 		if module and settings and settings.enabled and allowedHere then
 			-- Skip the dialect pass entirely when we could not work out a race.
 			if key ~= "dialect" or ctx.dialect then

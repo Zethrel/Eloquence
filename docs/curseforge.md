@@ -50,7 +50,7 @@ Want your own speech to go out in dialect so others see it too? One opt-in setti
 
 ---
 
-## Five filters
+## The filters
 
 Three run out of the box:
 
@@ -62,6 +62,8 @@ Two are off until you want them, because they rewrite a lot and are a matter of 
 
 - **Mouthwash** -- profanity to euphemism
 - **Fantasy Writer** -- modern turns of phrase into something that belongs in Azeroth
+
+Two more describe your own character rather than anyone else's -- **Lisp** and **Muffle** -- and have a section of their own below.
 
 Each has light, medium and heavy settings, and each can be switched on or off independently.
 
@@ -107,6 +109,26 @@ A Human farmer saying *"By the Light"* is fine. A Human death knight saying it i
 It removes rather than replaces. A **Dwarf** death knight stops invoking the Light and carries on speaking broad Scots -- the accent still belongs to the race, and only what clashes is gone.
 
 Four classes so far: **Death Knight**, **Warlock** and **Demon Hunter**, who all have reason to avoid the Light, and **Paladin**, who leans into it. Every other class speaks purely as its race does. `/elo class off` if you would rather they all did.
+
+---
+
+## Effects for your own character
+
+Two filters describe *your* character's mouth rather than anyone else's:
+
+- **Lisp** -- for characters who want the impediment.
+- **Muffle** -- for a closed helm, a diving suit, or anything else between you and the air.
+
+```
+Yes, stand aside friend.   lisp   ->  Yeth, thtand athide friend.
+                           muffle ->  Yeh, hnann ahine mrienn.
+```
+
+Both are off by default and apply only to what **you** send -- never to what you read. You cannot see what anyone else is wearing, and lisping a stranger's chat would be putting words in their mouth.
+
+Because they change what you send, they need **outgoing rewriting** switched on. Turning one on without it says so rather than quietly doing nothing.
+
+Muffling keeps each word's shape and length. Collapsing everything to *mmmph* would be more realistic and impossible to roleplay against.
 
 ---
 
@@ -166,7 +188,7 @@ Install and log in. The defaults are already the Roleplay preset.
 
 Free and open source (MIT): **[github.com/Zethrel/Eloquence](https://github.com/Zethrel/Eloquence)**
 
-Class flavour exists because **Môrgrith -- Argent Dawn (EU)** pointed out that his death knight had no business invoking the Light, and the Darnassian dialect owes most of its accuracy to **Trustbough -- Argent Dawn (EU)**. Feedback like that is welcome.
+The muffle and lisp filters exist because **Sleat -- Argent Dawn (EU)** asked for them. Class flavour exists because **Môrgrith -- Argent Dawn (EU)** pointed out that his death knight had no business invoking the Light, and the Darnassian dialect owes most of its accuracy to **Trustbough -- Argent Dawn (EU)**. Feedback like that is welcome.
 
 A revival of the classic Vanilla-era RP chat addon, by **Zethrel -- Argent Dawn EU**.
 If you'd like to support further work: **[ko-fi.com/zethrel](https://ko-fi.com/zethrel)**

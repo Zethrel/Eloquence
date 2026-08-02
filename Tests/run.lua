@@ -648,6 +648,71 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Personal speech effects: lisp and muffle")
+--------------------------------------------------------------------------------
+
+do
+	-- Requested by Sleat of Argent Dawn (EU). Unlike every other filter these
+	-- describe the speaker's own mouth, so they apply to what you send and never
+	-- to what you receive.
+	check("the lisp is registered", E.MODULES.lisp ~= nil)
+	check("and the muffle", E.MODULES.muffle ~= nil)
+	check("both are off by default",
+		E.DEFAULTS.modules.lisp.enabled == false and E.DEFAULTS.modules.muffle.enabled == false)
+	check("and both are self only",
+		E.MODULES.lisp.selfOnly == true and E.MODULES.muffle.selfOnly == true)
+
+	local lisp, muffle = E.MODULES.lisp.Lisp, E.MODULES.muffle.Muffle
+
+	eq("s becomes th", lisp("Yes sir", 1), "Yeth thir")
+	eq("capitals are kept", lisp("Sir", 1), "Thir")
+	eq("z too", lisp("zeal", 1), "theal")
+	-- "sh" must be handled before "s", or it becomes "thh".
+	excludes("sh does not double up", lisp("shield", 2), "thh")
+	-- Soft c only: "cat" must not become "that".
+	eq("a hard c is untouched", lisp("cat", 2), "cat")
+	contains("but a soft c lisps", lisp("city", 2), "th")
+
+	-- Muffling keeps the shape of the word, which is what makes it read as
+	-- speech rather than noise.
+	local muffled = muffle("stand aside friend", 2)
+	check("muffled text is still word-shaped",
+		select(2, muffled:gsub("%s+", "")) == select(2, ("stand aside friend"):gsub("%s+", "")),
+		muffled)
+	check("and is actually changed", muffled ~= "stand aside friend", muffled)
+	-- "th" is a digraph and must not be eaten by the "t" rule.
+	eq("th is handled before t", muffle("the", 2), "de")
+	check("light is gentler than heavy",
+		muffle("stand aside", 1) ~= muffle("stand aside", 3))
+
+	-- Both must respect the protections every other filter honours.
+	local protected = E.Pipeline.Run
+	do
+		local saved = E.db.modules
+		onlyModules("lisp")
+		E.db.modules.lisp.enabled = true
+		local out = protected("say (( sorry, brb )) so", nil, "Human", nil, "outgoing", "say")
+		contains("an OOC aside is not lisped", out, "(( sorry, brb ))")
+		E.db.modules = saved
+	end
+
+	-- Self only, enforced by the pipeline rather than by a setting: lisping a
+	-- stranger's chat would be putting words in their mouth.
+	do
+		onlyModules("lisp")
+		E.db.modules.lisp.enabled = true
+		E.db.modules.lisp.incoming = true  -- even asked for explicitly
+		local incoming = E.Pipeline.Run("Yes sir", "Player-1-TEST", "Human", "Common", nil, "say")
+		eq("incoming chat is never lisped", incoming, "Yes sir")
+		local outgoing = E.Pipeline.Run("Yes sir", nil, "Human", nil, "outgoing", "say")
+		check("but your own outgoing text is", outgoing ~= "Yes sir", outgoing)
+		E.db.modules.lisp.incoming = nil
+	end
+
+	onlyModules("dialect")
+end
+
+--------------------------------------------------------------------------------
 section("Emotes are narration with speech quoted inside")
 --------------------------------------------------------------------------------
 
