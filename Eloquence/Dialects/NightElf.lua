@@ -1,6 +1,14 @@
 -- Darnassian-flavoured: formal, unhurried, few contractions, some Darnassian.
 -- "Ishnu-alah." "Ande'thoras-ethil."
 --
+-- REPORTS
+-- Trustbough of Argent Dawn (EU) found most of what is right about this file:
+-- that a farewell was being used as a greeting, that every Night Elf greeted
+-- identically when Darnassian has three attested greetings, that "friend" was
+-- rendered as shan'do when the glossary below glosses that as *teacher*, and
+-- that kaldorei who measure their lives in millennia have no business calling
+-- each other "young one".
+--
 -- SOURCE
 -- The glossary is drawn from "Darnassian (Canon) Translation", a community
 -- document collecting every attested word and phrase and keeping the confirmed

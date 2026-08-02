@@ -687,6 +687,11 @@ phrase from quest text, unit voice lines and Warcraft III, with the confirmed
 translations kept separate from the speculative ones. Only the confirmed entries
 were used here. Thanks to everyone who put that list together.
 
+**Trustbough — Argent Dawn (EU)** reported that the Darnassian dialect greeted
+people with a farewell, that every Night Elf greeted identically when three
+greetings are attested, and that `shan'do` — *teacher* — was being used for
+"friend". Most of what is right about `Dialects/NightElf.lua` is his doing.
+
 **Môrgrith — Argent Dawn (EU)** reported that his Human death knight had no
 business saying "By the Light", which is what prompted the class flavour layer in
 `Core/Class.lua`. Race decides how a character sounds; class decides what they
