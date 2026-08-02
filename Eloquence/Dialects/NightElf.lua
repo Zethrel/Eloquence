@@ -7,7 +7,8 @@
 -- identically when Darnassian has three attested greetings, that "friend" was
 -- rendered as shan'do when the glossary below glosses that as *teacher*, and
 -- that kaldorei who measure their lives in millennia have no business calling
--- each other "young one".
+-- each other "young one", and that a Night Elf does not address the whole of
+-- Azeroth as "kin".
 --
 -- SOURCE
 -- The glossary is drawn from "Darnassian (Canon) Translation", a community
@@ -100,7 +101,7 @@ local GLOSSARY_WORDS = {
 
 E.RegisterDialect("NightElf", {
 	name = "Darnassian",
-	desc = "Formal and unhurried, with Darnassian. \"Ishnu-alah, kin.\"",
+	desc = "Formal and unhurried, with Darnassian. \"Ishnu-alah. Speak, and I will hear you.\"",
 
 	-- Night Elves speak without contractions; that expansion is the backbone.
 	words = E.Engine.Extend(E.Engine.EXPAND_CONTRACTIONS, {
@@ -136,16 +137,23 @@ E.RegisterDialect("NightElf", {
 		-- their master. Shan'do is a title earned by someone who taught you, not a
 		-- general courtesy.
 		--
-		-- "brother" and "sister" are the natural kaldorei alternatives, but a
-		-- vocative is aimed at whoever is being spoken to and the addon has no idea
-		-- who that is. Guessing would misgender people, so the neutral forms are
-		-- used and the gendered ones are left for the player to type themselves.
-		["friend"] = { "kin", "kindred" },
-		["friends"] = "kin", ["ally"] = "kin", ["allies"] = "kin",
+		-- The replacement was "kin" and "kindred", which is better but still wrong,
+		-- and wrong in a way that is easy to miss: those words claim shared blood.
+		-- A Night Elf greeting a Dwarf, a Forsaken or a Draenei is not addressing
+		-- kin, and a kaldorei of all people would know the difference.
+		--
+		-- So nothing is substituted at all now. "brother", "sister", "kin",
+		-- "kindred" and plain "friend" are all things a Night Elf might say, and
+		-- which one fits depends on who is listening -- something the addon cannot
+		-- see. Choosing for the player would also misgender people. The word stays
+		-- exactly as typed, and the player picks it.
+		--
+		-- Same reasoning retires "ally" -> "kin": an ally is by definition someone
+		-- who is *not* your kin.
 		["god"] = "Elune", ["goddess"] = "Elune", ["moon"] = "the Mother Moon",
 		["night"] = "the Mother Moon's hour", ["forest"] = "the wilds",
 		["human"] = "young one", ["humans"] = "the younger races",
-		["guy"] = "one", ["guys"] = "kin", ["dude"] = "kin",
+		["guy"] = "one", ["guys"] = "you all", ["dude"] = "you",
 		["everyone"] = "all of you", ["kid"] = "youngling", ["kids"] = "younglings",
 		["good"] = "well", ["great"] = "wondrous", ["nice"] = "pleasing",
 		["awesome"] = "wondrous", ["cool"] = "serene", ["bad"] = "ill",
@@ -237,6 +245,11 @@ E.RegisterDialect("NightElf", {
 		--
 		-- "young one" survives as the mapping for *human* further up, where the
 		-- condescension is the point and the listener is known.
-		suffix = { "kin", "as Elune wills", "in time", "kindred", "as the balance demands" },
+		--
+		-- "kin" and "kindred" were here too and are gone for the reason given
+		-- against the word mapping above: a suffix is bolted onto a message with
+		-- no idea who is reading it, so it would call strangers of every race the
+		-- speaker's own people. What is left is not aimed at anyone.
+		suffix = { "as Elune wills", "in time", "as the balance demands" },
 	},
 })

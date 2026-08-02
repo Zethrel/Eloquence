@@ -554,6 +554,33 @@ do
 
 		-- The condescension survives where the listener is known to be younger.
 		contains("a human is still a young one", darn("the human waits", 2, "P-h"), "young one")
+
+		-- Reported: "kin" was the fix for shan'do and is wrong for its own reason.
+		-- It claims shared blood, and Night Elves talk to Dwarves, Draenei and the
+		-- Forsaken. Which term of address fits depends on who is listening, so the
+		-- dialect no longer chooses one -- neither by rewriting the word nor by
+		-- appending a vocative to an arbitrary sentence.
+		for _, strength in ipairs({ 1, 2, 3 }) do
+			local claimed = 0
+			for i = 1, 40 do
+				for _, line in ipairs({ "Farewell friend", "Hello friend", "greetings my ally",
+				                        "I do not know", "the road is long" }) do
+					local out = darn(line, strength, "P-k-" .. i)
+					if out:find("%f[%a]kin%f[%A]") or out:find("%f[%a]kindred%f[%A]") then
+						claimed = claimed + 1
+					end
+				end
+			end
+			eq("no one is called kin at strength " .. strength, claimed, 0)
+		end
+
+		-- And the player's own choice of word survives untouched, whichever they
+		-- picked. These are all things a Night Elf might say; the addon does not
+		-- get a vote.
+		for _, term in ipairs({ "friend", "brother", "sister", "kin", "kindred" }) do
+			contains(term .. " is left as the player typed it",
+				darn("well met " .. term, 3, "P-kt"), term)
+		end
 	end
 
 	-- A replacement must not carry its own sentence punctuation. "Fandu-dath-belore?"

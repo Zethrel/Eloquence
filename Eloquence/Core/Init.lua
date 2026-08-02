@@ -2,7 +2,7 @@
 local ADDON, E = ...
 
 E.ADDON = ADDON
-E.VERSION = "2.7.1"
+E.VERSION = "2.7.2"
 
 -- Single source of truth for attribution: used by /elo status, the options panel
 -- and the TOC. The original Eloquence was a Vanilla-era community addon; this is
