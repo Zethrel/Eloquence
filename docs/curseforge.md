@@ -188,7 +188,9 @@ Install and log in. The defaults are already the Roleplay preset.
 
 Free and open source (MIT): **[github.com/Zethrel/Eloquence](https://github.com/Zethrel/Eloquence)**
 
-The muffle and lisp filters exist because **Sleat -- Argent Dawn (EU)** asked for them. Class flavour exists because **Môrgrith -- Argent Dawn (EU)** pointed out that his death knight had no business invoking the Light, and the Darnassian dialect owes most of its accuracy to **Trustbough -- Argent Dawn (EU)**. Feedback like that is welcome.
+The muffle and lisp filters exist because **Sleat -- Argent Dawn (EU)** asked for them. 
+Class flavour exists because **Môrgrith -- Argent Dawn (EU)** pointed out that his death knight had no business invoking the Light.
+The Darnassian dialect owes most of its accuracy to **Trustbough -- Argent Dawn (EU)**. Feedback like that is welcome.
 
 A revival of the classic Vanilla-era RP chat addon, by **Zethrel -- Argent Dawn EU**.
 If you'd like to support further work: **[ko-fi.com/zethrel](https://ko-fi.com/zethrel)**
