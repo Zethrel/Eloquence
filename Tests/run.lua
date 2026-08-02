@@ -515,6 +515,47 @@ do
 		check("a varied greeting is still deterministic", stable, first)
 	end
 
+	-- Reported: "Farewell friend" became "En'shu falah-nah shan'do", and shan'do
+	-- means teacher. The glossary three lines away glosses it correctly, so the
+	-- dialect was contradicting itself and addressing strangers as their master.
+	do
+		local function darn(text, strength, seed)
+			local ctx = E.Pipeline.NewContext(text, seed, "NightElf")
+			ctx.strength = strength
+			return E.Engine.Apply(E.DIALECTS["NightElf"], text, ctx)
+		end
+
+		for _, strength in ipairs({ 1, 2, 3 }) do
+			local wrong = 0
+			for i = 1, 40 do
+				for _, line in ipairs({ "Farewell friend", "Hello friend", "Thank you my friend" }) do
+					if darn(line, strength, "P-sd-" .. i):find("shan'do") then wrong = wrong + 1 end
+				end
+			end
+			eq("shan'do is never used for friend at strength " .. strength, wrong, 0)
+		end
+
+		-- It remains correct where it belongs.
+		contains("but still means teacher", darn("my teacher", 3, "P-t"), "shan'do")
+		contains("and mentor", darn("my mentor", 3, "P-t"), "shan'do")
+
+		-- Reported: kaldorei measure their lives in millennia, so addressing
+		-- another elf as "young one" is nonsense. A suffix is appended regardless
+		-- of who is listening, so it cannot assume the listener is younger.
+		for _, strength in ipairs({ 1, 2, 3 }) do
+			local young = 0
+			for i = 1, 40 do
+				if darn("I do not know", strength, "P-y-" .. i):find("young one") then
+					young = young + 1
+				end
+			end
+			eq("no one is called young one at random at strength " .. strength, young, 0)
+		end
+
+		-- The condescension survives where the listener is known to be younger.
+		contains("a human is still a young one", darn("the human waits", 2, "P-h"), "young one")
+	end
+
 	-- A replacement must not carry its own sentence punctuation. "Fandu-dath-belore?"
 	-- read correctly alone but produced "Fandu-dath-belore?, stranger?" the moment
 	-- anything followed it, because the source text supplies the punctuation.

@@ -92,7 +92,7 @@ local GLOSSARY_WORDS = {
 
 E.RegisterDialect("NightElf", {
 	name = "Darnassian",
-	desc = "Formal and unhurried, with Darnassian. \"Ishnu-alah, young one.\"",
+	desc = "Formal and unhurried, with Darnassian. \"Ishnu-alah, kin.\"",
 
 	-- Night Elves speak without contractions; that expansion is the backbone.
 	words = E.Engine.Extend(E.Engine.EXPAND_CONTRACTIONS, {
@@ -122,11 +122,22 @@ E.RegisterDialect("NightElf", {
 		["yes"] = "indeed", ["yeah"] = "indeed", ["yep"] = "indeed",
 		["ok"] = "very well", ["okay"] = "very well", ["sure"] = "certain",
 		["no"] = "nay", ["nope"] = "nay", ["maybe"] = "perhaps",
-		["friend"] = "shan'do", ["friends"] = "kin", ["ally"] = "kin",
+		-- TERMS OF ADDRESS
+		-- "friend" was mapped to "shan'do", which the glossary above correctly
+		-- glosses as *teacher* -- so a Night Elf addressed everyone they met as
+		-- their master. Shan'do is a title earned by someone who taught you, not a
+		-- general courtesy.
+		--
+		-- "brother" and "sister" are the natural kaldorei alternatives, but a
+		-- vocative is aimed at whoever is being spoken to and the addon has no idea
+		-- who that is. Guessing would misgender people, so the neutral forms are
+		-- used and the gendered ones are left for the player to type themselves.
+		["friend"] = { "kin", "kindred" },
+		["friends"] = "kin", ["ally"] = "kin", ["allies"] = "kin",
 		["god"] = "Elune", ["goddess"] = "Elune", ["moon"] = "the Mother Moon",
 		["night"] = "the Mother Moon's hour", ["forest"] = "the wilds",
 		["human"] = "young one", ["humans"] = "the younger races",
-		["guy"] = "one", ["guys"] = "friends", ["dude"] = "friend",
+		["guy"] = "one", ["guys"] = "kin", ["dude"] = "kin",
 		["everyone"] = "all of you", ["kid"] = "youngling", ["kids"] = "younglings",
 		["good"] = "well", ["great"] = "wondrous", ["nice"] = "pleasing",
 		["awesome"] = "wondrous", ["cool"] = "serene", ["bad"] = "ill",
@@ -211,6 +222,13 @@ E.RegisterDialect("NightElf", {
 		-- greets or parts. What goes here has to read sensibly in front of an
 		-- arbitrary sentence.
 		prefix = { "By Elune,", "Hear me,", "In truth,", "Consider this,", "Elune's grace," },
-		suffix = { "young one", "as Elune wills", "in time", "shan'do", "as the balance demands" },
+		-- "young one" and "shan'do" were here. Both are wrong as general suffixes:
+		-- a suffix is appended to any message regardless of who is listening, and
+		-- kaldorei measure their lives in millennia, so calling another elf young
+		-- is nonsense. "shan'do" had the same fault as the "friend" mapping above.
+		--
+		-- "young one" survives as the mapping for *human* further up, where the
+		-- condescension is the point and the listener is known.
+		suffix = { "kin", "as Elune wills", "in time", "kindred", "as the balance demands" },
 	},
 })

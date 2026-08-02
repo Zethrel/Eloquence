@@ -320,6 +320,7 @@ for _, word in ipairs({
 	"friend", "friends", "companion", "companions", "comrade", "comrades",
 	"laddie", "lassie", "lad", "lass", "lads", "brother", "sister", "kin",
 	"mate", "associate", "stranger", "youngling", "child", "mon", "bruddah",
+	"kindred",
 	"shan'do", "thero'shan", "young one", "old chap", "one",
 }) do E.VOCATIVES[word] = true end
 
