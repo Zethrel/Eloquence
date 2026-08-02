@@ -204,7 +204,24 @@ local function ApplyPhrases(phrases, pieces)
 	return pieces
 end
 
-local function ApplyWords(words, chunk)
+-- Deterministic choice from a list. Defined here rather than beside the flavour
+-- code because the word pass needs it too, and a local declared later would
+-- resolve to a nil global at the point of use.
+local function Pick(list, rng)
+	return list[floor(rng() * #list) + 1]
+end
+
+-- A replacement may be a list rather than a string, in which case one entry is
+-- chosen per occurrence:
+--
+--   ["hello"] = { "Ishnu-alah", "Elune-adore", "Ishnu-dal-dieb" }
+--
+-- Night Elves have three attested greetings and were only ever using one, which
+-- made every greeting from every Night Elf identical. The choice runs off
+-- ctx.rng, seeded from the message and the speaker, so the same line always
+-- renders the same way -- two people with the addon see the same text, and a
+-- chat frame redraw does not reshuffle it.
+local function ApplyWords(words, chunk, ctx)
 	return (gsub(chunk, "[%a']+", function(token)
 		-- An apostrophe on either end is the author eliding something on purpose
 		-- -- "no'", "th'", "'tis", "aboot tha'". Substituting the letters and
@@ -214,12 +231,12 @@ local function ApplyWords(words, chunk)
 		if token:sub(1, 1) == "'" or token:sub(-1) == "'" then return nil end
 		local replacement = words[lower(token)]
 		if not replacement then return nil end
+		if type(replacement) == "table" then
+			if #replacement == 0 then return nil end
+			replacement = ctx and Pick(replacement, ctx.rng) or replacement[1]
+		end
 		return E.MatchCase(token, replacement)
 	end))
-end
-
-local function Pick(list, rng)
-	return list[floor(rng() * #list) + 1]
 end
 
 -- Terms of address live in Core/Util.lua as E.VOCATIVES, since both this file
@@ -319,7 +336,7 @@ function Engine.Apply(rules, text, ctx, extraProtected)
 			if hasWords then
 				for _, piece in ipairs(pieces) do
 					if not piece.final then
-						piece.text = ApplyWords(compiled.words, piece.text)
+						piece.text = ApplyWords(compiled.words, piece.text, ctx)
 					end
 				end
 			end

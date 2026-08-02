@@ -1,5 +1,5 @@
 -- Darnassian-flavoured: formal, unhurried, few contractions, some Darnassian.
--- "Ishnu'alah." "Asha'falah."
+-- "Ishnu-alah." "Ande'thoras-ethil."
 --
 -- SOURCE
 -- The glossary is drawn from "Darnassian (Canon) Translation", a community
@@ -92,13 +92,32 @@ local GLOSSARY_WORDS = {
 
 E.RegisterDialect("NightElf", {
 	name = "Darnassian",
-	desc = "Formal and unhurried, with Darnassian. \"Ishnu'alah, young one.\"",
+	desc = "Formal and unhurried, with Darnassian. \"Ishnu-alah, young one.\"",
 
 	-- Night Elves speak without contractions; that expansion is the backbone.
 	words = E.Engine.Extend(E.Engine.EXPAND_CONTRACTIONS, {
-		["hello"] = "ishnu'alah", ["hi"] = "ishnu'alah", ["hey"] = "ishnu'alah",
-		["greetings"] = "ishnu'alah", ["goodbye"] = "ande'thoras-ethil",
-		["bye"] = "ande'thoras-ethil", ["farewell"] = "ande'thoras-ethil",
+		-- GREETINGS AND FAREWELLS
+		-- Reported: a farewell was being used as a greeting. "Asha'falah" is a
+		-- goodbye, and it was serving as both the strength-3 "hello" and a flavour
+		-- prefix, so Night Elves opened conversations by saying farewell.
+		--
+		-- Also reported: every Night Elf greeted identically, because one word was
+		-- mapped to one replacement. Darnassian has three attested greetings and
+		-- they are now all used -- the engine picks from a list per occurrence,
+		-- seeded from the message, so the choice varies between lines but never
+		-- between viewers of the same line.
+		--
+		-- Confirmed by Blizzard, so these are used at every strength:
+		--   Ishnu-alah        good fortune to you
+		--   Ishnu-dal-dieb    good fortune to your family
+		--   Elune-adore       Elune be with you
+		--   Ande'thoras-ethil may your troubles be diminished (a FAREWELL)
+		["hello"] = { "Ishnu-alah", "Elune-adore", "Ishnu-dal-dieb" },
+		["hi"] = { "Ishnu-alah", "Elune-adore" },
+		["hey"] = { "Ishnu-alah", "Elune-adore" },
+		["greetings"] = { "Ishnu-alah", "Elune-adore", "Ishnu-dal-dieb" },
+		["goodbye"] = "Ande'thoras-ethil",
+		["bye"] = "Ande'thoras-ethil", ["farewell"] = "Ande'thoras-ethil",
 		["thanks"] = "you have my gratitude", ["luck"] = "Elune's favor",
 		["yes"] = "indeed", ["yeah"] = "indeed", ["yep"] = "indeed",
 		["ok"] = "very well", ["okay"] = "very well", ["sure"] = "certain",
@@ -136,7 +155,20 @@ E.RegisterDialect("NightElf", {
 
 	wordsAt = {
 		[3] = E.Engine.Extend(GLOSSARY_WORDS, {
-			["yeah"] = "it is so", ["hello"] = "asha'falah",
+			["yeah"] = "it is so",
+			-- Attested in Warcraft sources with a known FUNCTION but no confirmed
+			-- translation, so they are held back to strength 3 where the rest of
+			-- the untranslated glossary lives:
+			--   Sael'ah          written as a greeting on the Encrypted Sigil
+			--   En'shu falah-nah Illidan's farewell to Tyrande in Warcraft III
+			--   Asha'falah       a goodbye; the reading is community guesswork
+			-- We do not need the literal meaning to know which end of a
+			-- conversation each belongs at, which is all a greeting has to get right.
+			["hello"] = { "Ishnu-alah", "Elune-adore", "Ishnu-dal-dieb", "Sael'ah" },
+			["greetings"] = { "Ishnu-alah", "Elune-adore", "Ishnu-dal-dieb", "Sael'ah" },
+			["goodbye"] = { "Ande'thoras-ethil", "En'shu falah-nah", "Asha'falah" },
+			["bye"] = { "Ande'thoras-ethil", "Asha'falah" },
+			["farewell"] = { "Ande'thoras-ethil", "En'shu falah-nah", "Asha'falah" },
 			["home"] = "Teldrassil", ["city"] = "Darnassus",
 			["tree"] = "the World Tree's kin", ["stars"] = "Elune's children",
 			["sleep"] = "the Emerald Dream", ["dream"] = "the Emerald Dream",
@@ -167,7 +199,18 @@ E.RegisterDialect("NightElf", {
 
 	flavor = {
 		chance = 0.16,
-		prefix = { "Elune-adore.", "By Elune,", "Ishnu-alah.", "Hear me,", "Asha'falah." },
+		-- Interjections, not salutations.
+		--
+		-- "Asha'falah" was here and is a farewell, which is how a goodbye ended up
+		-- greeting people. Replacing it with a greeting only inverted the problem:
+		-- a prefix is prepended to any message at random, so "Ishnu-alah." landed
+		-- on a goodbye and produced "Ishnu-alah. Ande'thoras-ethil." -- hello,
+		-- goodbye.
+		--
+		-- Salutations belong to the word mapping, which fires when someone actually
+		-- greets or parts. What goes here has to read sensibly in front of an
+		-- arbitrary sentence.
+		prefix = { "By Elune,", "Hear me,", "In truth,", "Consider this,", "Elune's grace," },
 		suffix = { "young one", "as Elune wills", "in time", "shan'do", "as the balance demands" },
 	},
 })

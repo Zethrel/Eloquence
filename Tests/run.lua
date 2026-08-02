@@ -444,6 +444,77 @@ do
 	contains("Fandu-dath-belore for who goes there",
 		dialectOnly("NightElf", "who goes there", 3), "Fandu-dath-belore")
 
+	-- Reported: a farewell was being used as a greeting. "Asha'falah" is a
+	-- goodbye and was serving as both the strength-3 "hello" and a flavour prefix.
+	do
+		local FAREWELLS = { "Ande'thoras%-ethil", "Asha'falah", "En'shu falah%-nah" }
+		local GREETINGS = { "Ishnu%-alah", "Ishnu%-dal%-dieb", "Elune%-adore", "Sael'ah" }
+
+		-- dialectOnly strips the flavour and pins the seed, which is exactly what
+		-- must vary here: the fault was a flavour prefix, and the fix is a list of
+		-- alternatives chosen from the seed.
+		local function darn(text, strength, seed)
+			local ctx = E.Pipeline.NewContext(text, seed, "NightElf")
+			ctx.strength = strength
+			return E.Engine.Apply(E.DIALECTS["NightElf"], text, ctx)
+		end
+
+		local function saysAny(text, list)
+			for _, word in ipairs(list) do
+				if text:find(word) then return true end
+			end
+			return false
+		end
+
+		for _, strength in ipairs({ 1, 2, 3 }) do
+			local greetBad, partBad = 0, 0
+			for i = 1, 40 do
+				local hi = darn("Hello there.", strength, "P-g-" .. i)
+				local bye = darn("Goodbye.", strength, "P-b-" .. i)
+				if saysAny(hi, FAREWELLS) then greetBad = greetBad + 1 end
+				-- A greeting prefixed to a farewell is the same fault inverted:
+				-- "Ishnu-alah. Ande'thoras-ethil." reads as "hello, goodbye".
+				if saysAny(bye, GREETINGS) then partBad = partBad + 1 end
+			end
+			eq("a greeting never renders as a farewell at strength " .. strength, greetBad, 0)
+			eq("nor a farewell as a greeting at strength " .. strength, partBad, 0)
+		end
+	end
+
+	-- Also reported: every Night Elf greeted identically. Darnassian has three
+	-- attested greetings and only one was used.
+	do
+		local function darn(text, seed)
+			local ctx = E.Pipeline.NewContext(text, seed, "NightElf")
+			ctx.strength = 3
+			return E.Engine.Apply(E.DIALECTS["NightElf"], text, ctx)
+		end
+		local greetings, farewells = {}, {}
+		for i = 1, 60 do
+			greetings[darn("Hello.", "P-v-" .. i)] = true
+			farewells[darn("Goodbye.", "P-w-" .. i)] = true
+		end
+		local function count(t) local n = 0 for _ in pairs(t) do n = n + 1 end return n end
+		check("greetings vary between messages", count(greetings) > 2, count(greetings) .. " forms")
+		check("and so do farewells", count(farewells) > 2, count(farewells) .. " forms")
+	end
+
+	-- The same message from the same speaker must always render identically, or
+	-- two players with the addon would disagree about what was said.
+	do
+		local function darn()
+			local ctx = E.Pipeline.NewContext("Hello there.", "P-stable", "NightElf")
+			ctx.strength = 3
+			return E.Engine.Apply(E.DIALECTS["NightElf"], "Hello there.", ctx)
+		end
+		local first = darn()
+		local stable = true
+		for _ = 1, 10 do
+			if darn() ~= first then stable = false end
+		end
+		check("a varied greeting is still deterministic", stable, first)
+	end
+
 	-- A replacement must not carry its own sentence punctuation. "Fandu-dath-belore?"
 	-- read correctly alone but produced "Fandu-dath-belore?, stranger?" the moment
 	-- anything followed it, because the source text supplies the punctuation.
