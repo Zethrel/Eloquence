@@ -24,7 +24,13 @@ local PROTECTED = {
 	"|T.-|t",                     -- inline textures
 	"|A.-|a",                     -- inline atlases
 	"|K.-|k",                     -- Battle.net presence names
-	"|c%x%x%x%x%x%x%x%x",         -- colour open
+	"|c%x%x%x%x%x%x%x%x",         -- colour open, the classic AARRGGBB form
+	-- Colour open, the named form the client now uses for item links:
+	-- "|cnIQ3:" for item quality 3, "|cnGREEN_FONT_COLOR:" and so on. This was
+	-- missing, so a shift-clicked item link went out with the escape mangled --
+	-- the Muffle filter turned "|cnIQ3:" into "|gnIG3:" and the client rejected
+	-- the whole message with "Invalid escape code in chat message".
+	"|cn[^:|]*:",
 	"|r",                         -- colour close
 	"|n",                         -- newline escape
 	"||",                         -- literal pipe
@@ -301,6 +307,28 @@ end
 -- True when `text` contains a quoted span at all.
 function E.HasQuotedSpeech(text)
 	return NextQuote(text, 1) ~= nil
+end
+
+--------------------------------------------------------------------------------
+-- Escape integrity
+--------------------------------------------------------------------------------
+
+-- PROTECTED enumerates the escape sequences we know about, which means it falls
+-- behind whenever the client gains a new one. It did: "|cnIQ3:" arrived with
+-- modern item links, went unprotected, and the Muffle filter rewrote it to
+-- "|gnIG3:" -- whereupon the client refused the whole message with "Invalid
+-- escape code in chat message" and the player's link never sent.
+--
+-- Enumerating better is not a fix on its own, since the next escape will do the
+-- same. So the invariant is checked directly instead: whatever the filters do,
+-- the sequence of escape markers must come out identical. Every escape begins
+-- with a pipe and one character, and that pair is what the client parses, so
+-- comparing them catches a mangled "|c" -> "|g" without needing to know what
+-- "|c" means.
+function E.EscapeSignature(text)
+	local marks = {}
+	for mark in text:gmatch("|.") do marks[#marks + 1] = mark end
+	return table.concat(marks)
 end
 
 --------------------------------------------------------------------------------

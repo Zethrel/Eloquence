@@ -161,6 +161,17 @@ function Pipeline.Run(text, guid, race, language, direction, channel)
 	-- of address to the same line. See E.CollapseVocatives.
 	text = E.CollapseVocatives(text)
 
+	-- Last line of defence. No filter may alter an escape sequence -- that is the
+	-- entire purpose of the protected-span machinery -- so if one has, the
+	-- transform is abandoned rather than shipped. Getting this wrong on the
+	-- outgoing path costs the player their whole message, since the client
+	-- rejects text whose escapes do not parse.
+	if E.EscapeSignature(text) ~= E.EscapeSignature(original) then
+		Pipeline.escapesRescued = (Pipeline.escapesRescued or 0) + 1
+		E.Debug("escape sequence altered, sending the original:", original, "->", text)
+		return original
+	end
+
 	if text ~= original then
 		E.Debug(original, "->", text)
 	end

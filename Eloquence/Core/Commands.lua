@@ -199,6 +199,16 @@ local function Doctor()
 			warn, secrets))
 	end
 
+	-- Escapes the guard had to rescue. Never expected to be non-zero; if it is,
+	-- the client has an escape sequence PROTECTED does not know about.
+	local rescued = E.Pipeline.escapesRescued or 0
+	if rescued > 0 then
+		print(format("  %s   %d message(s) sent unfiltered to keep an escape sequence intact",
+			warn, rescued))
+		print("       |cff808080this means a link or colour code the filters do not recognise; "
+			.. "worth reporting|r")
+	end
+
 	-- Self-only filters need the outgoing path to reach anyone at all.
 	local stranded = {}
 	for _, key in ipairs(E.MODULE_ORDER) do

@@ -648,6 +648,59 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Escape sequences survive the filters")
+--------------------------------------------------------------------------------
+
+do
+	-- Reported from live: shift-clicking an item into /say produced
+	--   SendChatMessage(): Invalid escape code in chat message
+	-- with the text "|gnIG3:[Spellbreaker's Phoenixblade]". Modern item links
+	-- carry a named colour escape, "|cnIQ3:", which PROTECTED did not know about,
+	-- so the Muffle filter rewrote c to g and Q to G inside it and the client
+	-- refused the whole message.
+	local MODERN = "|cnIQ3:|Hitem:44731::::::::70:::::|h[Spellbreaker's Phoenixblade]|h|r"
+	local LEGACY = "|cff0070dd|Hitem:44731::::::::70:::::|h[Spellbreaker's Phoenixblade]|h|r"
+
+	for _, link in ipairs({ MODERN, LEGACY }) do
+		local plain = {}
+		for _, seg in ipairs(E.Tokenize(link, true)) do
+			if not seg.protected then plain[#plain + 1] = seg.text end
+		end
+		eq("the whole link is protected: " .. link:sub(1, 12), table.concat(plain), "")
+	end
+
+	-- End to end, with the filter that actually broke it.
+	do
+		onlyModules("muffle")
+		E.db.modules.muffle.enabled = true
+		E.db.modules.muffle.strength = 3
+		for _, link in ipairs({ MODERN, LEGACY }) do
+			local out = E.Pipeline.Run("look at this " .. link, nil, "Human", nil, "outgoing", "say")
+			contains("the escape survives muffling", out, link)
+		end
+		-- And the surrounding words are still muffled, or the protection would be
+		-- indistinguishable from the filter not running.
+		local out = E.Pipeline.Run("look at this " .. MODERN, nil, "Human", nil, "outgoing", "say")
+		excludes("while the prose around it is not", out, "look at this ")
+	end
+
+	-- The guard itself. A filter that mangles an escape must have its work
+	-- discarded rather than shipped, whatever the cause.
+	do
+		eq("an unchanged signature compares equal",
+			E.EscapeSignature(MODERN), E.EscapeSignature(MODERN))
+		check("a mangled colour escape is detected",
+			E.EscapeSignature("|cnIQ3:x") ~= E.EscapeSignature("|gnIG3:x"))
+		check("and a dropped escape too",
+			E.EscapeSignature(MODERN) ~= E.EscapeSignature("[Spellbreaker's Phoenixblade]"))
+		eq("a literal pipe is one marker, not two",
+			E.EscapeSignature("a || b"), "||")
+	end
+
+	onlyModules("dialect")
+end
+
+--------------------------------------------------------------------------------
 section("Personal speech effects: lisp and muffle")
 --------------------------------------------------------------------------------
 
