@@ -1574,6 +1574,87 @@ do
 		end
 	end
 
+	-- No dialect greets a message that is already a greeting.
+	--
+	-- Reported for Darnassian first ("Ishnu-alah. Ande'thoras-ethil." -- hello,
+	-- goodbye) and fixed there by emptying that one prefix pool of salutations.
+	-- Orcish then turned out to do it too: "Well met, sister" -> "Throm-Ka,
+	-- Throm-Ka, sister". A flavour prefix lands on any message at all and has no
+	-- idea the message already opens with a greeting, so this is structural and
+	-- is checked across the roster, classes included.
+	do
+		local GREETINGS = {
+			"Well met, friend", "Hello there", "Hi there", "Greetings",
+			"Farewell friend", "Goodbye", "Bye for now", "Take care",
+			"Good day to you", "Safe travels",
+		}
+		-- The seeds have to survive translation to be worth testing. If a dialect
+		-- renders "hello" as something the salutation set does not know about,
+		-- the guard cannot fire and this test would pass for the wrong reason --
+		-- so that is checked first, on the raw word rather than a whole sentence.
+		for _, race in ipairs(PLAYABLE) do
+			for _, word in ipairs({ "hello", "goodbye" }) do
+				-- dialectOnly suppresses the flavour, which would otherwise put a
+				-- prefix in front of the very thing being measured.
+				local said = dialectOnly(race, word, 3)
+				check(race .. "'s \"" .. word .. "\" is a known salutation",
+					E.OpensWithSalutation(said), said)
+			end
+		end
+
+		for _, race in ipairs(PLAYABLE) do
+			local worst, sample = 0, nil
+			for _, strength in ipairs({ 1, 2, 3 }) do
+				for i = 1, 30 do
+					for _, line in ipairs(GREETINGS) do
+						local ctx = E.Pipeline.NewContext(line, "P-s-" .. race .. i, race)
+						ctx.strength = strength
+						local out = E.Engine.Apply(E.DIALECTS[race], line, ctx)
+						local n = E.CountLeadingSalutations(out)
+						if n > worst then worst, sample = n, line .. " -> " .. out end
+					end
+				end
+			end
+			check(race .. " never greets twice", worst <= 1, sample)
+		end
+
+		-- The class layer has its own prefix pools, and the Death Knight's opens
+		-- with "Suffer well." -- a farewell, which in front of a greeting is the
+		-- same fault wearing different clothes.
+		for token in pairs(E.CLASSES) do
+			local worst, sample = 0, nil
+			for _, race in ipairs({ "Human", "Orc", "NightElf", "Dwarf" }) do
+				local dialect = E.Class.Apply(E.DIALECTS[race], token)
+				for i = 1, 30 do
+					for _, line in ipairs(GREETINGS) do
+						local ctx = E.Pipeline.NewContext(line, "P-sc-" .. token .. i, race)
+						ctx.strength = 3
+						local out = E.Engine.Apply(dialect, line, ctx)
+						local n = E.CountLeadingSalutations(out)
+						if n > worst then worst, sample = n, race .. ": " .. line .. " -> " .. out end
+					end
+				end
+			end
+			check(token .. " never greets twice", worst <= 1, sample)
+		end
+
+		-- And the guard must not have simply switched the prefixes off. A message
+		-- that is not a greeting still gets them, greetings included.
+		do
+			local seen = {}
+			for i = 1, 200 do
+				local ctx = E.Pipeline.NewContext("the road is long", "P-sp-" .. i, "Orc")
+				ctx.strength = 3
+				seen[E.Engine.Apply(E.DIALECTS["Orc"], "the road is long", ctx)] = true
+			end
+			local greeted = false
+			for line in pairs(seen) do
+				if line:find("Throm%-Ka") or line:find("Lok'tar") then greeted = true end
+			end
+			check("an ordinary message can still be greeted", greeted)
+		end
+	end
+
 	-- Derived variants must not share their parent's table, or they would share
 	-- its compilation cache too.
 	check("derived variants are distinct tables",

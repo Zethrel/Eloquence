@@ -379,6 +379,198 @@ function E.CollapseVocatives(text)
 end
 
 --------------------------------------------------------------------------------
+-- Salutations
+--------------------------------------------------------------------------------
+
+-- The vocative problem again, at the other end of the sentence.
+--
+-- A flavour prefix is prepended to any message at all, and several of them are
+-- greetings. Landing one on a message that already opens with a greeting gives
+-- "Throm-Ka, Throm-Ka, sister"; landing one on a farewell gives the Darnassian
+-- case that was reported first -- "Ishnu-alah. Ande'thoras-ethil.", hello and
+-- goodbye in the same breath.
+--
+-- That was fixed for Darnassian by taking the salutations out of its prefix
+-- pool, which works but only for the one dialect and costs it the flavour. The
+-- prefix is not wrong; it is only wrong *there*. So it is skipped in place
+-- instead, and every dialect keeps its greetings for the messages that are not
+-- already one.
+--
+-- The set cannot be a hand-written list. It would need "Lok'tar ogar",
+-- "Ande'thoras-ethil", "Al diel shala", "swim wit da tide", "Suffer well" and
+-- everything else 26 dialects and 4 classes translate a greeting into, and the
+-- next dialect added would silently not be covered. So it is harvested from the
+-- rule sets themselves: whatever a dialect renders "hello" or "goodbye" as, by
+-- definition, is that dialect's salutation.
+
+-- The English words a salutation can be written as. Single words are looked up
+-- in the `words` tables; the multi-word ones are matched against phrase
+-- patterns, where "%f[%a]well met%f[%A]" contains "well met" literally.
+local SALUTATION_SEEDS = {
+	"hello", "hi", "hey", "greetings", "welcome", "hail", "salutations",
+	"goodbye", "bye", "farewell", "godspeed", "cheerio",
+	"well met", "good day", "good morrow", "good morning", "good evening",
+	"good afternoon", "good night", "ho there", "so long", "take care",
+	"safe travels", "safe journey", "until next time", "be well", "fair winds",
+}
+
+local SEED_SET = {}
+for _, seed in ipairs(SALUTATION_SEEDS) do SEED_SET[seed] = true end
+
+-- Lowercase, drop anything that is not part of a word, collapse the spacing.
+-- "Throm-Ka," and "throm-ka" have to compare equal, and so do "Ishnu-alah." and
+-- "Ishnu-alah".
+local function Normalize(text)
+	if type(text) ~= "string" then return nil end
+	local out = lower(text):gsub("[^%a'%- ]", " "):gsub("%s+", " ")
+	out = out:gsub("^ ", ""):gsub(" $", "")
+	if out == "" then return nil end
+	return out
+end
+
+-- first word -> list of full salutations starting with it, so the check is a
+-- table lookup plus a compare against a handful of candidates rather than a
+-- scan of every salutation in the game.
+local byFirstWord = nil
+
+-- Whatever a dialect renders "hello" or "farewell" as is a salutation by
+-- construction. "hi" and "hey" are different: they are casual enough that
+-- dialects render them as bare interjections -- Dwarven "hi" -> "och", Dark Iron
+-- "hey" -> "oi" and "hi" -> "whit". Those are question words and grunts as often
+-- as they are hellos, and taking them at face value makes the Dark Iron prefix
+-- "Och, whit noo." read as two stacked greetings.
+--
+-- So renderings of the casual keys have to earn their place by being
+-- distinctive: more than one word, or carrying the apostrophe or hyphen the
+-- canon languages use, or simply too long to be a common word. Renderings of the
+-- formal keys are taken as given -- which is what keeps Kul Tiran "ahoy" and
+-- Goblin "heya", both four letters and both unmistakably greetings.
+local CASUAL_KEYS = { hi = true, hey = true }
+local function IsDistinctive(norm)
+	return norm:find(" ", 1, true) ~= nil
+		or norm:find("['%-]") ~= nil
+		or #norm >= 5
+end
+
+local function Add(phrase, requireDistinctive)
+	local norm = Normalize(phrase)
+	if not norm then return end
+	if requireDistinctive and not IsDistinctive(norm) then return end
+	local first = norm:match("^[^ ]+")
+	local bucket = byFirstWord[first]
+	if not bucket then
+		bucket = {}
+		byFirstWord[first] = bucket
+	end
+	for _, existing in ipairs(bucket) do
+		if existing == norm then return end
+	end
+	bucket[#bucket + 1] = norm
+end
+
+local function Harvest(rules)
+	if type(rules) ~= "table" then return end
+
+	local function fromWords(words)
+		if type(words) ~= "table" then return end
+		for key, value in pairs(words) do
+			local name = type(key) == "string" and lower(key) or nil
+			if name and SEED_SET[name] then
+				local guard = CASUAL_KEYS[name] == true
+				if type(value) == "table" then
+					for _, one in ipairs(value) do Add(one, guard) end
+				else
+					Add(value, guard)
+				end
+			end
+		end
+	end
+
+	local function fromPhrases(list)
+		if type(list) ~= "table" then return end
+		for _, entry in ipairs(list) do
+			local pattern, replacement = entry[1], entry[2]
+			if type(pattern) == "string" and type(replacement) == "string" then
+				for _, seed in ipairs(SALUTATION_SEEDS) do
+					-- Only the multi-word seeds. "hi" would match the pattern for
+					-- "this", and a dialect's rendering of "this" is not a greeting.
+					if seed:find(" ", 1, true) and pattern:find(seed, 1, true) then
+						Add(replacement, true)
+						break
+					end
+				end
+			end
+		end
+	end
+
+	fromWords(rules.words)
+	if type(rules.wordsAt) == "table" then
+		for _, extra in pairs(rules.wordsAt) do fromWords(extra) end
+	end
+	fromPhrases(rules.phrases)
+	if type(rules.phrasesAt) == "table" then
+		for _, extra in pairs(rules.phrasesAt) do fromPhrases(extra) end
+	end
+end
+
+-- Built on first use rather than at load: dialects and classes register across
+-- a dozen files, and this has to see all of them.
+local function Build()
+	byFirstWord = {}
+	for _, seed in ipairs(SALUTATION_SEEDS) do Add(seed) end
+	for _, dialect in pairs(E.DIALECTS or {}) do Harvest(dialect) end
+	for _, class in pairs(E.CLASSES or {}) do Harvest(class) end
+	-- Longest first, so "lok'tar ogar" is matched whole rather than as
+	-- "lok'tar" with a stray "ogar" left behind.
+	for _, bucket in pairs(byFirstWord) do
+		table.sort(bucket, function(a, b) return #a > #b end)
+	end
+end
+
+-- The longest salutation `norm` opens with, or nil. `norm` must already be
+-- normalised.
+local function MatchHead(norm)
+	local bucket = byFirstWord[norm:match("^[^ ]+")]
+	if not bucket then return nil end
+	for _, salutation in ipairs(bucket) do
+		if norm == salutation or sub(norm, 1, #salutation + 1) == salutation .. " " then
+			return salutation
+		end
+	end
+	return nil
+end
+
+-- Discard the harvested set. Only needed by the tests, which register dialects
+-- of their own after the first lookup has already happened.
+function E.ResetSalutations()
+	byFirstWord = nil
+end
+
+-- How many salutations `text` opens with, back to back. One is a greeting; two
+-- is the bug -- "Throm-Ka, Throm-Ka, sister", or a greeting in front of a
+-- farewell. The count is what the tests assert on.
+function E.CountLeadingSalutations(text)
+	if type(text) ~= "string" then return 0 end
+	local norm = Normalize(text)
+	if not norm then return 0 end
+	if not byFirstWord then Build() end
+
+	local count = 0
+	while true do
+		local matched = MatchHead(norm)
+		if not matched then return count end
+		count = count + 1
+		if #norm <= #matched then return count end
+		norm = sub(norm, #matched + 2)
+	end
+end
+
+-- Does `text` begin with a greeting or a farewell, in any dialect?
+function E.OpensWithSalutation(text)
+	return E.CountLeadingSalutations(text) > 0
+end
+
+--------------------------------------------------------------------------------
 -- Run-length collapsing
 --------------------------------------------------------------------------------
 

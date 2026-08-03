@@ -2,7 +2,7 @@
 ## Title: Eloquence
 ## Notes: Linguistic chat filters and racial dialects. A revival of the classic RP chat addon.
 ## Author: Zethrel - Argent Dawn EU
-## Version: 2.7.3
+## Version: 2.7.4
 ## SavedVariables: EloquenceDB
 ## IconTexture: Interface\Icons\INV_Scroll_03
 ## Category-enUS: Roleplay

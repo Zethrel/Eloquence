@@ -251,7 +251,18 @@ end
 local function ApplyFlavor(flavor, text, ctx)
 	local chance = (flavor.chance or 0.12) * (ctx.strength / 2)
 	if flavor.prefix and #flavor.prefix > 0 and ctx.rng() < chance then
-		text = Pick(flavor.prefix, ctx.rng) .. " " .. text
+		-- Pick unconditionally, even when the prefix is then dropped: the draw
+		-- has to consume the same amount of randomness either way, or the same
+		-- message would render differently for two people reading it.
+		local prefix = Pick(flavor.prefix, ctx.rng)
+		-- Several prefixes are greetings. On a message that already opens with
+		-- one they double it -- "Throm-Ka, Throm-Ka, sister" -- and on one that
+		-- opens with a farewell they contradict it, which is the reported
+		-- "Ishnu-alah. Ande'thoras-ethil." A greeting is only wrong there, so it
+		-- is skipped rather than removed from the pool.
+		if not (E.OpensWithSalutation(prefix) and E.OpensWithSalutation(text)) then
+			text = prefix .. " " .. text
+		end
 	end
 	if flavor.suffix and #flavor.suffix > 0 and ctx.rng() < chance then
 		-- Slide the interjection in ahead of any trailing punctuation so we get
@@ -266,7 +277,11 @@ local function ApplyFlavor(flavor, text, ctx)
 		-- And when it already ends on a different term of address, which is the
 		-- "companion, friend" case above.
 		local stacked = E.VOCATIVES[lowerSuffix] and EndsWithVocative(body)
-		if not repeated and not stacked then
+		-- The greeting case, at the other end: Human renders "goodbye" as
+		-- "king's honor" and also carries it as a suffix, so "Safe travels"
+		-- became "Safe travels, king's honor" -- two farewells in four words.
+		local greeted = E.OpensWithSalutation(suffix) and E.OpensWithSalutation(body)
+		if not repeated and not stacked and not greeted then
 			text = body .. ", " .. suffix .. tail
 		end
 	end
