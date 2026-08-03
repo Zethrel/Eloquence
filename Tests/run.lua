@@ -2351,6 +2351,54 @@ do
 	-- Registration happens before the widgets are built, so a build failure
 	-- still leaves something to open.
 	check("the options method was recorded", E.optionsMethod ~= nil, tostring(E.optionsMethod))
+
+	-- A setting only a slash command can reach is invisible to anyone who does
+	-- not already know it is there. The class layer shipped that way: it changed
+	-- what people said, it was on by default, and the only way to turn it off was
+	-- "/elo class off" -- which you had to be told about.
+	--
+	-- Each entry pairs a checkbox with the setting it writes, so the test fails
+	-- both when the control goes missing and when it is wired to nothing.
+	do
+		local WIRED = {
+			{ "Adjust speech for the speaker's class",
+				function() return E.db.dialect.classFlavor end,
+				function(v) E.db.dialect.classFlavor = v end },
+			{ "Also apply a dialect to my own messages",
+				function() return E.db.dialect.applyToSelf end,
+				function(v) E.db.dialect.applyToSelf = v end },
+			{ "Rewrite my outgoing chat",
+				function() return E.db.outgoing.enabled end,
+				function(v) E.db.outgoing.enabled = v end },
+		}
+
+		local byLabel = {}
+		for _, cb in ipairs(E.optionsChecks or {}) do byLabel[cb.label] = cb end
+
+		for _, entry in ipairs(WIRED) do
+			local label, get, set = entry[1], entry[2], entry[3]
+			local cb = byLabel[label]
+			check("the panel offers \"" .. label .. "\"", cb ~= nil)
+			if cb then
+				-- Refresh reads the setting; the OnClick writes it. Drive both,
+				-- which is what a player does, and put the setting back after.
+				local saved = get()
+
+				set(false)
+				cb:Refresh()
+				eq(label .. " reflects a false setting", cb:GetChecked() and true or false, false)
+				set(true)
+				cb:Refresh()
+				eq(label .. " reflects a true setting", cb:GetChecked() and true or false, true)
+
+				cb:SetChecked(false)
+				cb:GetScript("OnClick")(cb)
+				eq(label .. " writes the setting when clicked", get() and true or false, false)
+
+				set(saved)
+			end
+		end
+	end
 end
 
 --------------------------------------------------------------------------------

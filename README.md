@@ -148,7 +148,8 @@ speaking broad Scots.
 Four layers so far — **Death Knight**, **Warlock** and **Demon Hunter**, which all
 have reason to avoid the Light, and **Paladin**, which leans into it. Every other
 class speaks purely as its race does, because a warrior says nothing a race would
-not. `/elo class off` disables the whole layer.
+not. **Adjust speech for the speaker's class** in the options disables the whole
+layer, as does `/elo class off`.
 
 The class token comes back from `GetPlayerInfoByGUID` alongside the race, so
 incoming costs no extra call.

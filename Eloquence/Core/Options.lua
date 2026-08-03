@@ -71,7 +71,13 @@ local function MakeCheck(column, label, tooltip, get, set, width)
 	end
 
 	cb.Refresh = function(self) self:SetChecked(get() and true or false) end
+	cb.label = label
 	allCheckboxes[#allCheckboxes + 1] = cb
+	-- Exposed so the tests can assert a setting is actually reachable here.
+	-- A setting that only a slash command can reach is invisible to anyone who
+	-- does not already know it exists, which is how the class layer shipped
+	-- switchable but undiscoverable.
+	E.optionsChecks = allCheckboxes
 	return cb
 end
 
@@ -256,6 +262,18 @@ local function Build()
 	end
 	if #races % 3 ~= 0 then Advance(26) end
 	Advance(10)
+
+	-- The class layer has been switchable since it was added, but only from the
+	-- command line -- which is no use to anyone who does not already know it is
+	-- there. It is on by default and it changes what people say, so it belongs
+	-- where the rest of the dialect settings are.
+	MakeCheck(1, "Adjust speech for the speaker's class",
+		"A death knight stops invoking the Light and a warlock speaks in bargains, "
+		.. "on top of their race's accent. Untick to have everyone speak purely as "
+		.. "their race does.",
+		function() return E.db.dialect.classFlavor ~= false end,
+		function(v) E.db.dialect.classFlavor = v end, 340)
+	Advance(26)
 
 	MakeCheck(1, "Also apply a dialect to my own messages",
 		"Shows your own chat in your race's dialect, without changing what you send.",
