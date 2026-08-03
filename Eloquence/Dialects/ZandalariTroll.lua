@@ -19,15 +19,20 @@ E.RegisterDialect("ZandalariTroll", {
 
 	words = E.Engine.Extend(E.Engine.EXPAND_CONTRACTIONS, {
 		["hello"] = "greetings", ["hi"] = "greetings", ["hey"] = "you there",
-		["greetings"] = "greetings, kin", ["goodbye"] = "walk with the loa",
+		-- "greetings" carried the claim inside the greeting itself, so it survived
+		-- the removal of the "friends" -> "kin" mapping below.
+		["greetings"] = "greetings", ["goodbye"] = "walk with the loa",
 		["bye"] = "walk with the loa", ["farewell"] = "walk with the loa",
 		["thanks"] = "you have my gratitude", ["please"] = "if it pleases you",
 		["sorry"] = "I regret it",
 		["yes"] = "it is so", ["yeah"] = "it is so", ["yep"] = "it is so",
 		["ok"] = "very well", ["okay"] = "very well", ["sure"] = "certain",
 		["no"] = "it is not so", ["nope"] = "it is not so", ["maybe"] = "perhaps",
-		["friend"] = "ally", ["friends"] = "kin", ["ally"] = "ally",
-		["guy"] = "one", ["guys"] = "kin", ["dude"] = "you",
+		-- "friends" and "guys" both became "kin". The Zandalari of all people
+		-- draw a hard line between their own blood and everyone else, so calling
+		-- a room full of outsiders kin is backwards for them specifically.
+		["friend"] = "ally", ["ally"] = "ally",
+		["guy"] = "one", ["guys"] = "you all", ["dude"] = "you",
 		["god"] = "loa", ["gods"] = "loa", ["spirit"] = "loa",
 		["spirits"] = "loa", ["luck"] = "loa's favor",
 		["magic"] = "loa's gift", ["priest"] = "prelate", ["prophet"] = "prophet",
@@ -89,7 +94,9 @@ E.RegisterDialect("ZandalariTroll", {
 		chance = 0.16,
 		prefix = { "Hear me.", "Behold.", "The loa are watching.", "Rise, then.", "Listen well," },
 		suffix = {
-			"as the loa will it", "child of Zandalar", "so it has always been",
+			-- "child of Zandalar" was here, which told the listener both their age
+			-- and their nation. It was landing on Night Elves and Draenei.
+			"as the loa will it", "so the empire teaches", "so it has always been",
 			"this is our way", "do not forget it",
 		},
 	},

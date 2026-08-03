@@ -30,7 +30,9 @@ E.RegisterDialect("Tauren", {
 		["sun"] = "An'she", ["moon"] = "Mu'sha", ["earth"] = "the Earth Mother",
 		["nature"] = "the Earth Mother's gift", ["luck"] = "the Earth Mother's blessing",
 		["land"] = "these plains", ["home"] = "Mulgore", ["city"] = "Thunder Bluff",
-		["friend"] = "friend", ["friends"] = "kin", ["human"] = "little one",
+		-- "friends" -> "kin" claimed shared blood with whoever was listening, who
+		-- is very often not a Tauren. Left as written.
+		["friend"] = "friend", ["human"] = "little one",
 		["humans"] = "the little ones", ["gnome"] = "very little one",
 		["guy"] = "one", ["guys"] = "friends", ["kid"] = "calf", ["kids"] = "calves",
 		["good"] = "well", ["great"] = "worthy", ["nice"] = "kind",
@@ -83,9 +85,14 @@ E.RegisterDialect("Tauren", {
 
 	flavor = {
 		chance = 0.16,
-		prefix = { "Hmm.", "Be at peace.", "Listen, young one,", "An'she guide you.", "Patience." },
+		-- "young one" was in both pools. Tauren elders do talk that way, but a
+		-- prefix and a suffix land on every message regardless of who sent it or
+		-- who is reading, so a young Tauren was calling ancient kaldorei young.
+		-- It survives as the mapping for "human" and "gnome" above, where the
+		-- player named the listener and the condescension is deliberate.
+		prefix = { "Hmm.", "Be at peace.", "Listen well,", "An'she guide you.", "Patience." },
 		suffix = {
-			"young one", "as the Earth Mother wills", "in its own season",
+			"as the Earth Mother wills", "in its own season",
 			"walk with the Earth Mother", "this I have learned",
 		},
 	},

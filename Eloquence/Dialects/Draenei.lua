@@ -46,7 +46,9 @@ E.RegisterDialect("Draenei", {
 		["demon"] = "the Legion's spawn", ["demons"] = "the Legion's spawn",
 		["evil"] = "the Legion's taint", ["fel"] = "that corruption",
 		["home"] = "Argus, that we lost", ["friend"] = "friend",
-		["friends"] = "kindred", ["human"] = "young friend",
+		-- "friends" -> "kindred" claimed shared blood with the listener. A people
+		-- who lost their world to the Legion do not hand that word out lightly.
+		["human"] = "young friend",
 		["humans"] = "the young races", ["guy"] = "one", ["guys"] = "friends",
 		["good"] = "well", ["great"] = "most fortunate", ["nice"] = "kind",
 		["bad"] = "unfortunate", ["awful"] = "grievous", ["awesome"] = "blessed",

@@ -1480,6 +1480,100 @@ do
 		"unaccounted for: " .. table.concat(unaccounted, ", "))
 	eq("one dialect per playable race", total, #PLAYABLE)
 
+	-- No dialect may decide something about the listener that it cannot see.
+	--
+	-- Reported for Darnassian ("friend" -> "kin") and then for Orcish ("friend"
+	-- -> "brother"), but the fault is structural rather than per-dialect, so it
+	-- is checked across the whole roster: a term of address is aimed at whoever
+	-- is being spoken to, and a flavour suffix is bolted onto any message at all.
+	-- Neither knows who is reading. Asserting a stranger's gender, their age, or
+	-- that they are the speaker's own blood is a guess the addon has no business
+	-- making, and it will be wrong for a large share of the realm.
+	--
+	-- The player may of course still type any of these themselves -- that is the
+	-- point. None of the inputs below contain one.
+	do
+		local CLAIMS = {
+			-- Gender.
+			"brother", "brothers", "bruddah", "bruddahs", "sister", "sisters",
+			"sistah", "gentlemen", "chap", "fellow", "fellows", "madam", "sir",
+			-- Kinship or nation: the speaker's own people, which a stranger is not.
+			"kin", "kindred", "flight", "caravan", "child of Zandalar",
+			-- Age.
+			"young one", "youngling",
+		}
+
+		-- Dwarves are exempt by decision rather than by oversight: "laddie" and
+		-- "lassie" are theirs, and a people who address an archmage as "laddie"
+		-- are not being careless about forms of address -- that IS the form of
+		-- address. Kul Tiran "lad"/"lass" is only reached by writing "man" or
+		-- "woman", so the player has already said which. Troll "mon" is kept for
+		-- the reason recorded in that file.
+		-- Vulpera keep "the caravan endures", which describes the speaker's own
+		-- people rather than the listener's -- the distinction the whole check
+		-- turns on. "my family is safe" -> "the caravan is safe" is a Vulpera
+		-- saying something true about themselves.
+		local EXEMPT = {
+			Dwarf = { "lad", "lads", "laddie", "lass", "lassie" },
+			DarkIronDwarf = { "lad", "lads", "laddie", "lass", "lassie" },
+			Vulpera = { "caravan" },
+		}
+
+		local NEUTRAL = {
+			"Farewell friend", "Hello friend", "Thank you my friend",
+			"greetings my ally", "well met", "I do not know",
+			"the road is long", "hello everyone", "good luck out there",
+			"hey guys", "what is the plan", "we should go now",
+		}
+
+		for _, race in ipairs(PLAYABLE) do
+			local exempt = {}
+			for _, word in ipairs(EXEMPT[race] or {}) do exempt[word] = true end
+
+			local found = {}
+			for _, strength in ipairs({ 1, 2, 3 }) do
+				for i = 1, 25 do
+					for _, line in ipairs(NEUTRAL) do
+						local ctx = E.Pipeline.NewContext(line, "P-cl-" .. race .. i, race)
+						ctx.strength = strength
+						local out = E.Engine.Apply(E.DIALECTS[race], line, ctx):lower()
+						for _, claim in ipairs(CLAIMS) do
+							if not exempt[claim] and out:find("%f[%a]" .. claim .. "%f[%A]") then
+								found[claim] = line .. " -> " .. out
+							end
+						end
+					end
+				end
+			end
+
+			local names = {}
+			for claim in pairs(found) do names[#names + 1] = claim end
+			table.sort(names)
+			check(race .. " claims nothing about the listener", #names == 0,
+				#names > 0 and (names[1] .. ": " .. found[names[1]]) or nil)
+		end
+
+		-- The other half: whatever the player did type survives. These are all
+		-- things a character might genuinely say, and which one fits is theirs
+		-- to decide -- so no dialect may swap one for another.
+		-- Dwarves are left out on purpose: "friend" -> "laddie" is theirs to keep,
+		-- so they are the one dialect that may still choose for the player.
+		for _, race in ipairs({ "Orc", "NightElf", "Tauren", "Troll", "Worgen" }) do
+			for _, term in ipairs({ "brother", "sister", "friend" }) do
+				local line = "well met " .. term
+				local ctx = E.Pipeline.NewContext(line, "P-keep", race)
+				ctx.strength = 3
+				local out = E.Engine.Apply(E.DIALECTS[race], line, ctx):lower()
+				-- Dwarven and Troll accents respell rather than replace, so the
+				-- test accepts their spelling of the same word.
+				local ok = out:find(term, 1, true)
+					or (race == "Troll" and out:find(term:sub(1, 4), 1, true))
+					or (race == "Dwarf" and out:find(term:sub(1, 4), 1, true))
+				check(race .. " keeps the player's \"" .. term .. "\"", ok ~= nil, out)
+			end
+		end
+	end
+
 	-- Derived variants must not share their parent's table, or they would share
 	-- its compilation cache too.
 	check("derived variants are distinct tables",

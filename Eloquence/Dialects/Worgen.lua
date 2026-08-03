@@ -18,8 +18,13 @@ E.RegisterDialect("Worgen", {
 		["yes"] = "quite", ["yeah"] = "quite so", ["yep"] = "quite",
 		["ok"] = "very good", ["okay"] = "very good", ["sure"] = "certain",
 		["no"] = "certainly not", ["nope"] = "certainly not", ["maybe"] = "possibly",
-		["friend"] = "old chap", ["friends"] = "good fellows", ["guy"] = "fellow",
-		["guys"] = "gentlemen", ["dude"] = "old chap", ["man"] = "fellow",
+		-- "old chap", "good fellows" and "gentlemen" all addressed the listener as
+		-- a man. Gilnean manners are the point of this dialect, and addressing a
+		-- lady as "old chap" is precisely the sort of thing they would not do.
+		["friends"] = "good people", ["guy"] = "fellow",
+		["guys"] = "good people", ["dude"] = "friend", ["man"] = "fellow",
+		-- These are safe: the word being replaced already states the gender, so
+		-- the player has told us. "madam" is only reached by writing "lady".
 		["woman"] = "madam", ["lady"] = "madam",
 		["good"] = "splendid", ["great"] = "capital", ["nice"] = "rather pleasant",
 		["awesome"] = "positively splendid", ["cool"] = "rather good",
@@ -80,6 +85,8 @@ E.RegisterDialect("Worgen", {
 	flavor = {
 		chance = 0.18,
 		prefix = { "I say,", "Right.", "Good grief.", "*grrr*", "Steady on," },
-		suffix = { "old chap", "quite so", "if you please", "*low growl*", "and no mistake" },
+		-- "old chap" was here. A suffix is appended to any message with no idea
+		-- who is reading it, so it addressed the whole realm as a gentleman.
+		suffix = { "I should think", "quite so", "if you please", "*low growl*", "and no mistake" },
 	},
 })

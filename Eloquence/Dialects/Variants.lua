@@ -194,9 +194,10 @@ E.RegisterDialect("HighmountainTauren", Derive(E.DIALECTS["Tauren"], {
 
 	flavor = {
 		chance = 0.16,
-		prefix = { "Hmm.", "Be at peace.", "Listen, young one,", "The peaks remember." },
+		-- "young one" removed from both pools, for the reason recorded in Tauren.
+		prefix = { "Hmm.", "Be at peace.", "Listen well,", "The peaks remember." },
 		suffix = {
-			"as the mountain endures", "by Huln's example", "young one",
+			"as the mountain endures", "by Huln's example",
 			"the peaks have taught us this", "in its own season",
 		},
 	},

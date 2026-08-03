@@ -81,7 +81,7 @@ Turn the Dialectician up to **heavy** and six races start salting their speech w
 | **Zandali** | Troll, Zandalari Troll | *ma'da*, *dazdooga*, *juju*, *loa* |
 
 ```
-Well met, friend.          ->  Throm-Ka, brother.
+Well met, friend.          ->  Throm-Ka, friend.
 Safe travels.              ->  Al diel shala.
 The spirits are angry.     ->  De loa be angry.
 ```
@@ -156,6 +156,7 @@ On a roleplaying realm, how somebody spells things is a choice. Eloquence never 
 
 - **Names** -- `Zethrrel` and `Zettle` both survive exactly as written
 - **Deliberate accents** -- `no'` never becomes `nae'`
+- **How you address people** -- `friend`, `brother`, `sister`, `kin` all stay as you typed them. The addon cannot see who you are talking to, so it does not guess their gender, their age or whether they are your kin. (Dwarves are the exception, and unrepentant about it.)
 - **OOC asides** -- anything in parentheses, `(single)` or `(( double ))`
 - **Register tags** -- `[low]`, `[Thalassian]`, `[to the crowd]`
 - **Links, colour codes and URLs** -- passed through intact

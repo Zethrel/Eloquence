@@ -19,9 +19,13 @@ E.RegisterDialect("Dracthyr", {
 		["sorry"] = "that was my error",
 		["yes"] = "indeed", ["yeah"] = "indeed", ["ok"] = "very well",
 		["okay"] = "very well", ["sure"] = "certain", ["maybe"] = "perhaps",
-		["friend"] = "ally", ["friends"] = "my flight", ["family"] = "my flight",
+		-- "friends" and "guys" became "flight", enlisting whoever was listening
+		-- into a dracthyr flight they are not part of. The rest stay: "my family",
+		-- "our group", "the party" are the speaker describing their own people,
+		-- which is exactly what a flight is.
+		["friend"] = "ally", ["family"] = "my flight",
 		["group"] = "flight", ["team"] = "flight", ["party"] = "flight",
-		["guy"] = "one", ["guys"] = "flight", ["dude"] = "you",
+		["guy"] = "one", ["guys"] = "you all", ["dude"] = "you",
 		["god"] = "the Aspects", ["gods"] = "the Aspects", ["leader"] = "the Aspect",
 		["boss"] = "the Aspect", ["maker"] = "our maker",
 		["home"] = "the Forbidden Reach", ["city"] = "Valdrakken",

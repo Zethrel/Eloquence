@@ -87,8 +87,10 @@ E.RegisterDialect("KulTiran", {
 		chance = 0.18,
 		prefix = { "Aye,", "Right,", "Listen here,", "By the tides,", "Well now," },
 		suffix = {
+			-- "lad" was here and addressed everyone as a man. "shipmate" does the
+			-- same job and does not care who is on the other end of the rope.
 			"aye", "shipmate", "mark me words", "and that's the truth of it",
-			"sure as the tide", "lad",
+			"sure as the tide", "steady now",
 		},
 	},
 })

@@ -20,7 +20,10 @@ E.RegisterDialect("Vulpera", {
 		["yes"] = "yes yes", ["yeah"] = "yes yes", ["yep"] = "yes yes",
 		["ok"] = "good, good", ["okay"] = "good, good", ["sure"] = "certain",
 		["no"] = "no no", ["nope"] = "no no", ["maybe"] = "who can say",
-		["friend"] = "friend", ["friends"] = "the caravan", ["family"] = "the caravan",
+		-- "friends" -> "the caravan" made strangers members of the speaker's own
+		-- caravan. "family", "group", "team" and "home" keep it, because those are
+		-- the speaker talking about their own -- which for a Vulpera is the point.
+		["friend"] = "friend", ["family"] = "the caravan",
 		["group"] = "the caravan", ["team"] = "the caravan", ["people"] = "the pack",
 		["home"] = "the caravan", ["guy"] = "friend", ["guys"] = "friends",
 		["stranger"] = "one we do not know yet",

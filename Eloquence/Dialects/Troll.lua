@@ -58,8 +58,15 @@ E.RegisterDialect("Troll", {
 		["no"] = "nah", ["nope"] = "nah mon", ["never"] = "neva",
 		["hello"] = "hey dere", ["hi"] = "hey", ["hey"] = "hey", ["greetings"] = "tas'dingo",
 		["goodbye"] = "swim wit da tide", ["bye"] = "later mon",
-		["friend"] = "mon", ["friends"] = "bruddahs", ["man"] = "mon", ["men"] = "mon",
-		["sir"] = "mon", ["guy"] = "mon", ["guys"] = "bruddahs", ["dude"] = "mon",
+		-- "friends" and "guys" both became "bruddahs", which addresses a whole
+		-- group as men. "folk" carries the accent without the claim.
+		--
+		-- "mon" is kept deliberately. It is the signature of the accent, and in
+		-- the patois it is drawn from it works as a particle attached to anything
+		-- said to anyone rather than as a statement about who is listening.
+		["friend"] = "mon", ["friends"] = "folk", ["man"] = "mon", ["men"] = "mon",
+		["sir"] = "mon", ["guy"] = "mon", ["guys"] = "folk", ["dude"] = "mon",
+		-- Reached only by writing "brother" or "sister", so the player chose.
 		["brother"] = "bruddah", ["sister"] = "sistah", ["mother"] = "mudda",
 		["father"] = "fadda", ["family"] = "fambly", ["people"] = "folk",
 		["good"] = "irie", ["great"] = "wicked irie", ["nice"] = "sweet",
@@ -130,6 +137,8 @@ E.RegisterDialect("Troll", {
 	flavor = {
 		chance = 0.2,
 		prefix = { "Ya know,", "Hey mon,", "Listen up,", "Tas'dingo!", "Ah,", "Mon," },
-		suffix = { "mon", "ya know", "fo' real", "irie", "so it be", "bruddah" },
+		-- "bruddah" was here and is gone: a suffix lands on any message regardless
+		-- of who reads it. "mon" stays, for the reason given above the words.
+		suffix = { "mon", "ya know", "fo' real", "irie", "so it be", "no lie" },
 	},
 })

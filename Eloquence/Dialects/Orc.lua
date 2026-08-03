@@ -68,7 +68,14 @@ E.RegisterDialect("Orc", {
 		["greetings"] = "lok'tar", ["goodbye"] = "lok'tar ogar", ["bye"] = "lok'tar ogar",
 		["farewell"] = "lok'tar ogar", ["thanks"] = "you have my honor",
 		["please"] = "", ["sorry"] = "I do not apologize",
-		["friend"] = "brother", ["friends"] = "brothers", ["ally"] = "blood brother",
+		-- "friend" -> "brother", "friends" -> "brothers" and "ally" -> "blood
+		-- brother" were all here. Orcs genuinely do address each other that way,
+		-- but a term of address is aimed at whoever is being spoken to and the
+		-- addon cannot see who that is -- so it was calling every woman on the
+		-- realm "brother". Guessing "sister" instead would be wrong just as often.
+		--
+		-- "brother" and "sister" stay available; the player types the one that
+		-- fits. The word they wrote is left exactly as written.
 		["human"] = "pinkskin", ["humans"] = "pinkskins",
 		["gnome"] = "tiny one", ["gnomes"] = "tiny ones",
 		["dwarf"] = "stunted one", ["elf"] = "pointed-ear", ["elves"] = "pointed-ears",
