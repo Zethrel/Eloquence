@@ -13,9 +13,16 @@ name: Interface check
 
 on:
   schedule:
-    # Wednesdays, 09:00 UTC. Retail patches land Tuesday in the US and reach EU
-    # overnight, so by Wednesday morning both regions report the new build.
-    - cron: '0 9 * * 3'
+    # Daily, 09:00 UTC. Retail patches land Tuesday in the US and reach EU
+    # overnight, so a Wednesday morning check is the one that matters -- but this
+    # ran weekly to begin with, and weekly has a bad failure mode: the version
+    # endpoint being unreachable is a soft failure by design, so one bad morning
+    # pushed detection a full seven days. Daily costs about twenty seconds and
+    # makes a transient failure self-healing.
+    #
+    # It cannot become noisy: the issue step matches on the interface number, so
+    # a patch gets one issue however many times the check sees it.
+    - cron: '0 9 * * *'
   workflow_dispatch:
 
 permissions:
@@ -54,6 +61,40 @@ jobs:
               exit "$status"
               ;;
           esac
+
+      # A green tick on this job used to mean nothing in particular. "Checked,
+      # up to date", "could not reach the endpoint, compared nothing" and "the
+      # issue step was skipped" all looked identical from the runs list, and the
+      # first live run failed in exactly that way -- the check never reached
+      # Blizzard, the issue step skipped for want of a drift flag, and the run
+      # was green. Only reading the log showed it.
+      #
+      # So every outcome now says what it concluded, on the run's own summary.
+      - name: Report the conclusion
+        if: always()
+        env:
+          SKIPPED: ${{ steps.check.outputs.skipped }}
+          DRIFT: ${{ steps.check.outputs.drift }}
+          LIVE_PATCH: ${{ steps.check.outputs.live_patch }}
+          LIVE_INTERFACE: ${{ steps.check.outputs.live_interface }}
+          TOC_INTERFACE: ${{ steps.check.outputs.toc_interface }}
+        run: |
+          if [ "$SKIPPED" = "true" ]; then
+            echo "### Nothing compared" >> "$GITHUB_STEP_SUMMARY"
+            echo "No version source could be reached this run. This is not a" >> "$GITHUB_STEP_SUMMARY"
+            echo "statement that the TOC is current -- the check did not happen." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$DRIFT" = "true" ]; then
+            echo "### Patch drift" >> "$GITHUB_STEP_SUMMARY"
+            echo "Live client is **$LIVE_PATCH** (\`$LIVE_INTERFACE\`); the TOC declares \`$TOC_INTERFACE\`." >> "$GITHUB_STEP_SUMMARY"
+            echo "An issue has been opened. The TOC is not bumped automatically." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$DRIFT" = "false" ]; then
+            echo "### Up to date" >> "$GITHUB_STEP_SUMMARY"
+            echo "TOC \`$TOC_INTERFACE\` matches live **$LIVE_PATCH**." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Inconclusive" >> "$GITHUB_STEP_SUMMARY"
+            echo "The check produced no verdict, which should not happen." >> "$GITHUB_STEP_SUMMARY"
+            echo "The endpoint format has most likely changed. Read the log." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Open an issue when the patch has moved on
         if: steps.check.outputs.skipped != 'true' && steps.check.outputs.drift == 'true'
