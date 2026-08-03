@@ -46,7 +46,11 @@ Eloquence reads the race of whoever is talking and renders their chat to match. 
 
 By default Eloquence changes **only what you read**. Nothing you type is altered, and nobody else is affected.
 
-Want your own speech to go out in dialect so others see it too? One opt-in setting.
+Your own speech is a single three-way setting -- **Show my chat in dialect to**:
+
+- **Off** -- your own lines appear exactly as you typed them.
+- **Only me** -- you see your character's accent in your own chat frame. Nothing you send changes and nobody else is affected.
+- **Everyone** -- your messages are rewritten before they are sent, so everyone reads them in dialect.
 
 ---
 
@@ -126,7 +130,7 @@ Yes, stand aside friend.   lisp   ->  Yeth, thtand athide friend.
 
 Both are off by default and apply only to what **you** send -- never to what you read. You cannot see what anyone else is wearing, and lisping a stranger's chat would be putting words in their mouth.
 
-Because they change what you send, they need **outgoing rewriting** switched on. Turning one on without it says so rather than quietly doing nothing.
+Because they change what you send, they need **Show my chat in dialect to** set to **Everyone**. Turning one on without that says so rather than quietly doing nothing.
 
 Muffling keeps each word's shape and length. Collapsing everything to *mmmph* would be more realistic and impossible to roleplay against.
 
@@ -171,7 +175,7 @@ The Spell Book stays off other people's chat unless you ask for it, because corr
 - **Whispers are left alone too.** In-character whispering is conventionally done in `/say` opened with a `[low]` tag, so nearby characters get the chance to overhear. That leaves the whisper channel itself carrying out-of-character talk.
 - **Chat bubbles** above characters' heads are rewritten as well, not just the chat frame.
 - **NPCs are not dialected** unless you ask -- the Immersive preset turns that on.
-- **Nothing you type is changed.** Sending in dialect is a separate opt-in.
+- **Nothing you type is changed** unless you ask for it. **Show my chat in dialect to** is one setting with three states: Off, Only me, Everyone.
 
 Four presets to start from: **Roleplay** (the default), **Immersive**, **Clean chat** and **Off**.
 

@@ -89,7 +89,7 @@ TOC — see [Keeping up with patches](#keeping-up-with-patches).
 /elo lisp on|off          your own speech is lisped
 /elo muffle on|off        your own speech is muffled, as through a helm
 /elo preset [name]        apply a bundle of settings, or list them
-/elo out on|off           rewrite your outgoing chat
+/elo out on|me|off        show your chat in dialect to everyone / only you / nobody
 /elo reset                restore defaults
 ```
 
@@ -256,6 +256,17 @@ people saying the same thing both get the same correct replacement.
 dialect. This genuinely changes what you send, so it is opt-in, per channel, and
 nothing is hooked until you enable it.
 
+**Show my chat in dialect to** is one three-way control — *Off*, *Only me*,
+*Everyone* — rather than the two checkboxes it used to be. Those were
+`outgoing.enabled` and `dialect.applyToSelf`, and they looked like duplicates
+because they nearly were: `Chat.ShouldFilterSelf` refuses to dialect your own
+incoming copy while outgoing rewriting is on, since that copy was already
+rewritten on the way out. Four tick combinations, three behaviours, and a fourth
+that silently ignored a box the player had ticked. Both settings survive
+unchanged in the saved variables; `E.GetSelfMode` and `E.SetSelfMode` in
+`Core/Init.lua` map between them and the three states, and a test asserts the
+mapping round-trips.
+
 Patch 12.0.0 rearchitected the chat send path. Overriding the global
 `SendChatMessage` — the technique addons used for twenty years — **no longer sees
 anything typed into the chat box**, and `ChatEdit_SendText` is now only a
@@ -282,8 +293,8 @@ Three consequences worth knowing:
   deliberately declines — otherwise the fallback would transform the very
   messages it just decided to leave alone.
 
-If you want your own messages in dialect but only for yourself, leave outgoing
-off and turn on "Also apply a dialect to my own messages" instead.
+If you want your own messages in dialect but only for yourself, set **Show my
+chat in dialect to** to *Only me* (`/elo out me`). Nothing you send changes.
 
 ---
 

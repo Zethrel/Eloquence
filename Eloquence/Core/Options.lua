@@ -44,6 +44,16 @@ local function MakeNote(text)
 	return fs
 end
 
+-- A caption sitting on the same row as a control, rather than the full-width
+-- paragraph MakeNote produces.
+local function MakeLabel(column, text)
+	local fs = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	fs:SetPoint("TOPLEFT", COL[column], y - 4)
+	fs:SetJustifyH("LEFT")
+	fs:SetText(text)
+	return fs
+end
+
 local allCheckboxes = {}
 
 local function MakeCheck(column, label, tooltip, get, set, width)
@@ -106,30 +116,47 @@ local function MakeCheckGroup(column, label, tooltip, store)
 		end, 340)
 end
 
--- A three-state cycling button beats a slider here: fewer template
+-- A cycling button beats a slider or a dropdown here: fewer template
 -- dependencies, and "Light / Medium / Heavy" is clearer than "2".
-local function MakeStrengthButton(column, get, set)
+local function MakeCycleButton(column, opts)
+	local labels, get, set = opts.labels, opts.get, opts.set
 	local btn = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
-	btn:SetSize(90, 22)
+	btn:SetSize(opts.width or 90, 22)
 	btn:SetPoint("TOPLEFT", COL[column], y + 1)
 	btn:SetScript("OnClick", function(self)
-		local current = get() or 2
-		set(current % 3 + 1)
+		local current = get() or opts.default or 1
+		set(current % #labels + 1)
 		self:Refresh()
+		if opts.onSet then opts.onSet() end
 	end)
 	btn:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-		GameTooltip:SetText("Filter strength", 1, 1, 1)
-		GameTooltip:AddLine("How aggressively this filter rewrites text. Click to cycle.", nil, nil, nil, true)
+		GameTooltip:SetText(opts.title, 1, 1, 1)
+		GameTooltip:AddLine(opts.tooltip, nil, nil, nil, true)
 		GameTooltip:Show()
 	end)
 	btn:SetScript("OnLeave", GameTooltip_Hide)
 	btn.Refresh = function(self)
-		self:SetText(STRENGTH_LABELS[get() or 2] or "Medium")
+		self:SetText(labels[get() or opts.default or 1] or labels[1])
 	end
+	btn.label = opts.label or opts.title
 	allCheckboxes[#allCheckboxes + 1] = btn
+	E.optionsChecks = allCheckboxes
 	return btn
 end
+
+local function MakeStrengthButton(column, get, set)
+	return MakeCycleButton(column, {
+		labels = STRENGTH_LABELS,
+		default = 2,
+		get = get,
+		set = set,
+		title = "Filter strength",
+		tooltip = "How aggressively this filter rewrites text. Click to cycle.",
+	})
+end
+
+local SELF_MODES, GetSelfMode, SetSelfMode = E.SELF_MODES, E.GetSelfMode, E.SetSelfMode
 
 --------------------------------------------------------------------------------
 -- Layout
@@ -224,17 +251,35 @@ local function Build()
 		function(v) E.db.incoming.bubbles = v end, 320)
 	Advance(30)
 
-	-- Outgoing ----------------------------------------------------------------
-	MakeTitle("Your own outgoing chat", "GameFontNormal")
-	MakeNote("|cffff8080Changes what you actually send.|r Other players see the dialect, and messages that "
-		.. "grow past the 255-character limit are split across several lines.")
-	MakeCheck(1, "Rewrite my outgoing chat", "Applies your race's dialect to messages you send.",
-		function() return E.db.outgoing.enabled end,
-		function(v)
-			E.db.outgoing.enabled = v
-			if v then E.Chat.EnsureOutgoingHook() end
-		end, 260)
+	-- Your own chat -------------------------------------------------------------
+	MakeTitle("My own chat", "GameFontNormal")
+	MakeNote("Whether your own speech is dialected, and who sees it. "
+		.. "|cffff8080\"Everyone\" changes what you actually send|r -- other players see "
+		.. "the dialect, and messages that grow past the 255-character limit are "
+		.. "split across several lines. \"Only me\" changes nothing you send; it just "
+		.. "shows your own lines to you the way your character sounds.")
+	MakeLabel(1, "Show my chat in dialect to")
+	MakeCycleButton(2, {
+		labels = SELF_MODES,
+		default = 1,
+		width = 110,
+		label = "Show my chat in dialect to",
+		get = GetSelfMode,
+		set = SetSelfMode,
+		onSet = function()
+			if E.db.outgoing.enabled then E.Chat.EnsureOutgoingHook() end
+			Refresh()
+		end,
+		title = "Who sees your dialect",
+		tooltip = "Off -- your own chat is shown to you as you typed it.\n\n"
+			.. "Only me -- your lines appear in your race's dialect in your own chat "
+			.. "frame. Nothing you send changes and nobody else is affected.\n\n"
+			.. "Everyone -- your messages are rewritten before they are sent, so "
+			.. "everyone reads them in dialect. Click to cycle.",
+	})
 	Advance(30)
+
+	MakeNote("Which of your own channels that applies to:")
 
 	-- NPCs have no outgoing side, so this is the in-character list minus that one.
 	local outgoing = {}
@@ -299,11 +344,7 @@ local function Build()
 		function(v) E.db.dialect.classFlavor = v end, 340)
 	Advance(26)
 
-	MakeCheck(1, "Also apply a dialect to my own messages",
-		"Shows your own chat in your race's dialect, without changing what you send.",
-		function() return E.db.dialect.applyToSelf end,
-		function(v) E.db.dialect.applyToSelf = v end, 340)
-	Advance(40)
+	Advance(14)
 
 	content:SetHeight(-y + 20)
 end

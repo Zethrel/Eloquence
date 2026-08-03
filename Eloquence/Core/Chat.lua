@@ -31,6 +31,11 @@ local function ShouldFilterSelf(guid)
 	return db.dialect.applyToSelf
 end
 
+-- Exposed because this is the reason the panel offers one three-way control
+-- rather than two checkboxes: "Everyone" makes "Only me" a no-op, so a UI that
+-- let you tick both would be offering a state that does not exist.
+Chat.ShouldFilterSelf = ShouldFilterSelf
+
 -- Counters and a last-message record, so /elo spy and /elo doctor can show what
 -- the filter actually saw. Without this, "incoming does not work" is
 -- indistinguishable from "the filter is never called".

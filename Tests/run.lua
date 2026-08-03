@@ -2364,12 +2364,9 @@ do
 			{ "Adjust speech for the speaker's class",
 				function() return E.db.dialect.classFlavor end,
 				function(v) E.db.dialect.classFlavor = v end },
-			{ "Also apply a dialect to my own messages",
-				function() return E.db.dialect.applyToSelf end,
-				function(v) E.db.dialect.applyToSelf = v end },
-			{ "Rewrite my outgoing chat",
-				function() return E.db.outgoing.enabled end,
-				function(v) E.db.outgoing.enabled = v end },
+			{ "Also rewrite chat bubbles",
+				function() return E.db.incoming.bubbles end,
+				function(v) E.db.incoming.bubbles = v end },
 		}
 
 		local byLabel = {}
@@ -2398,6 +2395,79 @@ do
 				set(saved)
 			end
 		end
+	end
+
+	-- Who sees your own dialect used to be two checkboxes: "Rewrite my outgoing
+	-- chat" and, four sections away, "Also apply a dialect to my own messages".
+	-- They read as two ways of saying one thing. They were not the same, but they
+	-- were not independent either -- Chat.ShouldFilterSelf refuses to dialect your
+	-- own incoming copy while outgoing rewriting is on, because that copy was
+	-- already rewritten on the way out. Four tick combinations, three behaviours,
+	-- and one combination that silently ignored a box the player had ticked.
+	--
+	-- Now one three-way control. The invariant that makes that safe is that the
+	-- mode round-trips through the two settings it is standing in for.
+	do
+		local saved = { E.db.outgoing.enabled, E.db.dialect.applyToSelf }
+
+		for mode = 1, #E.SELF_MODES do
+			E.SetSelfMode(mode)
+			eq("mode " .. E.SELF_MODES[mode] .. " round-trips", E.GetSelfMode(), mode)
+		end
+
+		-- And each mode means what it says, in the terms the rest of the addon
+		-- reads rather than the ones the panel writes.
+		E.SetSelfMode(1)
+		check("Off sends nothing rewritten", not E.db.outgoing.enabled)
+		check("and does not dialect your own copy either", not E.db.dialect.applyToSelf)
+
+		E.SetSelfMode(2)
+		check("Only me leaves what you send alone", not E.db.outgoing.enabled)
+		check("but dialects your own copy", E.db.dialect.applyToSelf == true)
+
+		E.SetSelfMode(3)
+		check("Everyone rewrites what you send", E.db.outgoing.enabled == true)
+		-- The self path must stand down here or the message would be dialected
+		-- twice: once on the way out, once on the copy that comes back.
+		check("the self path is exposed to be checked at all",
+			type(E.Chat.ShouldFilterSelf) == "function")
+		E.db.dialect.applyToSelf = true  -- even asked for explicitly
+		check("and it stands down to avoid a double pass",
+			E.Chat.ShouldFilterSelf("Player-1-TEST") == false)
+		-- ...and does its job once outgoing is off again.
+		E.SetSelfMode(2)
+		check("but does dialect your own copy in Only me",
+			E.Chat.ShouldFilterSelf("Player-1-TEST") == true)
+		E.SetSelfMode(3)
+
+		-- Reachable from the panel, and cycling lands on every mode.
+		local byLabel = {}
+		for _, cb in ipairs(E.optionsChecks or {}) do byLabel[cb.label] = cb end
+		local cycle = byLabel["Show my chat in dialect to"]
+		check("the panel offers the control", cycle ~= nil)
+		if cycle then
+			local seen = {}
+			E.SetSelfMode(1)
+			for _ = 1, #E.SELF_MODES do
+				cycle:GetScript("OnClick")(cycle)
+				seen[E.GetSelfMode()] = true
+			end
+			local count = 0
+			for _ in pairs(seen) do count = count + 1 end
+			eq("cycling reaches every mode", count, #E.SELF_MODES)
+		end
+
+		-- The command has to reach all three too, or the middle setting is once
+		-- again panel-only -- which is exactly what it was before this change.
+		-- "on" and "off" keep their old meanings so existing macros still work.
+		for _, case in ipairs({ { "off", 1 }, { "me", 2 }, { "on", 3 },
+		                        { "self", 2 }, { "1", 3 }, { "0", 1 } }) do
+			handler("out " .. case[1])
+			eq("/elo out " .. case[1] .. " selects " .. E.SELF_MODES[case[2]],
+				E.GetSelfMode(), case[2])
+		end
+
+		E.db.outgoing.enabled, E.db.dialect.applyToSelf = saved[1], saved[2]
 	end
 
 	-- The channel grid offers the roleplaying channels one at a time and the

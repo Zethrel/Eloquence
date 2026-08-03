@@ -49,8 +49,9 @@ local function Status()
 	local race = E.Race.Player()
 	local dialect = race and E.DIALECTS[E.Race.Canonical(race)]
 	E.Print(format("  your dialect: %s", dialect and dialect.name or "|cff808080none|r"))
-	E.Print(format("  outgoing rewriting: %s",
-		E.db.outgoing.enabled and "|cffff8040ON|r" or "|cff808080off|r"))
+	E.Print(format("  my chat in dialect to: %s",
+		E.db.outgoing.enabled and "|cffff8040everyone|r"
+			or (E.db.dialect.applyToSelf and "|cffffff80only me|r" or "|cff808080nobody|r")))
 end
 
 -- Run the pipeline against arbitrary text, optionally forcing a dialect, and
@@ -131,8 +132,10 @@ local function Doctor()
 			print("       |cffffcc00This client rearchitected chat sending; typed messages will")
 			print("       not be transformed. EventRegistry callback unavailable.|r")
 		end
+	elseif E.db.dialect.applyToSelf then
+		print("  " .. ok .. "   your own chat is dialected for you only -- nothing you send changes")
 	else
-		print("  " .. warn .. "   outgoing rewriting is off (only you see dialects)")
+		print("  " .. warn .. "   your own chat is not dialected (\"Show my chat in dialect to\" is Off)")
 	end
 
 	-- 2b. Can the options panel actually open?
@@ -293,7 +296,7 @@ local function Help()
 	print("  |cffffff80/elo race <race> on|off|r   mute or unmute one race's dialect")
 	print("  |cffffff80/elo races|r                list every dialect")
 	print("  |cffffff80/elo preset [name]|r        apply a bundle of settings, or list them")
-	print("  |cffffff80/elo out on|off|r           rewrite your outgoing chat")
+	print("  |cffffff80/elo out on|me|off|r        show your chat in dialect to everyone / only you / nobody")
 	print("  |cffffff80/elo reset|r                restore defaults")
 end
 
@@ -384,15 +387,28 @@ local function Handler(input)
 	end
 
 	if command == "out" or command == "outgoing" then
-		local value = Boolean(lower(rest))
-		if value == nil then
-			E.Print("usage: /elo out on|off")
-			return
+		-- Three states, matching the panel. "on" and "off" still mean what they
+		-- always did, so anything anyone has in a macro keeps working; "me" is
+		-- the middle setting, which previously had no command at all.
+		local want = lower(rest)
+		local mode
+		if want == "me" or want == "self" or want == "onlyme" then mode = 2
+		else
+			local value = Boolean(want)
+			if value == nil then
+				E.Print("usage: /elo out on|me|off  (everyone / only me / nobody)")
+				return
+			end
+			mode = value and 3 or 1
 		end
-		E.db.outgoing.enabled = value
-		if value then E.Chat.EnsureOutgoingHook() end
+
+		E.SetSelfMode(mode)
+		if E.db.outgoing.enabled then E.Chat.EnsureOutgoingHook() end
 		if E.RefreshOptions then E.RefreshOptions() end
-		E.Print("outgoing rewriting " .. (value and "|cffff8040on|r -- other players will see your dialect." or "off."))
+		E.Print("your chat is shown in dialect to " .. (
+			mode == 3 and "|cffff8040everyone|r -- this changes what you actually send."
+			or mode == 2 and "|cffffff80you only|r -- nothing you send changes."
+			or "|cff808080nobody|r."))
 		return
 	end
 

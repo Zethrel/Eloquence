@@ -2,7 +2,7 @@
 local ADDON, E = ...
 
 E.ADDON = ADDON
-E.VERSION = "2.8.0"
+E.VERSION = "2.8.1"
 
 -- Single source of truth for attribution: used by /elo status, the options panel
 -- and the TOC. The original Eloquence was a Vanilla-era community addon; this is
@@ -161,6 +161,42 @@ E.DEFAULTS = {
 		classColors   = false,
 	},
 }
+
+-- Who sees your own chat in dialect.
+--
+-- Two settings back this, and the panel used to expose both: "Rewrite my
+-- outgoing chat" (outgoing.enabled) and, four sections further down, "Also apply
+-- a dialect to my own messages" (dialect.applyToSelf). They read as two ways of
+-- saying one thing. They are not -- one changes what leaves your client, the
+-- other only changes what you see -- but they are not independent either:
+-- Chat.ShouldFilterSelf refuses to dialect your own incoming copy while outgoing
+-- rewriting is on, because that copy was already rewritten on the way out.
+--
+-- So the four tick combinations only ever produced three behaviours, and the
+-- fourth silently ignored a box the player had ticked. Three behaviours want one
+-- three-way control.
+--
+-- These live here rather than in the options panel because they are the meaning
+-- of the settings rather than a way of drawing them: the slash command needs the
+-- same three states, and Init loads first.
+E.SELF_MODES = { "Off", "Only me", "Everyone" }
+
+function E.GetSelfMode()
+	if E.db.outgoing.enabled then return 3 end
+	if E.db.dialect.applyToSelf then return 2 end
+	return 1
+end
+
+function E.SetSelfMode(mode)
+	if mode == 3 then
+		-- applyToSelf is left as it was: it is inert while this is on, and
+		-- preserving it means dropping back to "Only me" remembers the choice.
+		E.db.outgoing.enabled = true
+	else
+		E.db.outgoing.enabled = false
+		E.db.dialect.applyToSelf = (mode == 2)
+	end
+end
 
 local function CopyDefaults(src, dst)
 	if type(dst) ~= "table" then dst = {} end
