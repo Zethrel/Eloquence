@@ -81,6 +81,31 @@ local function MakeCheck(column, label, tooltip, get, set, width)
 	return cb
 end
 
+local OOC_TOOLTIP = "Party, raid, instance, officer and public channels, together. "
+	.. "These are coordination rather than roleplay almost all of the time, so they "
+	.. "are one switch rather than five. The Clean chat preset still turns them on, "
+	.. "which is where spelling and acronym expansion earn their keep."
+
+-- One checkbox standing in for several settings that are always wanted together.
+-- Reads as ticked if any of them is on, so a setting cannot be left switched on
+-- behind a box that shows empty -- and unticking clears the lot.
+--
+-- `store` is a function rather than the table itself: the panel is built once,
+-- and every other control here reaches through E.db on each access rather than
+-- closing over whatever table happened to exist at build time.
+local function MakeCheckGroup(column, label, tooltip, store)
+	return MakeCheck(column, label, tooltip,
+		function()
+			for _, key in ipairs(E.OOC_CHANNELS) do
+				if store()[key] then return true end
+			end
+			return false
+		end,
+		function(v)
+			for _, key in ipairs(E.OOC_CHANNELS) do store()[key] = v end
+		end, 340)
+end
+
 -- A three-state cycling button beats a slider here: fewer template
 -- dependencies, and "Light / Medium / Heavy" is clearer than "2".
 local function MakeStrengthButton(column, get, set)
@@ -173,13 +198,7 @@ local function Build()
 
 	-- Incoming ----------------------------------------------------------------
 	MakeTitle("Filter which incoming chat", "GameFontNormal")
-	local incoming = {
-		{ "say", "Say" }, { "yell", "Yell" }, { "emote", "Emotes" },
-		{ "whisper", "Whispers" }, { "party", "Party" }, { "raid", "Raid" },
-		{ "instance", "Instance" }, { "guild", "Guild" }, { "officer", "Officer" },
-		{ "channel", "Channels" }, { "monster", "NPCs" },
-	}
-	for i, entry in ipairs(incoming) do
+	for i, entry in ipairs(E.IC_CHANNELS) do
 		local key = entry[1]
 		local column = ((i - 1) % 3) + 1
 		MakeCheck(column, entry[2], nil,
@@ -187,7 +206,10 @@ local function Build()
 			function(v) E.db.incoming[key] = v end, 130)
 		if column == 3 then Advance(26) end
 	end
-	if #incoming % 3 ~= 0 then Advance(26) end
+	if #E.IC_CHANNELS % 3 ~= 0 then Advance(26) end
+	MakeCheckGroup(1, "Group and coordination chat", OOC_TOOLTIP,
+		function() return E.db.incoming end)
+	Advance(26)
 	MakeCheck(1, "Apply the Spell Book to other people's chat",
 		"Off by default. Correcting someone else's spelling also erases deliberate "
 		.. "speech quirks -- rolled Rs, stretched vowels, shouting. Your own outgoing "
@@ -214,12 +236,11 @@ local function Build()
 		end, 260)
 	Advance(30)
 
-	local outgoing = {
-		{ "say", "Say" }, { "yell", "Yell" }, { "emote", "Emotes" },
-		{ "whisper", "Whispers" }, { "party", "Party" }, { "raid", "Raid" },
-		{ "instance", "Instance" }, { "guild", "Guild" }, { "officer", "Officer" },
-		{ "channel", "Channels" },
-	}
+	-- NPCs have no outgoing side, so this is the in-character list minus that one.
+	local outgoing = {}
+	for _, entry in ipairs(E.IC_CHANNELS) do
+		if entry[1] ~= "monster" then outgoing[#outgoing + 1] = entry end
+	end
 	for i, entry in ipairs(outgoing) do
 		local key = entry[1]
 		local column = ((i - 1) % 3) + 1
@@ -229,6 +250,9 @@ local function Build()
 		if column == 3 then Advance(26) end
 	end
 	if #outgoing % 3 ~= 0 then Advance(26) end
+	MakeCheckGroup(1, "Group and coordination chat", OOC_TOOLTIP,
+		function() return E.db.outgoing end)
+	Advance(26)
 	Advance(10)
 
 	-- Presentation ------------------------------------------------------------

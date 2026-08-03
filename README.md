@@ -204,6 +204,13 @@ and outgoing alike. Party, raid, instance, guild, officer and public channels ar
 coordination by convention, and dialecting *"interrupt now, bloodlust on pull"*
 makes the useful chat harder to read rather than more immersive.
 
+Say, yell, emotes, guild, NPCs and whispers each get their own checkbox. Party,
+raid, instance, officer and public channels share one, because five boxes to
+express "the coordination channels are off" was a wall of boxes making a single
+point. They are kept rather than dropped because the settings are not only about
+dialects: the **Clean chat** preset switches them on so spelling and acronym
+expansion reach group chat, which is where *"lfm 2dps hc +10"* needs it most.
+
 Whispers are off on both sides, which surprises people until you look at how
 in-character whispering is actually done: in `/say`, opened with a `[low]` tag,
 so that nearby characters get the chance to overhear. That convention leaves the

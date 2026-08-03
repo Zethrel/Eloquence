@@ -2399,6 +2399,78 @@ do
 			end
 		end
 	end
+
+	-- The channel grid offers the roleplaying channels one at a time and the
+	-- coordination channels as a single switch. Eleven checkboxes to say "the
+	-- usual five are off" was a wall of boxes making one point.
+	do
+		-- Labels repeat here: the incoming and outgoing sections each carry their
+		-- own copy of the channel grid, told apart by the heading above them. So
+		-- collect every match in build order rather than keeping the last.
+		local byLabel = {}
+		for _, cb in ipairs(E.optionsChecks or {}) do
+			local list = byLabel[cb.label]
+			if not list then list = {} byLabel[cb.label] = list end
+			list[#list + 1] = cb
+		end
+
+		for _, entry in ipairs(E.IC_CHANNELS) do
+			check("the panel still offers " .. entry[2] .. " on its own", byLabel[entry[2]] ~= nil)
+		end
+		for _, label in ipairs({ "Party", "Raid", "Instance", "Officer", "Channels" }) do
+			check("and no longer offers " .. label .. " separately", byLabel[label] == nil)
+		end
+		-- The two lists have to partition the settings between them, or a channel
+		-- reachable in neither is a setting nobody can change.
+		do
+			local covered = {}
+			for _, entry in ipairs(E.IC_CHANNELS) do covered[entry[1]] = true end
+			for _, key in ipairs(E.OOC_CHANNELS) do
+				check(key .. " is not in both lists", not covered[key])
+				covered[key] = true
+			end
+			for event, key in pairs(E.CHANNELS) do
+				check(key .. " (" .. event .. ") is reachable from the panel", covered[key] == true)
+			end
+		end
+
+		local groups = byLabel["Group and coordination chat"] or {}
+		eq("both sections carry a grouped switch", #groups, 2)
+		local group = groups[1]  -- incoming is built first
+		check("the grouped switch exists", group ~= nil)
+		if group then
+			local saved = {}
+			for _, key in ipairs(E.OOC_CHANNELS) do saved[key] = E.db.incoming[key] end
+
+			for _, key in ipairs(E.OOC_CHANNELS) do E.db.incoming[key] = false end
+			group:Refresh()
+			eq("it reads empty when they are all off", group:GetChecked() and true or false, false)
+
+			-- Any one of them being on has to show, or a channel would go on being
+			-- filtered behind a box that looks switched off.
+			E.db.incoming[E.OOC_CHANNELS[#E.OOC_CHANNELS]] = true
+			group:Refresh()
+			eq("and ticked when any one of them is on", group:GetChecked() and true or false, true)
+
+			group:SetChecked(false)
+			group:GetScript("OnClick")(group)
+			local anyLeft = false
+			for _, key in ipairs(E.OOC_CHANNELS) do
+				if E.db.incoming[key] then anyLeft = true end
+			end
+			check("unticking it clears every one of them", not anyLeft)
+
+			group:SetChecked(true)
+			group:GetScript("OnClick")(group)
+			local allOn = true
+			for _, key in ipairs(E.OOC_CHANNELS) do
+				if not E.db.incoming[key] then allOn = false end
+			end
+			check("and ticking it sets every one of them", allOn)
+
+			for _, key in ipairs(E.OOC_CHANNELS) do E.db.incoming[key] = saved[key] end
+		end
+	end
 end
 
 --------------------------------------------------------------------------------

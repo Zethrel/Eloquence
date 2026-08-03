@@ -2,7 +2,7 @@
 local ADDON, E = ...
 
 E.ADDON = ADDON
-E.VERSION = "2.7.5"
+E.VERSION = "2.8.0"
 
 -- Single source of truth for attribution: used by /elo status, the options panel
 -- and the TOC. The original Eloquence was a Vanilla-era community addon; this is
@@ -45,6 +45,26 @@ E.CHANNELS = {
 	CHAT_MSG_MONSTER_EMOTE        = "monster",
 	CHAT_MSG_MONSTER_WHISPER      = "monster",
 }
+
+-- The channels worth offering one at a time, and the ones worth offering as a
+-- group.
+--
+-- Say, yell, emotes, guild, NPCs and whispers carry roleplay. Party, raid,
+-- instance, officer and public channels are coordination by convention, and
+-- eleven checkboxes to express "the usual five are off" is a wall of boxes that
+-- says one thing.
+--
+-- The group is not removed outright, because the settings behind it are not only
+-- about dialects: the Clean chat preset switches them all on so that spelling
+-- and acronym expansion reach group chat, which is exactly where "lfm 2dps hc
+-- +10 rio 2.4k" needs it most. One switch keeps that working and still gets four
+-- rows off the panel.
+E.IC_CHANNELS = {
+	{ "say", "Say" }, { "yell", "Yell" }, { "emote", "Emotes" },
+	{ "guild", "Guild" }, { "monster", "NPCs" }, { "whisper", "Whispers" },
+}
+
+E.OOC_CHANNELS = { "party", "raid", "instance", "officer", "channel" }
 
 -- Outgoing chat types (as passed to SendChatMessage) mapped to the same settings keys.
 E.OUTGOING_TYPES = {
