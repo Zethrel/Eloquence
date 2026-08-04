@@ -204,7 +204,7 @@ Free and open source (MIT): **[github.com/Zethrel/Eloquence](https://github.com/
 The muffle and lisp filters exist because **Sleat -- Argent Dawn (EU)** asked for them. 
 Class flavour exists because **Môrgrith -- Argent Dawn (EU)** pointed out that his death knight had no business invoking the Light.
 The Darnassian dialect owes most of its accuracy to **Trustbough -- Argent Dawn (EU)**.
-The Void whispers were reported by **Anadelonbrin**, creeped out by the voices in her head, and **Vynlor**, saying creepy stuff -- both due to a void elf bug. Feedback like that is welcome.
+The Void whispers were reported by **Anadelonbrin -- Argent Dawn (EU)**, creeped out by the voices in her head, and **Vynlor -- Argent Dawn (EU)**, saying creepy stuff -- both due to a void elf bug. Feedback like that is welcome.
 
 A revival of the classic Vanilla-era RP chat addon, by **Zethrel -- Argent Dawn EU**.
 If you'd like to support further work: **[ko-fi.com/zethrel](https://ko-fi.com/zethrel)**
