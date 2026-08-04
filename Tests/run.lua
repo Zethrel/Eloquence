@@ -1441,6 +1441,41 @@ do
 		dialectOnly("EarthenDwarf", "I do not know if that will work, friend"), "wirk")
 	contains("Dwarves still do get the Scots",
 		dialectOnly("Dwarf", "I do not know if that will work, friend"), "wirk")
+
+	-- Reported: a Dwarf should say "lassie" for a woman and "laddie" for a man,
+	-- and the plurals were missing -- "the man" became "the laddie" while "the
+	-- men" stayed as written.
+	do
+		for _, case in ipairs({
+			{ "the man is here", "laddie" },   { "the men are here", "lads" },
+			{ "the boy is here", "laddie" },   { "the boys are here", "lads" },
+			{ "the woman is here", "lassie" }, { "the women are here", "lasses" },
+			{ "the girl is here", "lassie" },  { "the girls are here", "lasses" },
+		}) do
+			contains("Dwarven \"" .. case[1] .. "\"", dialectOnly("Dwarf", case[1]), case[2])
+		end
+
+		-- "Lady" and "Lord" are titles as often as descriptions, and a Dwarf may
+		-- well be respectful enough to use one. Worse, the mapping ate the title
+		-- exactly when it led a sentence: mid-sentence the proper-noun rule
+		-- protects it, but a capitalised word at the start of a sentence is
+		-- indistinguishable from ordinary capitalisation, so "Lady Jaina is here"
+		-- became "Lassie Jaina is here".
+		--
+		-- Checked on the three dialects that had a mapping for it. Leading the
+		-- sentence is the case that regressed; the others are here so a future fix
+		-- cannot pass by protecting only the position that was reported.
+		for _, race in ipairs({ "Dwarf", "KulTiran", "Worgen" }) do
+			for _, line in ipairs({
+				"Lady Jaina is here", "I spoke to Lady Jaina",
+				"Lord Fordragon sent me", "I spoke to Lord Fordragon",
+			}) do
+				local title = line:find("Lady") and "Lady" or "Lord"
+				contains(race .. " keeps the title in \"" .. line .. "\"",
+					dialectOnly(race, line), title)
+			end
+		end
+	end
 end
 
 do

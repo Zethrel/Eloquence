@@ -23,9 +23,13 @@ E.RegisterDialect("Worgen", {
 		-- lady as "old chap" is precisely the sort of thing they would not do.
 		["friends"] = "good people", ["guy"] = "fellow",
 		["guys"] = "good people", ["dude"] = "friend", ["man"] = "fellow",
-		-- These are safe: the word being replaced already states the gender, so
-		-- the player has told us. "madam" is only reached by writing "lady".
-		["woman"] = "madam", ["lady"] = "madam",
+		-- Safe: the word being replaced already states the gender, so the player
+		-- has told us.
+		--
+		-- "lady" -> "madam" is gone, for the reason recorded in Dwarf.lua. Gilneas
+		-- is the most title-conscious culture in the game and "Lady Jaina is here"
+		-- was coming out as "Madam Jaina is here".
+		["woman"] = "madam", ["women"] = "ladies",
 		["good"] = "splendid", ["great"] = "capital", ["nice"] = "rather pleasant",
 		["awesome"] = "positively splendid", ["cool"] = "rather good",
 		["bad"] = "dreadful", ["awful"] = "perfectly dreadful", ["terrible"] = "ghastly",

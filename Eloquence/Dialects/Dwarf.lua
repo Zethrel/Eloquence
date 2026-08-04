@@ -74,10 +74,34 @@ E.RegisterDialect("Dwarf", {
 		["small"] = "wee", ["little"] = "wee", ["tiny"] = "wee bit o' a",
 		["big"] = "muckle", ["large"] = "muckle", ["huge"] = "muckle great",
 		["child"] = "bairn", ["children"] = "bairns", ["kid"] = "bairn", ["kids"] = "bairns",
-		["man"] = "laddie", ["boy"] = "laddie", ["lad"] = "laddie", ["guy"] = "laddie",
-		["woman"] = "lassie", ["girl"] = "lassie", ["lady"] = "lassie",
+		-- Dwarves address everyone as laddie or lassie and are unrepentant about
+		-- it -- an archmage included. That is the form of address rather than a
+		-- careless one, which is why this dialect is the one exception to the rule
+		-- that Eloquence does not choose a term of address for the player.
+		--
+		-- Only words that already state which they are get mapped, so the player
+		-- has told us. The plurals were missing, which read oddly: "the man" was
+		-- becoming "the laddie" while "the men" stayed as written.
+		["man"] = "laddie", ["men"] = "lads",
+		["boy"] = "laddie", ["boys"] = "lads",
+		["lad"] = "laddie", ["lads"] = "lads",
+		["guy"] = "laddie", ["guys"] = "lads",
+		["bloke"] = "laddie", ["blokes"] = "lads",
+		["fella"] = "laddie", ["fellas"] = "lads",
+		["woman"] = "lassie", ["women"] = "lasses",
+		["girl"] = "lassie", ["girls"] = "lasses",
+		["lass"] = "lassie", ["lasses"] = "lasses",
+		["gal"] = "lassie", ["gals"] = "lasses",
+		-- "lady" was here, mapped to "lassie", and "lord" deliberately never was.
+		-- Keeping one without the other was the wrong way round twice over.
+		--
+		-- A Dwarf may well be respectful enough to use the title, and worse, the
+		-- mapping ate the title exactly when it led a sentence: mid-sentence the
+		-- proper-noun rule protects "I spoke to Lady Jaina", but a capitalised
+		-- word at the start of a sentence is indistinguishable from ordinary
+		-- capitalisation, so "Lady Jaina is here" became "Lassie Jaina is here".
 		["friend"] = "laddie", ["friends"] = "lads", ["mate"] = "laddie",
-		["guys"] = "lads", ["everyone"] = "aw ye", ["everybody"] = "awbody",
+		["everyone"] = "aw ye", ["everybody"] = "awbody",
 		["nobody"] = "naebody", ["nothing"] = "nowt", ["something"] = "somethin'",
 		["anything"] = "owt", ["someone"] = "somebody",
 		["church"] = "kirk", ["home"] = "hame", ["stone"] = "stane", ["bone"] = "bane",

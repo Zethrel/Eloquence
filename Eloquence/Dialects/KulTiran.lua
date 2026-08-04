@@ -28,7 +28,14 @@ E.RegisterDialect("KulTiran", {
 		["think"] = "reckon", ["thinks"] = "reckons", ["guess"] = "reckon",
 		["friend"] = "shipmate", ["friends"] = "the crew", ["guy"] = "lad",
 		["guys"] = "the crew", ["man"] = "lad", ["boy"] = "lad",
-		["woman"] = "lass", ["girl"] = "lass", ["lady"] = "lass",
+		-- "lady" -> "lass" is gone for the reason recorded in Dwarf.lua: it is a
+		-- title as often as a description, and it was eaten at the start of a
+		-- sentence, where the proper-noun rule cannot tell a title from ordinary
+		-- capitalisation. "Lady Jaina is here" became "Lass Jaina is here", which
+		-- on this dialect of all of them is unfortunate.
+		["woman"] = "lass", ["women"] = "lasses",
+		["girl"] = "lass", ["girls"] = "lasses",
+		["men"] = "lads", ["boys"] = "lads",
 		["big"] = "sizeable", ["huge"] = "whale-sized", ["small"] = "wee",
 		["strong"] = "stout", ["weak"] = "soft", ["tired"] = "dead on me feet",
 		["hungry"] = "starved", ["drink"] = "grog", ["beer"] = "ale",
