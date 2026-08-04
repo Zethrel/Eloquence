@@ -191,6 +191,12 @@ Install and log in. The defaults are already the Roleplay preset.
 
 ---
 
+## Milestones
+
+- **04.08.2026** -- 100 downloads.
+
+---
+
 Free and open source (MIT): **[github.com/Zethrel/Eloquence](https://github.com/Zethrel/Eloquence)**
 
 The muffle and lisp filters exist because **Sleat -- Argent Dawn (EU)** asked for them. 
