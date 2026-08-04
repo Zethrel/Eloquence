@@ -7,6 +7,11 @@
 --
 -- REMOVED, and the reason is worth keeping.
 --
+-- REPORTS
+-- Anadelonbrin, creeped out by the voices in her head, and Vynlor, saying
+-- creepy stuff -- both due to a void elf bug. Their words, and better than any
+-- summary of the fault.
+--
 -- Every other filter here *translates* what somebody typed. The whispers
 -- invented text nobody wrote and attributed it to them, and they were wrapped in
 -- asterisks, which on a roleplaying realm means an emote. So a Void Elf appeared
