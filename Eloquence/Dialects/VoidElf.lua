@@ -1,26 +1,38 @@
 -- Void elves (ren'dorei): elven composure with something else leaking through.
 --
--- Void elves hear the Void constantly and spend their lives refusing it. That is
--- the whole character, so it is the mechanic here: alongside a restrained,
--- formal register, whispers surface between sentences, and they get louder the
--- more agitated the speaker is -- the same idea as the Forsaken hiss.
+-- Void elves hear the Void constantly and spend their lives refusing it, and
+-- this file used to act that out: random whispers -- "let go", "it is already
+-- too late" -- inserted into the message in a dim violet, more often the more
+-- agitated the speaker sounded.
 --
--- Whispers are rendered in a dim violet so they read as intrusions rather than
--- as something the speaker chose to say.
+-- REMOVED, and the reason is worth keeping.
+--
+-- Every other filter here *translates* what somebody typed. The whispers
+-- invented text nobody wrote and attributed it to them, and they were wrapped in
+-- asterisks, which on a roleplaying realm means an emote. So a Void Elf appeared
+-- to perform an action they had not performed:
+--
+--   [Vynlor Dawnfall] says: *it is already too late* Gold! Come here, girl!
+--
+-- Worse, it ran on the outgoing path too, so with outgoing rewriting on the
+-- invented emote was actually broadcast to everyone in range. Lisp and Muffle
+-- are self-only precisely so the addon never puts words in someone's mouth;
+-- this put whole actions there, for other people to read as roleplay.
+--
+-- It also hid for five versions. The escape guard added in 2.7.1 threw away any
+-- transform whose escapes changed, and a whisper adds a colour code, so from
+-- 2.7.1 to 2.8.2 the whispers silently never appeared -- and took the rest of
+-- the dialect with them. Fixing that guard in 2.8.3 brought them back, and the
+-- first thing that happened was a bug report from a live realm.
+--
+-- What is left is the register: formal, unhurried, contractions expanded, and a
+-- vocabulary that keeps circling back to silence and the dark. That says the
+-- same thing about the character without writing their lines for them.
 local ADDON, E = ...
-
-local gsub, find = string.gsub, string.find
-local floor = math.floor
-
-local WHISPERS = {
-	"it hungers", "they are watching", "give in", "so much dark",
-	"you will fall", "we are always here", "let go", "there is no light",
-	"listen to us", "it is already too late",
-}
 
 E.RegisterDialect("VoidElf", {
 	name = "Ren'dorei",
-	desc = "Restrained elven formality, with Void whispers surfacing when agitated.",
+	desc = "Restrained elven formality. Careful, quiet, and circling the dark.",
 
 	words = E.Engine.Extend(E.Engine.EXPAND_CONTRACTIONS, {
 		["hello"] = "greetings", ["hi"] = "greetings", ["hey"] = "you there",
@@ -75,41 +87,6 @@ E.RegisterDialect("VoidElf", {
 		{ "%f[%a]let's go%f[%A]", "let us be away from here" },
 		{ "%f[%a]shut up%f[%A]", "quiet -- I have enough voices" },
 	},
-
-	-- The whispers. Inserted after a sentence boundary, or appended if the
-	-- message has none; frequency and count rise with agitation.
-	--
-	-- This is `finish` rather than `post` because it inserts text instead of
-	-- transforming what is there. `post` runs once per plain chunk, and every
-	-- protected span in a line -- a character's name, an item link, an OOC aside
-	-- -- starts a new chunk. So "I will meet Brightmoore at the gate" fired the
-	-- insertion twice, once wedged mid-sentence and glued to the name:
-	--
-	--   I will meet  |cff9a70c8*we are always here*|rBrightmoore at the gate ...
-	--
-	-- `finish` sees the assembled line, so the sentence-boundary search works on
-	-- the actual sentence and fires once.
-	finish = function(chunk, ctx)
-		local excitement = ctx.excitement or 0
-		local strength = ctx.strength or 2
-		local chance = (0.12 + 0.4 * excitement) * (strength / 2)
-		if ctx.rng() > chance then return chunk end
-
-		local whisper = WHISPERS[floor(ctx.rng() * #WHISPERS) + 1]
-		local rendered = " |cff9a70c8*" .. whisper .. "*|r"
-
-		-- Prefer to slip in after the first sentence ending.
-		local inserted = false
-		local result = gsub(chunk, "([%.!%?])%s", function(punctuation)
-			if inserted then return nil end
-			inserted = true
-			return punctuation .. rendered .. " "
-		end, 1)
-		if inserted then return result end
-
-		if find(chunk, "%S") then return chunk .. rendered end
-		return chunk
-	end,
 
 	flavor = {
 		chance = 0.14,

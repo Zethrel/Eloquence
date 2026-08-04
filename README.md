@@ -397,7 +397,7 @@ roster rather than just the classic thirteen.
 | Gnome | Gnomish | Over-precise technical vocabulary meeting folksy cliches. |
 | Draenei | Draenei | Ancient and courteous, blessings of the Light. *"The Light be with you."* |
 | Worgen | Gilnean | Clipped aristocratic English, with a growl when riled. |
-| Void Elf | Ren'dorei | Elven composure, with Void whispers leaking through. |
+| Void Elf | Ren'dorei | Restrained elven formality, circling silence and the dark. |
 | Lightforged Draenei | Lightforged | Draenei courtesy welded onto a crusade. |
 | Dark Iron Dwarf | Dark Iron | Dwarven Scots gone sour. Coal, grudges, the Molten Core. |
 | Kul Tiran | Kul Tiran | A seafaring West Country burr. *"Fair winds to ye."* |
@@ -453,10 +453,27 @@ Mag'har, Lightforged, Mechagnome and Highmountain — and are built with
 `Engine.Derive` as their parent's dialect plus a layer, so shared vocabulary
 lives in one place.
 
-Three dialects do more than substitute words, and all three scale with how
-agitated the message looks (exclamation marks and shouting): the **Forsaken**
-hiss, the **Worgen** growl, and the **Void Elf** whispers, which surface between
-sentences in a dim violet so they read as intrusions rather than speech.
+Two dialects do more than substitute words, and both scale with how agitated
+the message looks (exclamation marks and shouting): the **Forsaken** hiss and
+the **Worgen** stretched consonants. Both respell what the speaker wrote rather
+than adding to it, which is the line that matters.
+
+**A dialect never writes anyone's roleplay for them.** The Void Elf dialect used
+to insert Void whispers — *"let go"*, *"it is already too late"* — and Worgen
+flavour included *"\*grrr\*"* and *"\*low growl\*"*. Every other filter here
+*translates* what somebody typed; those invented text nobody wrote and attributed
+it to them, in asterisks, which on a roleplaying realm means an emote. So a
+character appeared to perform an action they never performed:
+
+```
+[Vynlor Dawnfall] says: *it is already too late* Gold! Come here, girl!
+```
+
+With outgoing rewriting on it was broadcast, too. `Lisp` and `Muffle` are
+self-only precisely so the addon never puts words in someone's mouth; this put
+whole actions there. All of it is gone, and a test sweeps every dialect at every
+strength asserting that no asterisk appears in the output that was not in the
+input.
 
 ### Darnassian
 

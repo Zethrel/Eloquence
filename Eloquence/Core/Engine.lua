@@ -363,19 +363,6 @@ function Engine.Apply(rules, text, ctx, extraProtected)
 		end, extraProtected)
 	end
 
-	-- `post` runs per plain chunk, which is right for an accent: a Dwarf respells
-	-- the words around a name without touching the name. `finish` runs once on
-	-- the whole assembled line, for a rule that *inserts* rather than transforms.
-	--
-	-- The Void Elf whispers needed the second and were using the first. A message
-	-- is split into plain chunks by every protected span in it, so naming another
-	-- character -- the most ordinary thing anyone says in roleplay -- fired the
-	-- insertion once per chunk: two whispers in one line, one of them wedged into
-	-- the middle of the sentence and glued to the name with no space.
-	if rules.finish then
-		text = rules.finish(text, ctx)
-	end
-
 	if rules.flavor then
 		text = ApplyFlavor(rules.flavor, text, ctx)
 	end
@@ -427,7 +414,6 @@ function Engine.Derive(parent, overrides)
 		desc = overrides.desc,
 		words = Engine.Extend(parent.words or {}, overrides.words),
 		post = overrides.post or parent.post,
-		finish = overrides.finish or parent.finish,
 		flavor = overrides.flavor or parent.flavor,
 		wordsAt = {},
 		phrases = {},

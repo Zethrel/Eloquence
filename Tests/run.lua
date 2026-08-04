@@ -282,27 +282,55 @@ do
 end
 
 --------------------------------------------------------------------------------
-section("Dialect: Void elf whispers")
+section("No dialect writes anyone's roleplay for them")
 --------------------------------------------------------------------------------
 
 do
-	-- The whispers should surface far more often when the speaker is agitated.
-	local function whisperCount(text, runs)
-		local hits = 0
-		for i = 1, runs do
-			-- Vary the seed by appending an invisible-ish differentiator.
-			local sample = text .. string.rep(" ", i)
-			if dialectOnly("VoidElf", sample, 3):find("cff9a70c8", 1, true) then
-				hits = hits + 1
+	-- Reported from a live realm, of a Void Elf:
+	--
+	--   [Vynlor Dawnfall] says: *it is already too late* Gold! Come here, girl!
+	--
+	-- The dialect used to insert Void whispers into the message. Every other
+	-- filter here translates what somebody typed; this invented text nobody wrote
+	-- and attributed it to them -- and wrapped it in asterisks, which on a
+	-- roleplaying realm means an emote. So the character appeared to perform an
+	-- action they had not performed, and with outgoing rewriting on it was
+	-- broadcast to everyone in range.
+	--
+	-- Worgen had the same thing in their flavour pools: "*grrr*" and "*low growl*".
+	--
+	-- This is checked across the whole roster rather than the two files that had
+	-- it, because it is a rule about what a dialect is for, not a bug in a list.
+	local LINES = {
+		"Gold! Come here, girl!",
+		"THEY ARE COMING! RUN! GET OUT NOW!",
+		"it is quiet today and all is well here",
+		"I will meet Brightmoore at the gate",
+		"Come!",
+	}
+
+	for _, race in ipairs(E.Race.KnownDialects()) do
+		local fabricated = nil
+		for _, strength in ipairs({ 1, 2, 3 }) do
+			for i = 1, 40 do
+				for _, line in ipairs(LINES) do
+					local ctx = E.Pipeline.NewContext(line, "P-fab-" .. race .. i, race)
+					ctx.strength = strength
+					ctx.excitement = 1
+					local out = E.Engine.Apply(E.DIALECTS[race], line, ctx)
+					-- The player typed no asterisks, so any in the output were invented.
+					if out:find("%*") then fabricated = line .. " -> " .. out end
+				end
 			end
 		end
-		return hits
+		check(race .. " invents no emote", fabricated == nil, fabricated)
 	end
-	local calm = whisperCount("it is quiet today and all is well here", 40)
-	local frantic = whisperCount("THEY ARE COMING! RUN! GET OUT NOW!", 40)
-	check("an agitated void elf whispers more than a calm one", frantic > calm,
-		string.format("calm=%d frantic=%d", calm, frantic))
-	check("a calm void elf sometimes stays silent", calm < 40, tostring(calm))
+
+	-- An emote the player DID write still survives untouched, which is the whole
+	-- reason asterisks are protected in the first place.
+	contains("but an emote the player wrote is kept",
+		dialectOnly("Worgen", "Here, this is for you *pulls out a flower* hope you like it"),
+		"*pulls out a flower*")
 end
 
 --------------------------------------------------------------------------------
@@ -591,68 +619,21 @@ do
 end
 
 --------------------------------------------------------------------------------
-section("Void Elf: the whispers")
+section("The escape guard")
 --------------------------------------------------------------------------------
 
 do
-	-- The whispers are inserted rather than substituted, and they arrive wrapped
-	-- in a colour code. Two separate faults came of that.
+	-- The guard was added in 2.7.1 after a shift-clicked item link went out
+	-- mangled and the client rejected the whole message. It demanded the escapes
+	-- be identical before and after, which was too strong: the Void Elf dialect
+	-- inserted whispers wrapped in a colour code, so it threw away that entire
+	-- transform -- the whole dialect, not just the whisper -- and roughly a fifth
+	-- of what a Void Elf said went out as plain English with no error anywhere.
 	--
-	-- First, they were on `post`, which runs once per plain chunk. Every
-	-- protected span starts a new chunk, so naming another character -- the most
-	-- ordinary thing anyone does in roleplay -- fired the insertion twice, one of
-	-- them wedged mid-sentence and glued to the name with no space:
-	--
-	--   I will meet  |cff9a70c8*we are always here*|rBrightmoore at the gate ...
-	local function agitated(text, seed)
-		local dialect = E.DIALECTS["VoidElf"]
-		local saved = dialect.flavor
-		dialect.flavor = nil
-		local ctx = E.Pipeline.NewContext(text, seed, "VoidElf")
-		ctx.strength = 3
-		ctx.excitement = 1
-		local out = E.Engine.Apply(dialect, text, ctx)
-		dialect.flavor = saved
-		return out
-	end
-
-	local worst, sample = 0, nil
-	local glued = nil
-	for i = 1, 120 do
-		for _, line in ipairs({
-			"I will meet Brightmoore at the gate",
-			"we go now (brb one moment) and then east",
-			"tell Brightmoore and Aelric to wait",
-		}) do
-			local out = agitated(line, "P-ve-" .. i)
-			local n = select(2, out:gsub("|cff9a70c8", ""))
-			if n > worst then worst, sample = n, out end
-			-- The colour close must never butt straight against a word.
-			if out:find("|r%a") then glued = out end
-		end
-	end
-	check("at most one whisper per message", worst <= 1, sample)
-	check("and none is glued to the text after it", glued == nil, glued)
-
-	-- Second, and worse: the escape guard added with the item-link fix demanded
-	-- the escapes be identical before and after, and a whisper adds some. So the
-	-- guard threw away the whole transform -- the entire dialect, not just the
-	-- whisper -- and a fifth of what a Void Elf said went out as plain English
-	-- with no error anywhere. The guard is for corruption of existing escapes,
-	-- not for forbidding new ones.
-	do
-		E.db.modules.dialect.strength = 3
-		local survived = 0
-		for i = 1, 200 do
-			local out = E.Pipeline.Run("I hear the shadow and the silence around us.",
-				"Player-1-VEG" .. i, "VoidElf", nil, "incoming", "say")
-			if out:find("|cff9a70c8") then survived = survived + 1 end
-		end
-		check("whispers survive the pipeline at all", survived > 0,
-			survived .. " of 200 got through")
-		E.db.modules.dialect.strength = 2
-	end
-
+	-- The whispers have since been removed for a different reason, so nothing
+	-- ships that adds escapes today. The looser check is kept regardless: the
+	-- guard is for corruption of escapes that were already there, and the next
+	-- dialect that wants a colour code should not silently disable itself.
 	-- The guard still has to catch what it was built for: an escape that was
 	-- there and came back mangled, dropped, or reordered.
 	check("a mangled escape is still caught",

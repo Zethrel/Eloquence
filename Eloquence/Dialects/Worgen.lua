@@ -88,9 +88,14 @@ E.RegisterDialect("Worgen", {
 
 	flavor = {
 		chance = 0.18,
-		prefix = { "I say,", "Right.", "Good grief.", "*grrr*", "Steady on," },
+		-- "*grrr*" was here and "*low growl*" below. Same fault as the Void Elf
+		-- whispers: asterisks mean an emote, so these attributed an action to a
+		-- character who never performed one, and with outgoing rewriting on they
+		-- were broadcast. A dialect renders how someone speaks; what their body
+		-- does is theirs to write.
+		prefix = { "I say,", "Right.", "Good grief.", "Steady on,", "Come now," },
 		-- "old chap" was here. A suffix is appended to any message with no idea
 		-- who is reading it, so it addressed the whole realm as a gentleman.
-		suffix = { "I should think", "quite so", "if you please", "*low growl*", "and no mistake" },
+		suffix = { "I should think", "quite so", "if you please", "and no mistake" },
 	},
 })

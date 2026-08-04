@@ -167,6 +167,8 @@ On a roleplaying realm, how somebody spells things is a choice. Eloquence never 
 
 The Spell Book stays off other people's chat unless you ask for it, because correcting a stranger's spelling means sanding off authored voice rather than tidying a typo.
 
+**And it never writes anyone's roleplay for them.** Eloquence changes *how* a line is worded, never *what* was said. It will not add an emote, an action, or a line of dialogue your character did not type -- a dialect renders an accent, and what your character does is yours to write.
+
 ---
 
 ## What you get out of the box
