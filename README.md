@@ -782,7 +782,7 @@ business saying "By the Light", which is what prompted the class flavour layer i
 `Core/Class.lua`. Race decides how a character sounds; class decides what they
 would never say, and nothing had modelled the second until he said so.
 
-**Anadelonbrin**, creeped out by the voices in her head, and **Vynlor**, saying
+**Anadelonbrin — Argent Dawn (EU)**, creeped out by the voices in her head, and **Vynlor — Argent Dawn (EU)**, saying
 creepy stuff — both due to a void elf bug. Their descriptions, and better than
 any summary of the fault: the Void Elf dialect was inserting whispers into
 people's chat in emote asterisks, so characters appeared to perform actions they
