@@ -591,6 +591,83 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("Void Elf: the whispers")
+--------------------------------------------------------------------------------
+
+do
+	-- The whispers are inserted rather than substituted, and they arrive wrapped
+	-- in a colour code. Two separate faults came of that.
+	--
+	-- First, they were on `post`, which runs once per plain chunk. Every
+	-- protected span starts a new chunk, so naming another character -- the most
+	-- ordinary thing anyone does in roleplay -- fired the insertion twice, one of
+	-- them wedged mid-sentence and glued to the name with no space:
+	--
+	--   I will meet  |cff9a70c8*we are always here*|rBrightmoore at the gate ...
+	local function agitated(text, seed)
+		local dialect = E.DIALECTS["VoidElf"]
+		local saved = dialect.flavor
+		dialect.flavor = nil
+		local ctx = E.Pipeline.NewContext(text, seed, "VoidElf")
+		ctx.strength = 3
+		ctx.excitement = 1
+		local out = E.Engine.Apply(dialect, text, ctx)
+		dialect.flavor = saved
+		return out
+	end
+
+	local worst, sample = 0, nil
+	local glued = nil
+	for i = 1, 120 do
+		for _, line in ipairs({
+			"I will meet Brightmoore at the gate",
+			"we go now (brb one moment) and then east",
+			"tell Brightmoore and Aelric to wait",
+		}) do
+			local out = agitated(line, "P-ve-" .. i)
+			local n = select(2, out:gsub("|cff9a70c8", ""))
+			if n > worst then worst, sample = n, out end
+			-- The colour close must never butt straight against a word.
+			if out:find("|r%a") then glued = out end
+		end
+	end
+	check("at most one whisper per message", worst <= 1, sample)
+	check("and none is glued to the text after it", glued == nil, glued)
+
+	-- Second, and worse: the escape guard added with the item-link fix demanded
+	-- the escapes be identical before and after, and a whisper adds some. So the
+	-- guard threw away the whole transform -- the entire dialect, not just the
+	-- whisper -- and a fifth of what a Void Elf said went out as plain English
+	-- with no error anywhere. The guard is for corruption of existing escapes,
+	-- not for forbidding new ones.
+	do
+		E.db.modules.dialect.strength = 3
+		local survived = 0
+		for i = 1, 200 do
+			local out = E.Pipeline.Run("I hear the shadow and the silence around us.",
+				"Player-1-VEG" .. i, "VoidElf", nil, "incoming", "say")
+			if out:find("|cff9a70c8") then survived = survived + 1 end
+		end
+		check("whispers survive the pipeline at all", survived > 0,
+			survived .. " of 200 got through")
+		E.db.modules.dialect.strength = 2
+	end
+
+	-- The guard still has to catch what it was built for: an escape that was
+	-- there and came back mangled, dropped, or reordered.
+	check("a mangled escape is still caught",
+		not E.EscapesPreserved("|cnIQ3:[Blade]|r", "|gnIG3:[Blade]|r"))
+	check("a dropped escape is still caught",
+		not E.EscapesPreserved("|cffffffff|Hitem:1|h[A]|h|r", "|cffffffff[A]|r"))
+	check("an added escape is allowed",
+		E.EscapesPreserved("hello", "hello |cff9a70c8*listen*|r"))
+	check("an untouched link passes",
+		E.EscapesPreserved("|cnIQ3:[Blade]|r", "|cnIQ3:[Blade]|r"))
+	check("text with no escapes at all passes",
+		E.EscapesPreserved("hello", "goodbye"))
+end
+
+--------------------------------------------------------------------------------
 section("Dialect: Thalassian glossary")
 --------------------------------------------------------------------------------
 
@@ -1442,6 +1519,29 @@ do
 	contains("Dwarves still do get the Scots",
 		dialectOnly("Dwarf", "I do not know if that will work, friend"), "wirk")
 
+	-- Trollish is non-rhotic: "-er" and "-or" become "-a", as in wata and dokta.
+	-- The rule used to delete the r and keep the vowel, which truncated words
+	-- rather than respelling them. Every word that read correctly was an explicit
+	-- entry in the tables; the rule itself only produced what looked like typos.
+	do
+		for _, case in ipairs({
+			{ "the elder speaks", "elda" },   { "another matter", "matta" },
+			{ "for honor", "hona" },          { "he is a warrior", "warria" },
+			{ "my mentor taught me", "menta" },
+		}) do
+			contains("Trollish \"" .. case[1] .. "\"", dialectOnly("Troll", case[1], 3), case[2])
+		end
+		-- The explicit mappings still win, and must not be re-processed into
+		-- something else on the way past.
+		contains("water is still wata", dialectOnly("Troll", "the water is cold", 3), "wata")
+		contains("over is still ova", dialectOnly("Troll", "over there", 3), "ova")
+		-- "-ar" has no respelling that is not simply a misspelling.
+		contains("star keeps its r", dialectOnly("Troll", "the star is bright", 3), "star")
+		-- A letter is required in front of the vowel, or the conjunction is eaten.
+		contains("the conjunction \"or\" survives",
+			dialectOnly("Troll", "for honor or glory", 3), " or ")
+	end
+
 	-- Reported: a Dwarf should say "lassie" for a woman and "laddie" for a man,
 	-- and the plurals were missing -- "the man" became "the laddie" while "the
 	-- men" stayed as written.
@@ -1475,6 +1575,57 @@ do
 					dialectOnly(race, line), title)
 			end
 		end
+	end
+
+	-- The general form of that fault. Taking "lady" out of three dialects fixed
+	-- three words; the shape of the bug was any mapped word that is also a title
+	-- or a name, eaten when it leads a sentence -- where capitalisation carries
+	-- no information and the proper-noun rule deliberately stands down.
+	--
+	-- The signal is the word after it. "Lady Jaina" is capitalised twice, and the
+	-- second capital does mean something, because it is mid-sentence. A
+	-- capitalised word in front of a protected one is a title or a first name.
+	do
+		for _, case in ipairs({
+			{ "NightElf", "Master Aelric waits",     "Master" },
+			{ "NightElf", "Teacher Aelric waits",    "Teacher" },
+			{ "Troll",    "Sir Aelric waits",        "Sir" },
+			{ "Human",    "King Anduin waits",       "King Anduin" },
+			{ "Scourge",  "Queen Talanji waits",     "Queen" },
+			{ "Draenei",  "Hope Brightmoore waits",  "Hope" },
+			{ "KulTiran", "Storm Brightmoore waits", "Storm" },
+			{ "VoidElf",  "Silence Brightmoore waits", "Silence" },
+			{ "NightElf", "Fury Brightmoore waits",  "Fury" },
+			{ "Orc",      "Human Brightmoore waits", "Human" },
+		}) do
+			contains(case[1] .. " keeps \"" .. case[3] .. "\" in front of a name",
+				dialectOnly(case[1], case[2], 3), case[3])
+		end
+
+		-- The other half, and the one that makes this a heuristic rather than a
+		-- blanket exemption: the same words must still be translated when they are
+		-- not standing in front of a name. Protecting them everywhere would be a
+		-- much worse bug than the one being fixed, and it would look like this
+		-- test passing.
+		for _, case in ipairs({
+			{ "Draenei",  "Hope is what we have",  "Light's promise" },
+			{ "Draenei",  "I still have hope",     "the Light's promise" },
+			{ "NightElf", "my master taught me",   "shan'do" },
+			{ "Human",    "the king rules",        "the King" },
+			{ "Dwarf",    "the water is cold",     "watter" },
+			{ "Troll",    "the horde is coming",   "de horde" },
+		}) do
+			contains(case[1] .. " still translates \"" .. case[2] .. "\"",
+				dialectOnly(case[1], case[2], 3), case[3])
+		end
+
+		-- A full stop between them is two sentences, not a pair.
+		contains("a sentence boundary does not make a pair",
+			dialectOnly("Draenei", "We go. Hope is all we have", 3), "Light's promise")
+
+		-- Shouting is not evidence of a name; the whole line may be capitals.
+		excludes("a shouted line is not read as names",
+			dialectOnly("Troll", "THE HORDE IS COMING", 3), "THE HORDE IS COMING")
 	end
 end
 

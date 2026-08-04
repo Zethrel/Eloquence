@@ -78,7 +78,18 @@ E.RegisterDialect("VoidElf", {
 
 	-- The whispers. Inserted after a sentence boundary, or appended if the
 	-- message has none; frequency and count rise with agitation.
-	post = function(chunk, ctx)
+	--
+	-- This is `finish` rather than `post` because it inserts text instead of
+	-- transforming what is there. `post` runs once per plain chunk, and every
+	-- protected span in a line -- a character's name, an item link, an OOC aside
+	-- -- starts a new chunk. So "I will meet Brightmoore at the gate" fired the
+	-- insertion twice, once wedged mid-sentence and glued to the name:
+	--
+	--   I will meet  |cff9a70c8*we are always here*|rBrightmoore at the gate ...
+	--
+	-- `finish` sees the assembled line, so the sentence-boundary search works on
+	-- the actual sentence and fires once.
+	finish = function(chunk, ctx)
 		local excitement = ctx.excitement or 0
 		local strength = ctx.strength or 2
 		local chance = (0.12 + 0.4 * excitement) * (strength / 2)

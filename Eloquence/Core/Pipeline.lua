@@ -166,7 +166,7 @@ function Pipeline.Run(text, guid, race, language, direction, channel)
 	-- transform is abandoned rather than shipped. Getting this wrong on the
 	-- outgoing path costs the player their whole message, since the client
 	-- rejects text whose escapes do not parse.
-	if E.EscapeSignature(text) ~= E.EscapeSignature(original) then
+	if not E.EscapesPreserved(original, text) then
 		Pipeline.escapesRescued = (Pipeline.escapesRescued or 0) + 1
 		E.Debug("escape sequence altered, sending the original:", original, "->", text)
 		return original

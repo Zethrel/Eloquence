@@ -128,8 +128,22 @@ E.RegisterDialect("Troll", {
 			chunk = gsub(chunk, "%f[%a]([Tt])h", function(t)
 				return t == "T" and "D" or "d"
 			end)
-			-- Soften post-vocalic r at the end of words: over -> ova.
-			chunk = gsub(chunk, "([aeiou])r%f[%A]", "%1")
+			-- Non-rhotic endings: "-er" and "-or" become "-a". Trollish patois
+			-- writes water as wata and doctor as dokta.
+			--
+			-- This used to delete the r and leave the vowel, which is not the same
+			-- thing at all -- it truncated words rather than respelling them, so
+			-- "elder" came out "elde", "matter" "matte", "honor" "hono" and
+			-- "warrior" "warrio". Every word that read correctly was an explicit
+			-- entry in the tables above (wata, ova, betta, anudda); the rule
+			-- itself only ever produced what looked like typos. Its own comment
+			-- claimed "over -> ova", which the rule never did -- "over" is mapped,
+			-- so the example could not fail.
+			--
+			-- A letter is required before the vowel, or the conjunction "or"
+			-- becomes "a". "-ar", "-ir" and "-ur" are left alone: "star" has no
+			-- respelling that is not just a misspelling.
+			chunk = gsub(chunk, "(%a)([eo])r%f[%A]", "%1a")
 		end
 		return chunk
 	end,

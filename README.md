@@ -315,6 +315,25 @@ shouted message would make de-shouting impossible. `I` and its contractions are
 also exempt, or the Dwarven `i` → `Ah` would only ever fire at the start of a
 sentence.
 
+**A capitalised pair at the start of a sentence is a name too.** Leading a
+sentence, capitalisation carries no information, so the rule above stands down —
+which meant any mapped word that is also a title or a name was eaten precisely
+when it led. `Lady Jaina is here` became `Lassie Jaina is here`, `Master Aelric`
+became `Shan'do Aelric`, and anyone actually named *Hope* or *Storm* was
+rewritten whenever their name began a line. Mid-sentence they were all fine,
+which is why it went unnoticed.
+
+The signal is the word *after* it. `Lady Jaina` is capitalised twice and the
+second capital does mean something, because it is mid-sentence. A capitalised
+word standing in front of a protected one is a title or a first name, so it is
+protected as well. A sentence ending in between breaks the pair — `We go. Hope
+is all we have` still translates *hope*.
+
+The cost is that a sentence opening with a capitalised pair nobody meant as a
+name — `The Horde is coming` — keeps its first word, so a Troll says *The Horde*
+rather than *De Horde*. That is the right way round to be wrong: leaving a word
+alone is recoverable, eating somebody's name is not.
+
 **Deliberate elision is respected.** A word with an apostrophe at either end —
 `no'`, `tha'`, `'tis` — is left exactly as written. This used to produce
 `no'` → `nae'`: the letters were substituted and the apostrophe glued back on,

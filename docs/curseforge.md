@@ -158,7 +158,7 @@ Double quotes mark speech, curly ones included. Apostrophes are far too common i
 
 On a roleplaying realm, how somebody spells things is a choice. Eloquence never touches:
 
-- **Names** -- `Zethrrel` and `Zettle` both survive exactly as written
+- **Names** -- `Zethrrel` and `Zettle` both survive exactly as written, and so do titles in front of them: `Lady Jaina`, `Master Aelric`, `King Anduin`. If your character is called Hope or Storm, their name is left alone too.
 - **Deliberate accents** -- `no'` never becomes `nae'`
 - **How you address people** -- `friend`, `brother`, `sister`, `kin` all stay as you typed them. The addon cannot see who you are talking to, so it does not guess their gender, their age or whether they are your kin. (Dwarves are the exception, and unrepentant about it.)
 - **OOC asides** -- anything in parentheses, `(single)` or `(( double ))`

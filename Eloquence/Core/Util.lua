@@ -108,6 +108,38 @@ local function StartsSentence(text, wordStart)
 	return true
 end
 
+-- Is the next word after `from` capitalised?
+--
+-- A capitalised word that starts a sentence is normally left unprotected: at the
+-- start of a sentence, capitalisation says nothing, so protecting it would stop
+-- every dialect at the first word of every line.
+--
+-- But "Lady Jaina is here" is capitalised twice, and the second one does mean
+-- something -- it is mid-sentence, so it is already protected as a name. A
+-- capitalised word immediately in front of a protected one is a title or a first
+-- name, and it was being eaten precisely when it led: "Lady Jaina" became
+-- "Lassie Jaina", "Master Aelric" became "Shan'do Aelric", and anyone actually
+-- named Hope or Storm was rewritten whenever their name began a sentence.
+--
+-- The cost is that a sentence opening with a capitalised pair the player did not
+-- mean as a name -- "The Horde is coming" -- keeps its first word untouched, so
+-- a Troll says "The Horde" rather than "De Horde". That is the right way to be
+-- wrong: leaving a word alone is recoverable, eating somebody's name is not.
+local function NextWordIsCapitalised(text, from)
+	local s, e = find(text, "%a[%w']*", from)
+	if not s then return false end
+	-- Only across ordinary separators. A sentence ending in between means the
+	-- next capital is just another sentence starting.
+	local between = sub(text, from, s - 1)
+	if between:find("[%.!%?]") then return false end
+	local word = sub(text, s, e)
+	local first = sub(word, 1, 1)
+	if first ~= first:upper() or not first:match("%a") then return false end
+	-- A shouted word is not evidence of a name; the whole line may be caps.
+	if #word > 1 and word == word:upper() then return false end
+	return true
+end
+
 local function FindProperNouns(text)
 	local spans = {}
 	local pos = 1
@@ -123,7 +155,7 @@ local function FindProperNouns(text)
 		if first == first:upper() and first:match("%a")
 			and not shouted
 			and not PRONOUN_I[word]
-			and not StartsSentence(text, s) then
+			and (not StartsSentence(text, s) or NextWordIsCapitalised(text, e + 1)) then
 			spans[#spans + 1] = { s = s, e = e }
 		end
 		pos = e + 1
@@ -329,6 +361,34 @@ function E.EscapeSignature(text)
 	local marks = {}
 	for mark in text:gmatch("|.") do marks[#marks + 1] = mark end
 	return table.concat(marks)
+end
+
+-- Is every escape in `before` still present in `after`, in the same order?
+--
+-- The guard this backs used to demand the two signatures be equal, which was too
+-- strong and quietly broke a feature: the Void Elf dialect inserts its whispers
+-- wrapped in a colour code, so the result legitimately carries escapes the
+-- original never had. Equality failed, and the guard threw away the whole
+-- transform -- not just the whisper, the entire dialect -- so roughly a fifth of
+-- what a Void Elf said went out as plain English with no error anywhere.
+--
+-- What the guard is actually for is corruption of the escapes that were already
+-- there: "|cnIQ3:" arriving as "|gnIG3:" and the client rejecting the message.
+-- A subsequence check catches all of that -- a mangled mark no longer matches, a
+-- dropped one is missing, a reordered one is out of order -- while letting a
+-- dialect add marks of its own.
+function E.EscapesPreserved(before, after)
+	local want, got = E.EscapeSignature(before), E.EscapeSignature(after)
+	if want == "" then return true end
+	-- Marks are two characters each, so step in pairs rather than by character.
+	local i = 1
+	for j = 1, #got - 1, 2 do
+		if sub(got, j, j + 1) == sub(want, i, i + 1) then
+			i = i + 2
+			if i > #want then return true end
+		end
+	end
+	return i > #want
 end
 
 --------------------------------------------------------------------------------
