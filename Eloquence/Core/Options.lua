@@ -145,6 +145,70 @@ local function MakeCycleButton(column, opts)
 	return btn
 end
 
+-- A button showing one of many choices, opened as a menu.
+--
+-- The cycling button used elsewhere is fine for three options and useless for
+-- twenty-seven, so this opens a list. `MenuUtil` is the modern client's context
+-- menu and is called through pcall like everything else that might move between
+-- patches; if it is not there, the button falls back to cycling, which is
+-- clumsy but never a dead control.
+local function MakeChoiceButton(column, opts)
+	local btn = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
+	btn:SetSize(opts.width or 200, 22)
+	btn:SetPoint("TOPLEFT", COL[column], y + 1)
+
+	local function choices() return opts.choices() end
+
+	local function currentIndex()
+		local current = opts.get()
+		for i, choice in ipairs(choices()) do
+			if choice.value == current then return i end
+		end
+		return 1
+	end
+
+	btn.Refresh = function(self)
+		local list = choices()
+		self:SetText(list[currentIndex()] and list[currentIndex()].label or list[1].label)
+	end
+
+	btn:SetScript("OnClick", function(self)
+		local list = choices()
+		local opened = false
+		if MenuUtil and MenuUtil.CreateContextMenu then
+			opened = pcall(MenuUtil.CreateContextMenu, self, function(_, root)
+				for _, choice in ipairs(list) do
+					root:CreateButton(choice.label, function()
+						opts.set(choice.value)
+						self:Refresh()
+						if opts.onSet then opts.onSet() end
+					end)
+				end
+			end)
+		end
+		if not opened then
+			-- No menu API: step to the next choice so the control still works.
+			local nextChoice = list[currentIndex() % #list + 1]
+			opts.set(nextChoice.value)
+			self:Refresh()
+			if opts.onSet then opts.onSet() end
+		end
+	end)
+
+	btn:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		GameTooltip:SetText(opts.title, 1, 1, 1)
+		GameTooltip:AddLine(opts.tooltip, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	btn:SetScript("OnLeave", GameTooltip_Hide)
+
+	btn.label = opts.label or opts.title
+	allCheckboxes[#allCheckboxes + 1] = btn
+	E.optionsChecks = allCheckboxes
+	return btn
+end
+
 local function MakeStrengthButton(column, get, set)
 	return MakeCycleButton(column, {
 		labels = STRENGTH_LABELS,
@@ -331,6 +395,37 @@ local function Build()
 	end
 	if #races % 3 ~= 0 then Advance(26) end
 	Advance(10)
+
+	-- Speaking as somebody else. A character's accent is not their biology: a
+	-- Night Elf raised in Ironforge sounds like Ironforge, and a Forsaken who was
+	-- Gilnean in life kept the vowels. Both settings worked from the start and
+	-- neither could be reached without editing saved variables.
+	MakeNote("Your character's accent need not match their race. A Night Elf raised "
+		.. "in Ironforge sounds like Ironforge. This changes only how |cffffff80you|r sound.")
+	MakeLabel(1, "I speak as")
+	MakeChoiceButton(2, {
+		label = "I speak as",
+		width = 210,
+		choices = E.SpeakAsChoices,
+		get = E.GetSpeakAs,
+		set = E.SetSpeakAs,
+		title = "Speak as another race",
+		tooltip = "Use another race's dialect for your own speech, whatever the "
+			.. "client says you are. Everyone else is still rendered by their own race.",
+	})
+	Advance(26)
+	MakeLabel(1, "and as a")
+	MakeChoiceButton(2, {
+		label = "and as a",
+		width = 210,
+		choices = E.SpeakClassChoices,
+		get = E.GetSpeakClass,
+		set = E.SetSpeakClass,
+		title = "Speak as another class",
+		tooltip = "Use another class layer for your own speech -- a paladin who "
+			.. "was raised among warlocks, or a death knight who never lost the Light.",
+	})
+	Advance(30)
 
 	-- The class layer has been switchable since it was added, but only from the
 	-- command line -- which is no use to anyone who does not already know it is

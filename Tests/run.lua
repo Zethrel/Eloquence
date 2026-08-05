@@ -2637,6 +2637,100 @@ do
 		E.db.outgoing.enabled, E.db.dialect.applyToSelf = saved[1], saved[2]
 	end
 
+	-- Speaking as another race. A character's accent is not their biology: a
+	-- Night Elf raised in Ironforge sounds like Ironforge.
+	--
+	-- Both settings worked from the first release and neither could be reached
+	-- without editing saved variables -- the third to ship that way, after the
+	-- class layer and applyToSelf. So what is tested here is mostly reachability.
+	do
+		local savedRace, savedClass = E.GetSpeakAs(), E.GetSpeakClass()
+		local savedMode = E.GetSelfMode()
+		local LINE = "I do not know if that will work, friend."
+
+		-- The engine half, which already worked.
+		E.SetSpeakAs("Dwarf")
+		E.db.outgoing.enabled = true
+		E.db.outgoing.say = true
+		contains("speaking as a Dwarf gives you the Scots",
+			E.Pipeline.Run(LINE, UnitGUID("player"), E.Race.Player(), nil, "outgoing", "say"),
+			"wirk")
+
+		-- The half that did not: "Only me" reads your own copy back through the
+		-- incoming filter, which resolved your race from your GUID and so ignored
+		-- the override entirely. A setting whose control does nothing, again.
+		eq("your own GUID resolves to the race you chose",
+			E.Race.Resolve(UnitGUID("player")), "Dwarf")
+		E.SetSpeakAs(false)
+		local own = select(2, UnitRace("player"))
+		eq("and back to your own when you clear it",
+			E.Race.Resolve(UnitGUID("player")), own)
+
+		-- Nobody else is affected. The whole point is that this is about you.
+		E.SetSpeakAs("Dwarf")
+		check("someone else's GUID is untouched by your choice",
+			E.Race.Resolve("Player-1-OTHER") ~= "Dwarf")
+
+		-- Reachable by command, by the names a player would actually type.
+		for _, case in ipairs({
+			{ "speak dwarf", "Dwarf" },
+			{ "speak Dark Iron", "DarkIronDwarf" },   -- by display name
+			{ "speak ren'dorei", "VoidElf" },         -- punctuation and all
+			{ "speak nightelf", "NightElf" },
+		}) do
+			handler(case[1])
+			eq("/elo " .. case[1], E.GetSpeakAs(), case[2])
+		end
+		handler("speak reset")
+		eq("/elo speak reset", E.GetSpeakAs(), false)
+
+		handler("speakclass deathknight")
+		eq("/elo speakclass deathknight", E.GetSpeakClass(), "DEATHKNIGHT")
+		handler("speakclass reset")
+		eq("/elo speakclass reset", E.GetSpeakClass(), false)
+
+		-- Rubbish must not silently set something.
+		handler("speak dwarf")
+		handler("speak notarace")
+		eq("an unknown race changes nothing", E.GetSpeakAs(), "Dwarf")
+		handler("speak reset")
+
+		-- And reachable from the panel, which is the part that was missing.
+		local byLabel = {}
+		for _, cb in ipairs(E.optionsChecks or {}) do byLabel[cb.label] = cb end
+		for _, label in ipairs({ "I speak as", "and as a" }) do
+			local control = byLabel[label]
+			check("the panel offers \"" .. label .. "\"", control ~= nil)
+			if control then
+				-- No menu API in the stub, so this exercises the fallback: the
+				-- control must still change the setting rather than sit dead.
+				local before = E.GetSpeakAs()
+				control:GetScript("OnClick")(control)
+				if label == "I speak as" then
+					check("and clicking it does something", E.GetSpeakAs() ~= before)
+				end
+			end
+		end
+
+		-- Every choice offered has to be one the addon can actually honour.
+		for _, choice in ipairs(E.SpeakAsChoices()) do
+			if choice.value then
+				check("the offered race " .. choice.value .. " has a dialect",
+					E.DIALECTS[choice.value] ~= nil)
+			end
+		end
+		for _, choice in ipairs(E.SpeakClassChoices()) do
+			if choice.value then
+				check("the offered class " .. choice.value .. " has a layer",
+					E.CLASSES[choice.value] ~= nil)
+			end
+		end
+
+		E.SetSpeakAs(savedRace or false)
+		E.SetSpeakClass(savedClass or false)
+		E.SetSelfMode(savedMode)
+	end
+
 	-- The channel grid offers the roleplaying channels one at a time and the
 	-- coordination channels as a single switch. Eleven checkboxes to say "the
 	-- usual five are off" was a wall of boxes making one point.

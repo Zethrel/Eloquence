@@ -159,6 +159,16 @@ end
 -- the message would vanish rather than merely go undialected. See the note on
 -- secret values above.
 function Race.Resolve(guid, name)
+	-- Your own messages answer to your own choice, whatever the client says your
+	-- race is. Without this the override applied only on the outgoing path, and
+	-- "Only me" -- which reads your own copy back through the incoming filter --
+	-- would quietly ignore it. That is the same shape of fault as a setting whose
+	-- checkbox does nothing.
+	if guid and guid ~= "" then
+		local ok, isPlayer = pcall(function() return guid == UnitGUID("player") end)
+		if ok and isPlayer then return Race.Player() end
+	end
+
 	local ok, result = pcall(ResolveInner, guid, name)
 	if ok then return result end
 	Race.secretsSkipped = Race.secretsSkipped + 1

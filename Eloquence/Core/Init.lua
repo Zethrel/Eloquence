@@ -2,7 +2,7 @@
 local ADDON, E = ...
 
 E.ADDON = ADDON
-E.VERSION = "2.8.4"
+E.VERSION = "2.9.0"
 
 -- Single source of truth for attribution: used by /elo status, the options panel
 -- and the TOC. The original Eloquence was a Vanilla-era community addon; this is
@@ -197,6 +197,88 @@ function E.SetSelfMode(mode)
 		E.db.dialect.applyToSelf = (mode == 2)
 	end
 end
+
+-- Speaking as somebody else.
+--
+-- `dialect.selfRace` and `dialect.selfClass` override the dialect and class
+-- layer used for your own speech. Both worked from the start and neither could
+-- be set: no command, no control, saved-variable editing only. That is the third
+-- setting to ship that way, after the class layer and applyToSelf.
+--
+-- The reason to have it at all is that a character's accent is not their
+-- biology. A Night Elf raised in Ironforge sounds like Ironforge; a Forsaken who
+-- was Gilnean in life kept the vowels. The addon defaulting to your race is a
+-- good guess and a bad rule, and this only ever changes how *you* sound, so
+-- there is nothing here to use against anybody else.
+--
+-- `false` means "whatever I actually am".
+function E.SetSpeakAs(race)
+	E.db.dialect.selfRace = race or false
+end
+
+function E.GetSpeakAs()
+	return E.db.dialect.selfRace or false
+end
+
+function E.SetSpeakClass(token)
+	E.db.dialect.selfClass = token or false
+end
+
+function E.GetSpeakClass()
+	return E.db.dialect.selfClass or false
+end
+
+-- The choices, in the order they should be offered: "my own" first, then every
+-- dialect by name. Returns a list of { value, label }, where `value` is false
+-- for the default.
+function E.SpeakAsChoices()
+	local _, own = UnitRace("player")
+	local choices = {
+		{ value = false, label = "My own (" .. (own or "unknown") .. ")" },
+	}
+	for _, race in ipairs(E.Race.KnownDialects()) do
+		local dialect = E.DIALECTS[race]
+		choices[#choices + 1] = {
+			value = race,
+			label = (dialect and dialect.name or race) .. " (" .. race .. ")",
+		}
+	end
+	return choices
+end
+
+function E.SpeakClassChoices()
+	local choices = { { value = false, label = "My own class" } }
+	local tokens = {}
+	for token in pairs(E.CLASSES) do tokens[#tokens + 1] = token end
+	table.sort(tokens)
+	for _, token in ipairs(tokens) do
+		choices[#choices + 1] = { value = token, label = E.CLASSES[token].name or token }
+	end
+	return choices
+end
+
+-- Find a choice by anything a player might reasonably type: the race token, the
+-- dialect's name, or either with the spaces and punctuation left out.
+local function Loosen(text)
+	return (tostring(text):lower():gsub("[^%a]", ""))
+end
+
+local function MatchChoice(choices, wanted)
+	local want = Loosen(wanted)
+	if want == "" then return nil end
+	for _, choice in ipairs(choices) do
+		if choice.value then
+			if Loosen(choice.value) == want then return choice end
+		end
+	end
+	-- Second pass over the display names, so "Dark Iron" and "Ren'dorei" work.
+	for _, choice in ipairs(choices) do
+		if choice.value and Loosen(choice.label):find(want, 1, true) then return choice end
+	end
+	return nil
+end
+
+E.MatchSpeakChoice = MatchChoice
 
 local function CopyDefaults(src, dst)
 	if type(dst) ~= "table" then dst = {} end

@@ -116,6 +116,21 @@ Four classes so far: **Death Knight**, **Warlock** and **Demon Hunter**, who all
 
 ---
 
+## Your accent is not your biology
+
+A Night Elf raised in Ironforge sounds like Ironforge. A Forsaken who was Gilnean in life kept the vowels. So you can pick which dialect your own character speaks in, whatever the game says your race is:
+
+```
+/elo speak dwarf      ->  Ah dinnae ken if that wull wirk, laddie.
+/elo speak reset      ->  back to your own
+```
+
+Every one of the 26 dialects is on the list, and the class layer can be chosen the same way with `/elo speakclass` -- a paladin raised among warlocks, or a death knight who never lost the Light. Both are in the options panel under **Dialects**, as **I speak as** and **and as a**.
+
+This changes only how **you** sound. Everyone else is still rendered by their own race, and nothing you choose here affects what anybody else reads from anybody else.
+
+---
+
 ## Effects for your own character
 
 Two filters describe *your* character's mouth rather than anyone else's:
@@ -203,7 +218,7 @@ Free and open source (MIT): **[github.com/Zethrel/Eloquence](https://github.com/
 
 The muffle and lisp filters exist because **Sleat -- Argent Dawn (EU)** asked for them. 
 Class flavour exists because **Môrgrith -- Argent Dawn (EU)** pointed out that his death knight had no business invoking the Light.
-The Darnassian dialect owes most of its accuracy to **Trustbough -- Argent Dawn (EU)**.
+The Darnassian dialect owes most of its accuracy to **Trustbough -- Argent Dawn (EU)**, who also asked whether a character could speak in a dialect other than their own race's -- which is where **I speak as** came from.
 The Void whispers were reported by **Anadelonbrin -- Argent Dawn (EU)**, creeped out by the voices in her head, and **Vynlor -- Argent Dawn (EU)**, saying creepy stuff -- both due to a void elf bug. Feedback like that is welcome.
 
 A revival of the classic Vanilla-era RP chat addon, by **Zethrel -- Argent Dawn EU**.

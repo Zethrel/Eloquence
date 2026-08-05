@@ -89,6 +89,8 @@ TOC — see [Keeping up with patches](#keeping-up-with-patches).
 /elo lisp on|off          your own speech is lisped
 /elo muffle on|off        your own speech is muffled, as through a helm
 /elo preset [name]        apply a bundle of settings, or list them
+/elo speak <race>         speak as another race ("list" or "reset")
+/elo speakclass <class>   speak as another class layer
 /elo out on|me|off        show your chat in dialect to everyone / only you / nobody
 /elo reset                restore defaults
 ```
@@ -153,6 +155,32 @@ layer, as does `/elo class off`.
 
 The class token comes back from `GetPlayerInfoByGUID` alongside the race, so
 incoming costs no extra call.
+
+### Speaking as somebody else
+
+A character's accent is not their biology. A Night Elf raised in Ironforge sounds
+like Ironforge; a Forsaken who was Gilnean in life kept the vowels. `selfRace`
+and `selfClass` override the dialect and class layer used for **your own** speech
+and nobody else's.
+
+```
+/elo speak dwarf          your own lines come out in broad Scots
+/elo speak Dark Iron      display names work too, punctuation and all
+/elo speak list           every option
+/elo speak reset          back to your own
+/elo speakclass warlock   the class layer, separately
+```
+
+Both settings existed and worked from the first release, and neither could be
+reached without editing saved variables — the third to ship that way, after the
+class layer and `applyToSelf`. The engine half needed nothing; what was missing
+was a command and a control.
+
+One real bug came with it. The override was honoured on the outgoing path only,
+so in **Only me** mode — which reads your own copy back through the *incoming*
+filter — your race was resolved from your GUID and the choice was silently
+ignored. `Race.Resolve` now answers `Race.Player()` for your own GUID, so both
+paths agree.
 
 ### Personal speech effects
 
@@ -775,7 +803,10 @@ characters in closed helms and characters who want the impediment.
 **Trustbough — Argent Dawn (EU)** reported that the Darnassian dialect greeted
 people with a farewell, that every Night Elf greeted identically when three
 greetings are attested, and that `shan'do` — *teacher* — was being used for
-"friend". Most of what is right about `Dialects/NightElf.lua` is his doing.
+"friend". Most of what is right about `Dialects/NightElf.lua` is his doing. He
+also asked whether a character could speak in a race's dialect other than their
+own — a Night Elf raised in Ironforge — which is what surfaced **Speak as**
+below.
 
 **Môrgrith — Argent Dawn (EU)** reported that his Human death knight had no
 business saying "By the Light", which is what prompted the class flavour layer in

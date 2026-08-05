@@ -296,6 +296,8 @@ local function Help()
 	print("  |cffffff80/elo race <race> on|off|r   mute or unmute one race's dialect")
 	print("  |cffffff80/elo races|r                list every dialect")
 	print("  |cffffff80/elo preset [name]|r        apply a bundle of settings, or list them")
+	print("  |cffffff80/elo speak <race>|r         speak as another race (\"list\" or \"reset\")")
+	print("  |cffffff80/elo speakclass <class>|r   speak as another class layer")
 	print("  |cffffff80/elo out on|me|off|r        show your chat in dialect to everyone / only you / nobody")
 	print("  |cffffff80/elo reset|r                restore defaults")
 end
@@ -343,6 +345,61 @@ local function Handler(input)
 			or "off -- everyone speaks purely by race"))
 		return
 	end
+	-- Speak as another race or class. A character's accent is not their biology:
+	-- a Night Elf raised in Ironforge sounds like Ironforge. Affects only your
+	-- own speech.
+	if command == "speak" or command == "speakas" or command == "speakclass" then
+		local isClass = (command == "speakclass")
+		local choices = isClass and E.SpeakClassChoices() or E.SpeakAsChoices()
+		local label = isClass and "class layer" or "dialect"
+		local want = E.Trim(rest)
+
+		if lower(want) == "list" or lower(want) == "?" then
+			E.Print("you can speak as:")
+			for _, choice in ipairs(choices) do
+				if choice.value then print("  |cffffff80" .. choice.value .. "|r  " .. choice.label) end
+			end
+			print("  |cffffff80reset|r  back to your own")
+			return
+		end
+
+		if want == "" then
+			local current = isClass and E.GetSpeakClass() or E.GetSpeakAs()
+			if not current then
+				E.Print(format("you speak with your own %s. |cffffff80/elo %s list|r to see the options.",
+					label, command))
+			else
+				E.Print(format("you are speaking as |cffffff80%s|r. |cffffff80/elo %s reset|r to stop.",
+					current, command))
+			end
+			return
+		end
+
+		if lower(want) == "reset" or lower(want) == "off" or lower(want) == "own"
+			or lower(want) == "me" or lower(want) == "none" then
+			if isClass then E.SetSpeakClass(false) else E.SetSpeakAs(false) end
+			if E.RefreshOptions then E.RefreshOptions() end
+			E.Print("back to your own " .. label .. ".")
+			return
+		end
+
+		local choice = E.MatchSpeakChoice(choices, want)
+		if not choice then
+			E.Print(format("|cffff8040%s|r is not one I know. |cffffff80/elo %s list|r shows them all.",
+				want, command))
+			return
+		end
+
+		if isClass then E.SetSpeakClass(choice.value) else E.SetSpeakAs(choice.value) end
+		if E.RefreshOptions then E.RefreshOptions() end
+		E.Print(format("you now speak as |cffffff80%s|r.", choice.label))
+		if not E.db.outgoing.enabled and not E.db.dialect.applyToSelf then
+			E.Print("|cffffcc00Nothing shows it yet: \"Show my chat in dialect to\" is Off.|r "
+				.. "|cffffff80/elo out me|r or |cffffff80/elo out on|r.")
+		end
+		return
+	end
+
 	if command == "preset" or command == "presets" then
 		local wanted = lower(E.Trim(rest))
 		if wanted ~= "" and E.Presets.Apply(wanted) then
