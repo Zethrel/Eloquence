@@ -2186,7 +2186,6 @@ do
 	-- rewritten afterwards.
 	onlyModules("dialect")
 	E.db.enabled = true
-	E.db.incoming.enabled = true
 	E.db.incoming.say = true
 	E.db.incoming.bubbles = true
 	E.db.outgoing.enabled = false
@@ -2317,7 +2316,6 @@ do
 	-- The sender argument must never be modified: the chat system builds the
 	-- player hyperlink around it, so colour codes injected there corrupt the
 	-- link and spill raw markup into the frame.
-	E.db.cleanup.classColors = true
 	local filter
 	for _, fn in ipairs(_G._filters["CHAT_MSG_SAY"]) do filter = fn end
 	local args = { "Hello there", "Becche-Ravencrest", "Common", "", "", "", 0, 0, "", "", 236,
@@ -2329,7 +2327,6 @@ do
 	else
 		check("the presentation filter left the sender alone", true)
 	end
-	E.db.cleanup.classColors = false
 end
 
 --------------------------------------------------------------------------------
@@ -2635,6 +2632,130 @@ do
 		end
 
 		E.db.outgoing.enabled, E.db.dialect.applyToSelf = saved[1], saved[2]
+	end
+
+	-- Every setting must be reachable by somebody who has not read the source.
+	--
+	-- Three shipped that were not. The class layer was switchable by command
+	-- only until 2.7.5. `applyToSelf` was panel-only until 2.8.1. `selfRace` and
+	-- `selfClass` worked from the first release and could be set by neither until
+	-- 2.9.0 -- the feature was finished and invisible for its whole life.
+	--
+	-- Three times is a pattern rather than an accident, so it is checked. The
+	-- panel half is measured rather than declared: every control is driven and
+	-- the saved variables are diffed, so a control wired to nothing counts as
+	-- unreachable no matter how convincing it looks.
+	do
+		local function leaves(t, prefix, out)
+			out = out or {}
+			for k, v in pairs(t) do
+				local path = prefix == "" and k or (prefix .. "." .. k)
+				if type(v) == "table" and next(v) ~= nil then
+					leaves(v, path, out)
+				else
+					out[#out + 1] = path
+				end
+			end
+			return out
+		end
+
+		local function snapshot(t, prefix, out)
+			out = out or {}
+			for k, v in pairs(t) do
+				local path = prefix == "" and k or (prefix .. "." .. k)
+				if type(v) == "table" then snapshot(v, path, out) else out[path] = v end
+			end
+			return out
+		end
+
+		-- This block drives every control and applies every preset, including
+		-- "off", so it leaves the settings somewhere arbitrary. Everything after
+		-- it would then be testing a configuration nobody chose.
+		local function deepCopy(t)
+			local out = {}
+			for k, v in pairs(t) do
+				out[k] = type(v) == "table" and deepCopy(v) or v
+			end
+			return out
+		end
+		local function restore(src, dst)
+			for k in pairs(dst) do
+				if src[k] == nil then dst[k] = nil end
+			end
+			for k, v in pairs(src) do
+				if type(v) == "table" then
+					if type(dst[k]) ~= "table" then dst[k] = {} end
+					restore(v, dst[k])
+				else
+					dst[k] = v
+				end
+			end
+		end
+		local savedDb = deepCopy(E.db)
+
+		local reached = {}
+		local function record(before)
+			local after = snapshot(E.db, "")
+			for path, value in pairs(after) do
+				if before[path] ~= value then reached[path] = true end
+			end
+		end
+
+		for _, control in ipairs(E.optionsChecks or {}) do
+			local click = control:GetScript("OnClick")
+			if click then
+				for _ = 1, 6 do
+					local before = snapshot(E.db, "")
+					-- A real CheckButton toggles before OnClick fires; the stub
+					-- does not, so without this every click writes back the value
+					-- it just read and nothing appears reachable.
+					if control.GetChecked then
+						pcall(control.SetChecked, control, not control:GetChecked())
+					end
+					pcall(click, control)
+					record(before)
+				end
+			end
+		end
+		for _, key in ipairs(E.Presets.order) do
+			local before = snapshot(E.db, "")
+			E.Presets.Apply(key)
+			record(before)
+		end
+
+		-- Settings deliberately not on the panel, with where they are instead.
+		-- Anything added here needs a reason, which is the point of the list.
+		local ELSEWHERE = {
+			-- A developer switch. On the panel it would be an invitation to turn
+			-- on a firehose of debug output by accident.
+			["debug"] = "/elo debug",
+			-- A map rather than a leaf: one entry per muted race, empty by
+			-- default, so it has nothing for the diff above to see. Written by
+			-- the race checkboxes and by /elo race.
+			["dialect.races"] = "the race checkboxes, and /elo race <race> on|off",
+		}
+
+		local unreachable = {}
+		for _, path in ipairs(leaves(E.DEFAULTS, "")) do
+			if not reached[path] and not ELSEWHERE[path] then
+				unreachable[#unreachable + 1] = path
+			end
+		end
+		table.sort(unreachable)
+		check("every setting can be reached without editing saved variables",
+			#unreachable == 0,
+			#unreachable > 0 and ("no way to set: " .. table.concat(unreachable, ", ")) or nil)
+
+		-- And the reverse: the exemption list must not outlive the settings it
+		-- excuses, or it becomes a place for dead entries to hide.
+		local known = {}
+		for _, path in ipairs(leaves(E.DEFAULTS, "")) do known[path] = true end
+		for path in pairs(ELSEWHERE) do
+			check("the exemption for " .. path .. " still refers to a real setting",
+				known[path] == true)
+		end
+
+		restore(savedDb, E.db)
 	end
 
 	-- Speaking as another race. A character's accent is not their biology: a

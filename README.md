@@ -176,6 +176,19 @@ reached without editing saved variables — the third to ship that way, after th
 class layer and `applyToSelf`. The engine half needed nothing; what was missing
 was a command and a control.
 
+Three times is a pattern, so a test now measures it. It drives every control on
+the panel, applies every preset, and diffs the saved variables to see what
+actually changed — a control wired to nothing counts as unreachable however
+convincing it looks. Anything left over must appear in a short exemption list
+with a reason, and that list is itself checked against the current settings so a
+stale entry cannot hide a deleted one.
+
+Running it found two more. `cleanup.classColors` was read by nothing at all —
+Eloquence used to colour sender names, got it wrong, and the setting outlived the
+feature. `incoming.enabled` was a second master switch, checked beside
+`db.enabled` on the same line, defaulted true, set true by every preset and set
+false by nothing. Both are gone.
+
 One real bug came with it. The override was honoured on the outgoing path only,
 so in **Only me** mode — which reads your own copy back through the *incoming*
 filter — your race was resolved from your GUID and the choice was silently

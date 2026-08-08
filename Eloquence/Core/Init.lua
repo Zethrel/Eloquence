@@ -2,7 +2,7 @@
 local ADDON, E = ...
 
 E.ADDON = ADDON
-E.VERSION = "2.9.0"
+E.VERSION = "2.9.1"
 
 -- Single source of truth for attribution: used by /elo status, the options panel
 -- and the TOC. The original Eloquence was a Vanilla-era community addon; this is
@@ -90,8 +90,11 @@ E.DEFAULTS = {
 	-- done in /say with a "[low]" tag, so that nearby characters get the chance
 	-- to overhear -- which leaves the actual whisper channel as out-of-character
 	-- traffic, like party and guild.
+	-- There was an "enabled" here as well: a second master switch, checked
+	-- alongside db.enabled on the same line in Chat.lua, defaulted true, set true
+	-- by every preset and set false by nothing at all. One master switch is
+	-- enough, and db.enabled is the one with a control.
 	incoming = {
-		enabled  = true,
 		say      = true,
 		yell     = true,
 		emote    = true,
@@ -158,7 +161,9 @@ E.DEFAULTS = {
 	cleanup = {
 		urls          = true,
 		shortChannels = false,
-		classColors   = false,
+		-- "classColors" was here and nothing read it. Eloquence used to colour
+		-- sender names and got it wrong; the client does this natively, so the
+		-- feature went and the setting stayed behind.
 	},
 }
 

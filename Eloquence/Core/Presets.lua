@@ -34,7 +34,7 @@ Presets.list = {
 	rp = {
 		name = "Roleplay",
 		desc = "Dialects on the in-character channels only. Coordination chat left alone.",
-		incoming = E.CopyDefaults(IN_CHARACTER, { monster = false, bubbles = true, enabled = true }),
+		incoming = E.CopyDefaults(IN_CHARACTER, { monster = false, bubbles = true }),
 		outgoing = E.CopyDefaults(IN_CHARACTER, {}),
 		modules = {
 			spellbook     = { enabled = true,  strength = 2, incoming = false },
@@ -48,7 +48,7 @@ Presets.list = {
 	immersive = {
 		name = "Immersive",
 		desc = "As Roleplay, but heavier, and NPCs get dialects too.",
-		incoming = E.CopyDefaults(IN_CHARACTER, { monster = true, bubbles = true, enabled = true }),
+		incoming = E.CopyDefaults(IN_CHARACTER, { monster = true, bubbles = true }),
 		outgoing = E.CopyDefaults(IN_CHARACTER, {}),
 		modules = {
 			spellbook     = { enabled = true,  strength = 2, incoming = false },
@@ -62,7 +62,7 @@ Presets.list = {
 	clean = {
 		name = "Clean chat",
 		desc = "No dialects. Just tidier chat everywhere: spelling, acronyms, profanity.",
-		incoming = E.CopyDefaults(EVERY_CHANNEL, { monster = false, bubbles = false, enabled = true }),
+		incoming = E.CopyDefaults(EVERY_CHANNEL, { monster = false, bubbles = false }),
 		outgoing = E.CopyDefaults(EVERY_CHANNEL, {}),
 		modules = {
 			spellbook     = { enabled = true,  strength = 2, incoming = true },

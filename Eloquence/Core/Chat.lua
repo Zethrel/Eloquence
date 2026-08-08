@@ -60,7 +60,7 @@ end
 local function MakeFilter(settingKey)
 	return function(_, event, text, sender, ...)
 		local db = E.db
-		if not db or not db.enabled or not db.incoming.enabled then return false end
+		if not db or not db.enabled then return false end
 		Chat.stats.calls = Chat.stats.calls + 1
 
 		if not db.incoming[settingKey] then
