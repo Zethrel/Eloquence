@@ -112,7 +112,9 @@ A Human farmer saying *"By the Light"* is fine. A Human death knight saying it i
 
 It removes rather than replaces. A **Dwarf** death knight stops invoking the Light and carries on speaking broad Scots -- the accent still belongs to the race, and only what clashes is gone.
 
-Four classes so far: **Death Knight**, **Warlock** and **Demon Hunter**, who all have reason to avoid the Light, and **Paladin**, who leans into it. Every other class speaks purely as its race does. If you would rather they all did, untick **Adjust speech for the speaker's class** in the options, or `/elo class off`.
+Nine classes so far. **Death Knight**, **Warlock** and **Demon Hunter** all have reason to avoid the Light, and **Paladin** leans into it. **Priest**, **Shaman**, **Druid**, **Monk** and **Mage** each have an idiom of their own -- vows and the care of souls, asking the elements rather than commanding them, seasons and the balance, breath and form, and precision with a licence. A Dwarf paladin, priest and mage no longer sound like the same person.
+
+**Warrior**, **Rogue**, **Hunter** and **Evoker** have none, deliberately: they say nothing their race would not, or their race already says it. If you would rather they all did, untick **Adjust speech for the speaker's class** in the options, or `/elo class off`.
 
 ---
 

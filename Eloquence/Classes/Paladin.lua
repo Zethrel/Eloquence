@@ -25,7 +25,10 @@ E.RegisterClass("PALADIN", {
 
 	wordsAt = {
 		[3] = {
-			["should"] = "am sworn to", ["must"] = "am sworn to",
+			-- "should" and "must" were here, both mapped to "am sworn to", which
+			-- only agrees with "I": "you should go now" became "you am sworn to
+			-- go now". A word mapping cannot see the subject, so the idiom moved
+			-- to a phrase that carries the pronoun with it.
 			["wrong"] = "unjust", ["right"] = "just",
 		},
 	},
@@ -34,5 +37,7 @@ E.RegisterClass("PALADIN", {
 		{ "%f[%a]good luck%f[%A]", "may the Light watch over you" },
 		{ "%f[%a]i promise%f[%A]", "I so swear" },
 		{ "%f[%a]be careful%f[%A]", "walk in the Light" },
+		{ "%f[%a]i should%f[%A]", "I am sworn to" },
+		{ "%f[%a]i must%f[%A]", "I am sworn to" },
 	},
 })

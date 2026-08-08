@@ -2,7 +2,7 @@
 ## Title: Eloquence
 ## Notes: Linguistic chat filters and racial dialects. A revival of the classic RP chat addon.
 ## Author: Zethrel - Argent Dawn EU
-## Version: 2.9.1
+## Version: 2.10.0
 ## SavedVariables: EloquenceDB
 ## IconTexture: Interface\Icons\INV_Scroll_03
 ## Category-enUS: Roleplay
@@ -46,6 +46,11 @@ Classes\DeathKnight.lua
 Classes\Warlock.lua
 Classes\DemonHunter.lua
 Classes\Paladin.lua
+Classes\Priest.lua
+Classes\Shaman.lua
+Classes\Druid.lua
+Classes\Monk.lua
+Classes\Mage.lua
 
 Modules\SpellBook.lua
 Modules\Decompression.lua

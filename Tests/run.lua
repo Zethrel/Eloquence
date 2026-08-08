@@ -326,6 +326,79 @@ do
 		check(race .. " invents no emote", fabricated == nil, fabricated)
 	end
 
+	-- A replacement has to agree with the subject it lands next to.
+	--
+	-- The Paladin layer mapped "should" and "must" to "am sworn to", which agrees
+	-- only with "I", so "you should go now" shipped as "you am sworn to go now"
+	-- from 2.6.0. Two of the layers added alongside this test had the same fault
+	-- before it existed. A word mapping cannot see the subject, so an idiom that
+	-- needs one has to be a phrase that carries the pronoun with it.
+	--
+	-- Checked across every dialect as well as every class, since nothing stops a
+	-- racial mapping doing it.
+	do
+		local SUBJECTS = {
+			"you should go now", "we must leave now", "they will wait for us",
+			"he should know better", "she must decide", "it will hold",
+			"I should go now", "you are ready", "we are ready",
+		}
+		-- A pronoun followed by a verb form that cannot agree with it.
+		local DISAGREEMENTS = {
+			"you am", "we am", "they am", "he am", "she am", "it am",
+			"i are", "he are", "she are", "it are",
+			"you is", "we is", "they is",
+		}
+
+		local function scan(label, rules, race)
+			local broken = nil
+			for _, strength in ipairs({ 1, 2, 3 }) do
+				for _, line in ipairs(SUBJECTS) do
+					local ctx = E.Pipeline.NewContext(line, "P-agree", race)
+					ctx.strength = strength
+					local saved = rules.flavor
+					rules.flavor = nil
+					local out = E.Engine.Apply(rules, line, ctx):lower()
+					rules.flavor = saved
+					for _, bad in ipairs(DISAGREEMENTS) do
+						if out:find("%f[%a]" .. bad .. "%f[%A]") then
+							broken = line .. " -> " .. out
+						end
+					end
+				end
+			end
+			check(label .. " keeps subject and verb in agreement", broken == nil, broken)
+		end
+
+		for _, race in ipairs(E.Race.KnownDialects()) do
+			scan(race, E.DIALECTS[race], race)
+		end
+		for token in pairs(E.CLASSES) do
+			scan(token, E.Class.Apply(E.DIALECTS["Human"], token), "Human")
+		end
+	end
+
+	-- Class layers have their own flavour pools and so their own way to break
+	-- this. Worgen's "*low growl*" was in a dialect; nothing stops the same thing
+	-- appearing in a class file, and there are nine of them now.
+	for token in pairs(E.CLASSES) do
+		local fabricated = nil
+		for _, race in ipairs({ "Human", "Orc", "NightElf", "Dwarf" }) do
+			local dialect = E.Class.Apply(E.DIALECTS[race], token)
+			for _, strength in ipairs({ 1, 2, 3 }) do
+				for i = 1, 25 do
+					for _, line in ipairs(LINES) do
+						local ctx = E.Pipeline.NewContext(line, "P-fabc-" .. token .. i, race)
+						ctx.strength = strength
+						ctx.excitement = 1
+						local out = E.Engine.Apply(dialect, line, ctx)
+						if out:find("%*") then fabricated = race .. ": " .. line .. " -> " .. out end
+					end
+				end
+			end
+		end
+		check(token .. " invents no emote", fabricated == nil, fabricated)
+	end
+
 	-- An emote the player DID write still survives untouched, which is the whole
 	-- reason asterisks are protected in the first place.
 	contains("but an emote the player wrote is kept",
@@ -1718,6 +1791,31 @@ do
 			table.sort(names)
 			check(race .. " claims nothing about the listener", #names == 0,
 				#names > 0 and (names[1] .. ": " .. found[names[1]]) or nil)
+		end
+
+		-- Class layers add their own flavour on top, and a suffix there lands on
+		-- an arbitrary message exactly as a racial one does. Nine layers now, so
+		-- the same rule is checked against all of them.
+		for token in pairs(E.CLASSES) do
+			local claimed = nil
+			for _, race in ipairs({ "Human", "Orc", "NightElf" }) do
+				local dialect = E.Class.Apply(E.DIALECTS[race], token)
+				for _, strength in ipairs({ 1, 2, 3 }) do
+					for i = 1, 20 do
+						for _, line in ipairs(NEUTRAL) do
+							local ctx = E.Pipeline.NewContext(line, "P-clc-" .. token .. i, race)
+							ctx.strength = strength
+							local out = E.Engine.Apply(dialect, line, ctx):lower()
+							for _, claim in ipairs(CLAIMS) do
+								if out:find("%f[%a]" .. claim .. "%f[%A]") then
+									claimed = race .. "/" .. claim .. ": " .. line .. " -> " .. out
+								end
+							end
+						end
+					end
+				end
+			end
+			check(token .. " claims nothing about the listener", claimed == nil, claimed)
 		end
 
 		-- The other half: whatever the player did type survives. These are all

@@ -147,10 +147,25 @@ they were before they died; instead the clashing lines are dropped by pattern an
 the class adds its own. A Dwarf death knight stops invoking the Light and keeps
 speaking broad Scots.
 
-Four layers so far — **Death Knight**, **Warlock** and **Demon Hunter**, which all
-have reason to avoid the Light, and **Paladin**, which leans into it. Every other
-class speaks purely as its race does, because a warrior says nothing a race would
-not. **Adjust speech for the speaker's class** in the options disables the whole
+Nine layers. **Death Knight**, **Warlock** and **Demon Hunter** all have reason
+to avoid the Light; **Paladin** leans into it; **Priest**, **Shaman**, **Druid**,
+**Monk** and **Mage** each have an idiom of their own — vows and the care of
+souls, asking the elements rather than commanding them, seasons and the balance,
+breath and form, and precision with a licence.
+
+**Priest** is the awkward one and shapes how it is written. The client reports
+the class token, not the specialisation, so `PRIEST` covers a holy priest of the
+Light and a shadow priest who hears the Void with no way to tell them apart. The
+layer is therefore built on the vocation — faith, vows, tending suffering — and
+names neither the Light nor the Void.
+
+Four classes still have none. **Warrior** and **Rogue** say nothing a race would
+not, which is the criterion. **Hunter** comes close, but its idiom overlaps
+almost entirely with the Troll, Tauren and Night Elf dialects that already carry
+it. **Evoker** is Dracthyr-only, and the Dracthyr dialect already speaks of
+Aspects, flights and scales — a layer would repeat it.
+
+**Adjust speech for the speaker's class** in the options disables the whole
 layer, as does `/elo class off`.
 
 The class token comes back from `GetPlayerInfoByGUID` alongside the race, so
