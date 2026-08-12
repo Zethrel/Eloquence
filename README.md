@@ -59,7 +59,7 @@ The folder you copy must be the inner `Eloquence` directory — the one containi
 
 ### If the addon shows as out of date
 
-`## Interface: 120007` in `Eloquence.toc` is the only thing that needs changing.
+`## Interface: 120100` in `Eloquence.toc` is the only thing that needs changing.
 Run `/dump select(4, GetBuildInfo())` in game and put that number in the TOC.
 Nothing else is version-sensitive.
 
