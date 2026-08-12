@@ -2428,6 +2428,75 @@ do
 end
 
 --------------------------------------------------------------------------------
+section("What /elo spy reports about a skipped message")
+--------------------------------------------------------------------------------
+
+do
+	-- Reported from live, on 12.1: the spy printed
+	--
+	--   guid nil -> race nil -> dialect nil
+	--   language nil, verdict: the say channel is switched off
+	--
+	-- under a line that had visibly been translated. Nothing was broken. The
+	-- message was the player's own, already rewritten on the way out, and the
+	-- channel check returned before guid and language were even read -- so the
+	-- spy printed nil for fields it had never looked at, and named a reason that
+	-- was true but not the operative one.
+	--
+	-- A diagnostic that invents a failed lookup is worse than no diagnostic: it
+	-- sends the reader after a bug in race resolution that does not exist.
+	local savedOut, savedSay = E.db.outgoing.enabled, E.db.incoming.say
+	local savedMode = E.GetSelfMode()
+
+	local function fire(guid)
+		local args = { "Hold on, hey you there", "Sigbjorn-ArgentDawn", "Common",
+			"", "", "", 0, 0, "", "", 236, guid, nil, false, false, false, false }
+		E.Chat.lastSeen = nil
+		for _, fn in ipairs(_G._filters["CHAT_MSG_SAY"]) do
+			fn(nil, "CHAT_MSG_SAY", table.unpack(args, 1, 17))
+			if E.Chat.lastSeen then break end
+		end
+		return E.Chat.lastSeen
+	end
+
+	E.db.outgoing.enabled = true
+
+	-- The reported configuration: own message, outgoing on, that channel off.
+	E.db.incoming.say = false
+	local own = fire(UnitGUID("player"))
+	check("a skipped message still reports the guid it was given",
+		own and own.guid ~= nil, own and tostring(own.guid))
+	check("and the language it was given",
+		own and own.language ~= nil, own and tostring(own.language))
+	contains("and blames the outgoing rewrite rather than the channel",
+		own and own.verdict or "", "already rewritten on the way out")
+
+	-- Somebody else's message on the same disabled channel is a different case
+	-- and must still say so.
+	local other = fire("Player-1-OTHER")
+	contains("but someone else's message on that channel names the channel",
+		other and other.verdict or "", "switched off")
+	check("and reports its guid too", other and other.guid ~= nil)
+
+	-- With the channel on, the answer must not change for your own message: it
+	-- was rewritten outgoing either way.
+	E.db.incoming.say = true
+	local onChannel = fire(UnitGUID("player"))
+	contains("the verdict does not depend on the channel setting",
+		onChannel and onChannel.verdict or "", "already rewritten on the way out")
+
+	-- And with outgoing off, the advice points at the control that now exists
+	-- rather than the checkbox that was removed in 2.8.1.
+	E.SetSelfMode(1)
+	local quiet = fire(UnitGUID("player"))
+	contains("with nothing enabled it names the current setting",
+		quiet and quiet.verdict or "", "Show my chat in dialect to")
+
+	E.db.outgoing.enabled, E.db.incoming.say = savedOut, savedSay
+	E.SetSelfMode(savedMode)
+end
+
+--------------------------------------------------------------------------------
 section("Slash commands")
 --------------------------------------------------------------------------------
 

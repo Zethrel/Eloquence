@@ -47,9 +47,17 @@ local function Record(info)
 	Chat.lastSeen = info
 	if Chat.spy then
 		E.Print(("|cff808080spy|r %s from %s"):format(info.event or "?", tostring(info.sender)))
-		print(("       guid %s -> race %s -> dialect %s"):format(
-			tostring(info.guid), tostring(info.race), tostring(info.dialect)))
-		print(("       language %s, verdict: %s"):format(tostring(info.language), info.verdict))
+		-- Only claim a race lookup happened when one did. Printing
+		-- "race nil -> dialect nil" after an early exit invented a failure that
+		-- had not occurred, and sent someone looking for a bug in race
+		-- resolution when the message had simply been skipped a step earlier.
+		if info.guid then
+			print(("       guid %s%s"):format(tostring(info.guid),
+				info.race and (" -> race " .. tostring(info.race)
+					.. " -> dialect " .. tostring(info.dialect)) or ""))
+		end
+		if info.language then print(("       language %s"):format(tostring(info.language))) end
+		print(("       verdict: %s"):format(info.verdict))
 		if info.before then
 			print("       |cff808080" .. info.before .. "|r")
 			print("       |cffffff80" .. tostring(info.after) .. "|r")
@@ -63,23 +71,38 @@ local function MakeFilter(settingKey)
 		if not db or not db.enabled then return false end
 		Chat.stats.calls = Chat.stats.calls + 1
 
-		if not db.incoming[settingKey] then
-			Chat.stats.skippedOff = Chat.stats.skippedOff + 1
-			Record({ event = event, sender = sender, verdict = "the " .. settingKey .. " channel is switched off" })
-			return false
-		end
 		if not text or text == "" then return false end
 
+		-- Read before any of the early exits, so /elo spy reports what is
+		-- actually known rather than printing nil for fields it never looked at.
+		-- Reported from live: the spy said "guid nil -> race nil -> dialect nil,
+		-- language nil" under a message that had visibly been translated, which
+		-- reads as a broken lookup. Nothing had failed; the channel check
+		-- returned before those lines were reached.
 		local language = select(LANGUAGE_INDEX, ...)
 		local guid = select(GUID_INDEX, ...)
 
+		-- Your own message is diagnosed before the channel settings are consulted.
+		-- Both paths return false either way, so this changes no behaviour -- but
+		-- it changes the answer from "the say channel is switched off", which is
+		-- true and useless, to the reason the line looks translated anyway: it was
+		-- rewritten on the way out, and this is the copy coming back.
 		if guid and guid ~= "" and guid == UnitGUID("player") and not ShouldFilterSelf(guid) then
 			Chat.stats.skippedSelf = Chat.stats.skippedSelf + 1
 			Record({
 				event = event, sender = sender, guid = guid, language = language,
 				verdict = db.outgoing.enabled
 					and "your own message, already rewritten on the way out"
-					or "your own message; enable 'apply a dialect to my own messages'",
+					or "your own message; set \"Show my chat in dialect to\" to \"Only me\"",
+			})
+			return false
+		end
+
+		if not db.incoming[settingKey] then
+			Chat.stats.skippedOff = Chat.stats.skippedOff + 1
+			Record({
+				event = event, sender = sender, guid = guid, language = language,
+				verdict = "the " .. settingKey .. " channel is switched off, so nothing was looked up",
 			})
 			return false
 		end
