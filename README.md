@@ -63,7 +63,7 @@ The folder you copy must be the inner `Eloquence` directory — the one containi
 Run `/dump select(4, GetBuildInfo())` in game and put that number in the TOC.
 Nothing else is version-sensitive.
 
-A weekly workflow watches for this and opens an issue when a patch moves past the
+A daily workflow watches for this and opens an issue when a patch moves past the
 TOC — see [Keeping up with patches](#keeping-up-with-patches).
 
 ---
@@ -726,10 +726,19 @@ Wago.io and WoWInterface are other options; both take the same zip.
 
 ### Keeping up with patches
 
-`.github/workflows/interface-check.yml` runs every Wednesday, compares the TOC's
-interface number against the live retail client, and opens an issue when a patch
-has moved past it. `tools/check-interface.sh` does the work and can be run by
-hand.
+`.github/workflows/interface-check.yml` runs daily at 17:00 UTC, compares the
+TOC's interface number against the live retail client, and opens an issue when a
+patch has moved past it. `tools/check-interface.sh` does the work and can be run
+by hand.
+
+Both the frequency and the hour were corrected by being wrong in practice.
+Weekly came first, and weekly has a bad failure mode: an unreachable version
+endpoint is a soft failure by design, so a single bad morning pushed detection
+out a full seven days. Then 09:00 UTC turned out to be the wrong hour — that is
+02:00 Pacific, well before US Tuesday maintenance finishes, so on 11 August the
+patch-day run correctly reported 12.0.7 while 12.1 was mid-deployment and
+detection slipped to the following day anyway. 17:00 UTC is after the US window
+and still the same evening in Europe.
 
 **It deliberately does not bump the TOC**, and should not be changed to. The
 interface number is a compatibility claim — `## Interface: 120100` asserts that a
@@ -752,9 +761,17 @@ CHECK_SELFTEST=1 tools/check-interface.sh
 
 That matters more than it looks. The failure this guards against is not a crash
 but a silent degradation to "never reports drift", which is indistinguishable
-from "no patch has landed". The live fetch is the one part that has never run
-here — Blizzard's build endpoint is not reachable from every environment — so the
-first real run is the first proof it works end to end.
+from "no patch has landed".
+
+Which is why every run now writes its verdict to the run summary — including an
+explicit "the check did not happen" for the unreachable case. A green tick used
+to cover *up to date*, *could not reach the endpoint* and *the parser broke*
+without distinguishing them, and the first live run of this workflow failed in
+exactly that way: green, having never reached Blizzard at all.
+
+It has since proved itself end to end. It detected 12.1.0 on 12 August 2026 and
+opened [#2](https://github.com/Zethrel/Eloquence/issues/2) with the in-game
+checklist, without touching the TOC.
 
 The project page's summary and description live in
 [`docs/curseforge.md`](docs/curseforge.md), so the store copy and this README can

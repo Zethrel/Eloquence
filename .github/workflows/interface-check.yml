@@ -13,16 +13,26 @@ name: Interface check
 
 on:
   schedule:
-    # Daily, 09:00 UTC. Retail patches land Tuesday in the US and reach EU
-    # overnight, so a Wednesday morning check is the one that matters -- but this
-    # ran weekly to begin with, and weekly has a bad failure mode: the version
-    # endpoint being unreachable is a soft failure by design, so one bad morning
-    # pushed detection a full seven days. Daily costs about twenty seconds and
-    # makes a transient failure self-healing.
+    # Daily, 17:00 UTC.
+    #
+    # This ran at 09:00 and that was the wrong hour, demonstrated by 12.1 rather
+    # than reasoned about: 09:00 UTC is 02:00 Pacific, well before US Tuesday
+    # maintenance finishes, so the patch-day run asked the version feed a
+    # question it could not yet answer. On 11 August it correctly reported
+    # 12.0.7 while 12.1 was mid-deployment, and detection fell to the next day.
+    #
+    # 17:00 UTC is 10:00 Pacific and 19:00 in Berlin -- after the US window
+    # closes and still the same evening in Europe, where this addon's players
+    # mostly are. GitHub delays scheduled runs under load, historically by up to
+    # an hour here, so the hour is a floor rather than a promise.
+    #
+    # Daily rather than weekly because an unreachable endpoint is a soft failure
+    # by design: one bad afternoon would otherwise push detection a full seven
+    # days. Daily costs about twenty seconds and heals itself.
     #
     # It cannot become noisy: the issue step matches on the interface number, so
     # a patch gets one issue however many times the check sees it.
-    - cron: '0 9 * * *'
+    - cron: '0 17 * * *'
   workflow_dispatch:
 
 permissions:
