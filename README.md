@@ -688,7 +688,7 @@ To upload by hand, which takes under a minute:
    [GitHub release](https://github.com/Zethrel/Eloquence/releases), or build it
    locally with `tools/package.sh`.
 2. Drag it into the project's **Upload File** form and pick the game version
-   matching the TOC's `## Interface` line (`120007` → `12.0.7`).
+   matching the TOC's `## Interface` line (`120100` → `12.1.0`).
 3. Mark it the **main file**, so the project page's Install button serves it.
 4. Write a **changelog**. Eloquence changes what chat looks like, so "single
    parentheses are now treated as out-of-character" is exactly what a returning
