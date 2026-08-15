@@ -54,7 +54,7 @@ E.RegisterDialect("EarthenDwarf", {
 		["stupid"] = "poorly reasoned", ["dumb"] = "poorly reasoned",
 		["big"] = "of great mass", ["huge"] = "of considerable mass",
 		["small"] = "of little mass", ["fast"] = "at speed", ["slow"] = "at reduced speed",
-		["very"] = "highly", ["really"] = "verifiably", ["maybe"] = "uncertain",
+		["very"] = "highly", ["really"] = "verifiably",
 		["hurry"] = "increase pace", ["wait"] = "hold position", ["stop"] = "halt",
 		["go"] = "proceed", ["come"] = "approach", ["look"] = "observe",
 		["see"] = "observe", ["understand"] = "comprehend",

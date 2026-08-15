@@ -107,7 +107,13 @@ E.RegisterDialect("Dwarf", {
 		["church"] = "kirk", ["home"] = "hame", ["stone"] = "stane", ["bone"] = "bane",
 		["food"] = "scran", ["hungry"] = "hungert", ["drunk"] = "steamin'",
 		["beer"] = "ale", ["ale"] = "ale", ["mug"] = "tankard", ["money"] = "siller",
-		["fight"] = "stramash", ["trouble"] = "bother", ["mountain"] = "ben",
+		-- "fight" was defined here as well as forty lines up, where the -ight ->
+		-- -icht block renders it "fecht". Lua keeps the last key, so "fecht" was
+		-- dead and every fight became a stramash -- which is a noun, a brawl, so
+		-- "we fight at dawn" came out "we stramash at dawn". "fecht" carries both
+		-- senses; the noun keeps its own word below.
+		["brawl"] = "stramash", ["scuffle"] = "stramash",
+		["trouble"] = "bother", ["mountain"] = "ben",
 		["please"] = "gie's", ["thanks"] = "ta", ["sorry"] = "ma apologies",
 		["hello"] = "hae ye", ["hi"] = "och", ["hey"] = "och",
 		["great"] = "braw", ["good"] = "guid", ["nice"] = "braw", ["awesome"] = "pure braw",

@@ -26,7 +26,11 @@ E.RegisterDialect("Pandaren", {
 		["bad"] = "unfortunate", ["awful"] = "most unfortunate",
 		["awesome"] = "a joy", ["cool"] = "pleasing",
 		["stupid"] = "unwise", ["dumb"] = "unwise", ["crazy"] = "restless",
-		["fight"] = "test one another", ["fighting"] = "testing one another",
+		-- "fight" was mapped to "test one another", which is a verb phrase, so
+		-- "there was a fight in the inn" became "there was a test one another in
+		-- the inn". The verb sense is the good one and it keeps the mapping via
+		-- the phrases below, where the article can be matched with it.
+		["fighting"] = "testing one another",
 		["kill"] = "end", ["killed"] = "ended", ["die"] = "pass on",
 		["died"] = "passed on", ["dead"] = "at rest", ["death"] = "the long rest",
 		["war"] = "this great sadness", ["help"] = "lend my hands",
@@ -50,6 +54,10 @@ E.RegisterDialect("Pandaren", {
 	},
 
 	phrases = {
+		-- The noun sense first, so it wins before the verb rule sees the word.
+		{ "%f[%a]a fight%f[%A]", "a testing" },
+		{ "%f[%a]the fight%f[%A]", "the testing" },
+		{ "%f[%a]fight%f[%A]", "test one another" },
 		{ "%f[%a]i think%f[%A]", "I believe" },
 		{ "%f[%a]i don't know%f[%A]", "that answer has not yet found me", nil, true },
 		{ "%f[%a]thank you%f[%A]", "you have my thanks" },

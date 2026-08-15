@@ -326,6 +326,107 @@ do
 		check(race .. " invents no emote", fabricated == nil, fabricated)
 	end
 
+	-- Ordinary sentences must come out as sentences.
+	--
+	-- Three faults of the same shape have shipped: a word mapped to a phrase of
+	-- the wrong part of speech. Priest turned "that will work" into "that will
+	-- calling", Worgen into "that will the business at hand", and Dwarf defined
+	-- "fight" twice so the Scots "fecht" lost to the noun "stramash" and "we
+	-- fight at dawn" became "we stramash at dawn".
+	--
+	-- None of those needed judgement to spot. A verb replaced by a noun phrase
+	-- leaves mechanical wreckage -- an auxiliary in front of an article, a
+	-- doubled article, a stranded comma -- so the wreckage is what is looked for,
+	-- across every dialect and class rather than the file that happened to fail.
+	do
+		local CORPUS = {
+			"I will fight beside you", "we fight at dawn", "there was a fight in the inn",
+			"that will work", "I hurt my hand", "the work is done",
+			"do you want to come", "I need help with this", "can you help me",
+			"the water is cold", "he is my teacher", "the king rules here",
+			"I think it is fine", "good luck out there", "be careful", "I promise",
+			"the light of dawn", "I heal the wounded", "what do you mean",
+			-- Determiners in front of things dialects render as possessives.
+			"the family is waiting", "my family is waiting",
+			"the night elf is waiting", "a blood elf spoke to me",
+			"the caravan moves", "the group is ready",
+		}
+		local ARTEFACTS = {
+			{ "a double space",              "%s%s" },
+			{ "a space before a comma",      "%s," },
+			{ "a doubled comma",             ",%s*," },
+			{ "a doubled \"the\"",           "%f[%a][Tt]he%s+the%f[%A]" },
+			{ "a doubled article",           "%f[%a][Aa]n?%s+an?%f[%A]" },
+			{ "a leading comma",             "^%s*," },
+			{ "an auxiliary before \"the\"", "%f[%a]will%s+the%f[%A]" },
+			{ "an auxiliary before \"a\"",   "%f[%a]will%s+an?%f[%A]" },
+			{ "a doubled \"my\"",            "%f[%a]my%s+my%f[%A]" },
+		}
+
+		-- An article in front of a possessive: "the my flight is waiting". Plenty
+		-- of replacements begin with a possessive, so any determiner already in
+		-- the sentence collides with one. Generated from the two word lists
+		-- rather than hand-written -- the hand-written attempt was loose enough to
+		-- match "a test", which cost a debugging round.
+		for _, article in ipairs({ "the", "a", "an", "de", "da" }) do
+			for _, possessive in ipairs({ "my", "your", "his", "her", "its", "our", "their" }) do
+				ARTEFACTS[#ARTEFACTS + 1] = {
+					"\"" .. article .. " " .. possessive .. "\"",
+					"%f[%a]" .. article .. "%s+" .. possessive .. "%f[%A]",
+					true,   -- compare against the lower-cased output
+				}
+			end
+		end
+
+		local function scan(label, rules, race)
+			local broken = nil
+			for _, strength in ipairs({ 1, 2, 3 }) do
+				for _, line in ipairs(CORPUS) do
+					local ctx = E.Pipeline.NewContext(line, "P-art", race)
+					ctx.strength = strength
+					-- Flavour is suppressed: an interjection legitimately adds a
+					-- comma, and this is about the substitutions.
+					local saved = rules.flavor
+					rules.flavor = nil
+					local out = E.Engine.Apply(rules, line, ctx)
+					rules.flavor = saved
+					local lowered = out:lower()
+					for _, a in ipairs(ARTEFACTS) do
+						if (a[3] and lowered or out):find(a[2]) then
+							broken = a[1] .. ": " .. line .. " -> " .. out
+						end
+					end
+				end
+			end
+			check(label .. " leaves ordinary sentences intact", broken == nil, broken)
+		end
+
+		for _, race in ipairs(E.Race.KnownDialects()) do scan(race, E.DIALECTS[race], race) end
+		for token in pairs(E.CLASSES) do
+			scan(token, E.Class.Apply(E.DIALECTS["Human"], token), "Human")
+		end
+
+		-- The sweep above only catches a bad substitution when it leaves
+		-- mechanical wreckage. Three of these did not: "there was a fight in the
+		-- inn" becoming "there was a test one another in the inn" is perfectly
+		-- well-formed punctuation and entirely wrong. Those get named directly,
+		-- because there is nothing general to detect them by.
+		for _, case in ipairs({
+			-- Dwarf defined "fight" twice; the Scots respelling lost to the noun.
+			{ "Dwarf",    "we fight at dawn",             "fecht" },
+			{ "Dwarf",    "there was a fight in the inn", "fecht" },
+			-- Worgen mapped the verb to a noun phrase.
+			{ "Worgen",   "that will work",               "will work" },
+			{ "Worgen",   "I work at the docks",          "I work at" },
+			-- Pandaren mapped the noun to a verb phrase.
+			{ "Pandaren", "we fight at dawn",             "test one another" },
+			{ "Pandaren", "there was a fight in the inn", "a testing" },
+		}) do
+			contains(case[1] .. ": \"" .. case[2] .. "\"",
+				dialectOnly(case[1], case[2], 3), case[3])
+		end
+	end
+
 	-- A replacement has to agree with the subject it lands next to.
 	--
 	-- The Paladin layer mapped "should" and "must" to "am sworn to", which agrees
@@ -3090,6 +3191,104 @@ do
 			for _, key in ipairs(E.OOC_CHANNELS) do E.db.incoming[key] = saved[key] end
 		end
 	end
+end
+
+--------------------------------------------------------------------------------
+section("No table defines the same key twice")
+--------------------------------------------------------------------------------
+
+do
+	-- Lua keeps the last of a repeated key and says nothing. The Dwarf words
+	-- table defined "fight" twice, forty lines apart: "fecht", the Scots
+	-- respelling that belongs with night/nicht and right/richt, lost to the noun
+	-- "stramash", so "we fight at dawn" came out "we stramash at dawn". The
+	-- earlier entry had simply stopped existing.
+	--
+	-- Nothing at runtime can detect this -- by the time the table exists the
+	-- loser is gone -- so the source is read as text. Two more were found this
+	-- way, both harmless repeats of the same value, but harmless is not the same
+	-- as intended.
+	local function keysOf(path)
+		local handle = io.open(path, "r")
+		if not handle then return nil end
+		local src = handle:read("*a")
+		handle:close()
+
+		local tables, stack, id = {}, {}, 0
+		local i, line, n = 1, 1, #src
+		while i <= n do
+			local c = src:sub(i, i)
+			if c == "\n" then
+				line = line + 1
+				i = i + 1
+			elseif c == "-" and src:sub(i, i + 1) == "--" then
+				-- A comment can contain braces and quotes; skip to end of line.
+				local stop = src:find("\n", i) or (n + 1)
+				i = stop
+			elseif c == '"' then
+				-- Skip the whole literal, escapes included.
+				i = i + 1
+				while i <= n do
+					local ch = src:sub(i, i)
+					if ch == "\\" then i = i + 2
+					elseif ch == '"' then i = i + 1 break
+					else
+						if ch == "\n" then line = line + 1 end
+						i = i + 1
+					end
+				end
+			elseif c == "{" then
+				id = id + 1
+				stack[#stack + 1] = id
+				tables[id] = {}
+				i = i + 1
+			elseif c == "}" then
+				stack[#stack] = nil
+				i = i + 1
+			elseif c == "[" and src:sub(i, i + 1) == '["' then
+				-- With an init offset, "^" anchors at that offset and the captured
+				-- position is absolute, so it can be assigned straight to i.
+				local key, after = src:match('^%["([^"]*)"%]%s*=()', i)
+				if key and #stack > 0 then
+					local into = tables[stack[#stack]]
+					into[#into + 1] = { key = key, line = line }
+					i = after
+				else
+					i = i + 1
+				end
+			else
+				i = i + 1
+			end
+		end
+		return tables
+	end
+
+	local files = {}
+	for _, relative in ipairs(stub.ReadTOC("Eloquence")) do
+		files[#files + 1] = "Eloquence/" .. relative:gsub("\\", "/")
+	end
+	check("there are files to scan", #files > 0, tostring(#files))
+
+	local duplicates = {}
+	for _, path in ipairs(files) do
+		local tables = keysOf(path)
+		if tables then
+			for _, keys in pairs(tables) do
+				local seen = {}
+				for _, entry in ipairs(keys) do
+					if seen[entry.key] then
+						duplicates[#duplicates + 1] = string.format(
+							"%s: \"%s\" at lines %d and %d",
+							path, entry.key, seen[entry.key], entry.line)
+					end
+					seen[entry.key] = entry.line
+				end
+			end
+		end
+	end
+	table.sort(duplicates)
+	check("no table defines the same key twice", #duplicates == 0,
+		#duplicates > 0 and table.concat(duplicates, "\n      ") or nil)
 end
 
 --------------------------------------------------------------------------------

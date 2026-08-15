@@ -23,7 +23,7 @@
 --                literal in "I don't know where the child went".
 local ADDON, E = ...
 
-local gsub, lower, find, sub = string.gsub, string.lower, string.find, string.sub
+local gsub, lower, upper, find, sub = string.gsub, string.lower, string.upper, string.find, string.sub
 local floor = math.floor
 
 local function Concat(pieces)
@@ -315,6 +315,22 @@ for _, word in ipairs({
 	"a", "an", "my", "your", "his", "her", "its", "our", "their",
 }) do REPEATABLE[word] = true end
 
+-- An article in front of a possessive is the same collision arriving from the
+-- other side. Plenty of replacements begin with one -- Dracthyr renders "family"
+-- as "my flight", Nightborne renders "night elf" as "our estranged kin" -- and a
+-- determiner already in the sentence then sits in front of it: "the family is
+-- waiting" became "the my flight is waiting".
+--
+-- English does not allow the pair at all, so the article is always the one to
+-- drop: the possessive is what the dialect deliberately chose.
+local ARTICLE = {}
+for _, word in ipairs({ "the", "de", "da", "a", "an" }) do ARTICLE[word] = true end
+
+local POSSESSIVE = {}
+for _, word in ipairs({
+	"my", "your", "his", "her", "its", "our", "their",
+}) do POSSESSIVE[word] = true end
+
 local function CollapseArticles(chunk)
 	return (gsub(chunk, "(%a+)(%s+)(%a+)", function(first, space, second)
 		local a, b = lower(first), lower(second)
@@ -322,6 +338,14 @@ local function CollapseArticles(chunk)
 			-- Drop the trailing space too, or "the the Flame" collapses to
 			-- "the  Flame": the space before the next word is still there.
 			return first
+		end
+		if ARTICLE[a] and POSSESSIVE[b] then
+			-- The article goes, so the possessive inherits its capitalisation --
+			-- otherwise "The family" would leave a sentence opening lower case.
+			if first:sub(1, 1) ~= lower(first:sub(1, 1)) then
+				return upper(second:sub(1, 1)) .. second:sub(2)
+			end
+			return second
 		end
 		return first .. space .. second
 	end))

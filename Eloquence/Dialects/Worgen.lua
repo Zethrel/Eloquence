@@ -53,7 +53,7 @@ E.RegisterDialect("Worgen", {
 	wordsAt = {
 		[3] = {
 			["yes"] = "rather", ["hello"] = "how do you do",
-			["work"] = "the business at hand", ["job"] = "the business at hand",
+			["job"] = "the business at hand",
 			["fast"] = "sharpish", ["big"] = "considerable", ["small"] = "slight",
 			["understand"] = "follow you", ["talk"] = "have a word",
 			["nonsense"] = "utter rot", ["lie"] = "utter rot",

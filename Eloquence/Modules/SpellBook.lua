@@ -33,7 +33,7 @@ local CORRECTIONS = {
 	["probaly"] = "probably", ["propably"] = "probably", ["probly"] = "probably",
 	["basicly"] = "basically", ["completly"] = "completely",
 	["immediatly"] = "immediately", ["speach"] = "speech", ["strenght"] = "strength",
-	["lenght"] = "length", ["heigth"] = "height", ["wich"] = "which",
+	["lenght"] = "length", ["heigth"] = "height",
 	["excpet"] = "except", ["becuase"] = "because", ["becasue"] = "because",
 	["bacause"] = "because", ["wanna"] = "want to", ["gonna"] = "going to",
 	["gotta"] = "got to", ["kinda"] = "kind of", ["sorta"] = "sort of",

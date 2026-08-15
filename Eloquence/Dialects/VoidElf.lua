@@ -59,7 +59,9 @@ E.RegisterDialect("VoidElf", {
 		["afraid"] = "wary", ["scared"] = "wary", ["fear"] = "a familiar companion",
 		["control"] = "control, always control", ["calm"] = "held together",
 		["home"] = "Telogrus Rift", ["exile"] = "our exile",
-		["blood elf"] = "our estranged kin", ["human"] = "the short-lived",
+		-- "blood elf" was here and never fired: a word lookup is a single token.
+		-- It is a phrase below now.
+		["human"] = "the short-lived",
 		["good"] = "well", ["great"] = "remarkable", ["bad"] = "ill",
 		["stupid"] = "unwise", ["dumb"] = "unwise",
 		["think"] = "consider", ["want"] = "desire", ["need"] = "require",
@@ -81,6 +83,8 @@ E.RegisterDialect("VoidElf", {
 	},
 
 	phrases = {
+		{ "%f[%a]blood elf%f[%A]", "our estranged kin" },
+		{ "%f[%a]blood elves%f[%A]", "our estranged kin" },
 		{ "%f[%a]i don't know%f[%A]", "the whispers do not say", nil, true },
 		{ "%f[%a]i think%f[%A]", "I believe -- I think it is mine to believe" },
 		{ "%f[%a]thank you%f[%A]", "you have my gratitude" },

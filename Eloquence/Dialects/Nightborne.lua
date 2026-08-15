@@ -55,11 +55,15 @@ E.RegisterDialect("Nightborne", {
 			["history"] = "what I remember of it",
 			["outside"] = "the world beyond the shield",
 			["free"] = "free, at considerable cost",
-			["night elf"] = "our estranged kin", ["exile"] = "our long seclusion",
+			-- "night elf" was here, and a word lookup is single-token, so it never
+			-- fired once. Moved to phrases below, where it works.
+			["exile"] = "our long seclusion",
 		},
 	},
 
 	phrases = {
+		{ "%f[%a]night elf%f[%A]", "our estranged kin" },
+		{ "%f[%a]night elves%f[%A]", "our estranged kin" },
 		{ "%f[%a]i don't know%f[%A]", "I have not troubled myself to learn", nil, true },
 		{ "%f[%a]i think%f[%A]", "I should think" },
 		{ "%f[%a]i guess%f[%A]", "I suppose, if pressed", nil, true },
