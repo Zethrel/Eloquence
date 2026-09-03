@@ -865,7 +865,11 @@ people's chat in emote asterisks, so characters appeared to perform actions they
 had never typed. It is the report that produced the rule now enforced across
 every dialect — Eloquence changes *how* a line is worded, never *what* was said.
 
-MIT licensed — see [LICENSE](LICENSE).
+**All rights reserved** — see [LICENSE](LICENSE). The source is published because
+Blizzard's add-on policy requires it to be, not as an invitation to reuse it:
+you may install and tinker with your own copy, but redistributing it, forking it
+or lifting its dialect tables into another project needs permission first. Asking
+is welcome.
 
 ### Supporting it
 

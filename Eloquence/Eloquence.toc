@@ -2,12 +2,12 @@
 ## Title: Eloquence
 ## Notes: Linguistic chat filters and racial dialects. A revival of the classic RP chat addon.
 ## Author: Zethrel - Argent Dawn EU
-## Version: 2.10.3
+## Version: 2.10.4
 ## SavedVariables: EloquenceDB
 ## IconTexture: Interface\Icons\INV_Scroll_03
 ## Category-enUS: Roleplay
 ## X-Website: https://github.com/Zethrel/Eloquence
-## X-License: MIT
+## X-License: All Rights Reserved
 
 Core\Init.lua
 Core\Util.lua

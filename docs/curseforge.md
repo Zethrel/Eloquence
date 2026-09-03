@@ -216,7 +216,7 @@ Install and log in. The defaults are already the Roleplay preset.
 
 ---
 
-Free and open source (MIT): **[github.com/Zethrel/Eloquence](https://github.com/Zethrel/Eloquence)**
+Free to use, source published: **[github.com/Zethrel/Eloquence](https://github.com/Zethrel/Eloquence)**. All rights reserved -- install and tinker freely, but please ask before redistributing or forking it.
 
 The muffle and lisp filters exist because **Sleat -- Argent Dawn (EU)** asked for them. 
 Class flavour exists because **Môrgrith -- Argent Dawn (EU)** pointed out that his death knight had no business invoking the Light.

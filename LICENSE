@@ -1,21 +1,68 @@
-MIT License
+Eloquence — All Rights Reserved
 
-Copyright (c) 2026 Zethrel (Argent Dawn EU)
+Copyright (c) 2026 Zethrel (Argent Dawn EU). All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Eloquence is a World of Warcraft add-on. Its source is published because
+Blizzard Entertainment's UI Add-On Development Policy requires add-on code to be
+distributed openly and unobfuscated. Publishing it is not a grant of permission
+to reuse it: everything not expressly permitted below is reserved.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+PERMITTED
+
+  1. You may download Eloquence and install it into your own copy of World of
+     Warcraft, and use it there, at no charge and for as long as you like.
+
+  2. You may modify your own installed copy for your own private use.
+
+  3. You may read the source, quote short excerpts when discussing or reporting
+     problems with it, and submit suggestions, bug reports or patches.
+
+
+NOT PERMITTED WITHOUT PRIOR WRITTEN PERMISSION
+
+  4. Redistributing Eloquence, in whole or in part, modified or unmodified. This
+     includes republishing it on CurseForge, Wago, WoWInterface or any other
+     add-on host, bundling it with other add-ons or with an add-on pack, and
+     mirroring the repository other than a personal, unpublished copy.
+
+  5. Publishing a fork, a derivative work, a port to another game or client, or
+     a rename of this add-on.
+
+  6. Reusing its code, dialect tables, word lists or documentation in another
+     project, whether or not that project is an add-on.
+
+  7. Selling it, charging for access to it, or including it in anything sold.
+
+Permission for anything in 4 to 7 may be granted, and asking is welcome. Open an
+issue at https://github.com/Zethrel/Eloquence or ask on Argent Dawn (EU).
+
+
+CONTRIBUTIONS
+
+  8. By submitting a contribution you agree it may be included in Eloquence and
+     released under this licence. You keep the copyright in what you wrote.
+
+
+NO WARRANTY
+
+  9. Eloquence is provided "as is", without warranty of any kind, express or
+     implied, including but not limited to the warranties of merchantability,
+     fitness for a particular purpose and non-infringement. In no event shall
+     the copyright holder be liable for any claim, damages or other liability,
+     whether in an action of contract, tort or otherwise, arising from, out of
+     or in connection with the software or its use.
+
+
+NOT AFFILIATED WITH BLIZZARD
+
+ 10. World of Warcraft and Warcraft are trademarks of Blizzard Entertainment,
+     Inc. Eloquence is an unofficial add-on and is not affiliated with,
+     endorsed or sponsored by Blizzard Entertainment.
+
+
+VERSIONS RELEASED BEFORE THIS LICENCE
+
+ 11. Releases up to and including 2.10.3 were published under the MIT licence.
+     That grant cannot be withdrawn and continues to apply to those versions.
+     This licence governs every release after 2.10.3.
