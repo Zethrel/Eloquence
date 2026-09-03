@@ -2550,7 +2550,7 @@ do
 	local savedMode = E.GetSelfMode()
 
 	local function fire(guid)
-		local args = { "Hold on, hey you there", "Sigbjorn-ArgentDawn", "Common",
+		local args = { "Hold on, hey you there", "Testchar-ArgentDawn", "Common",
 			"", "", "", 0, 0, "", "", 236, guid, nil, false, false, false, false }
 		E.Chat.lastSeen = nil
 		for _, fn in ipairs(_G._filters["CHAT_MSG_SAY"]) do
@@ -3376,7 +3376,7 @@ do
 	-- options panel. Tie the TOC copy to the Lua copy so they cannot drift.
 	eq("the author is set", E.AUTHOR, "Zethrel")
 	eq("the realm is set", E.REALM, "Argent Dawn EU")
-	contains("the combined credit reads correctly", E.CREDIT, "Zethrel - Argent Dawn EU")
+	eq("the formal credit is the handle alone", E.CREDIT, "Zethrel")
 
 	local handle = io.open("Eloquence/Eloquence.toc", "r")
 	if handle then

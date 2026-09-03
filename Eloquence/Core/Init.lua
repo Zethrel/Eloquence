@@ -7,9 +7,14 @@ E.VERSION = "2.10.4"
 -- Single source of truth for attribution: used by /elo status, the options panel
 -- and the TOC. The original Eloquence was a Vanilla-era community addon; this is
 -- a reimplementation of it from its documented feature set.
+--
+-- CREDIT is the formal attribution -- the TOC and the LICENSE carry this exact
+-- string, and it is the handle alone, matching every other addon in the set.
+-- REALM is community flavour rather than attribution, so it stays in the
+-- in-game text that greets people and nowhere that names a copyright holder.
 E.AUTHOR = "Zethrel"
 E.REALM = "Argent Dawn EU"
-E.CREDIT = E.AUTHOR .. " - " .. E.REALM
+E.CREDIT = E.AUTHOR
 
 -- Ordered list of the linguistic filters. The pipeline runs them in this order:
 -- normalise the text first, then layer flavour on top.

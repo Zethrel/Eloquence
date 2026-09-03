@@ -1,7 +1,7 @@
 ## Interface: 120100
 ## Title: Eloquence
 ## Notes: Linguistic chat filters and racial dialects. A revival of the classic RP chat addon.
-## Author: Zethrel - Argent Dawn EU
+## Author: Zethrel
 ## Version: 2.10.4
 ## SavedVariables: EloquenceDB
 ## IconTexture: Interface\Icons\INV_Scroll_03
