@@ -51,7 +51,9 @@ updates take care of themselves.
 **By hand**, from a
 [GitHub release](https://github.com/Zethrel/Eloquence/releases):
 
-1. Copy the `Eloquence` folder into `World of Warcraft/_retail_/Interface/AddOns/`.
+1. Copy the `Eloquence` folder into the AddOns folder of the client you play:
+   `World of Warcraft/_retail_/Interface/AddOns/` for retail, or
+   `World of Warcraft/_classic_beta_/Interface/AddOns/` for the WoW Forever beta.
 2. Restart the game, or `/reload`.
 
 The folder you copy must be the inner `Eloquence` directory — the one containing
@@ -59,9 +61,12 @@ The folder you copy must be the inner `Eloquence` directory — the one containi
 
 ### If the addon shows as out of date
 
-`## Interface: 120100` in `Eloquence.toc` is the only thing that needs changing.
-Run `/dump select(4, GetBuildInfo())` in game and put that number in the TOC.
-Nothing else is version-sensitive.
+`## Interface: 120100, 16001` in `Eloquence.toc` is the only thing that needs
+changing. It lists one number per client the addon has been tested on — retail
+12.1.0 and the WoW Forever beta 1.60.1 — and each client reads the number meant
+for it. Run `/dump select(4, GetBuildInfo())` in the client that complains and
+replace that client's entry (the one with the same leading digits) with the
+number it prints. Nothing else is version-sensitive.
 
 A daily workflow watches for this and opens an issue when a patch moves past the
 TOC — see [Keeping up with patches](#keeping-up-with-patches).
@@ -688,7 +693,8 @@ To upload by hand, which takes under a minute:
    [GitHub release](https://github.com/Zethrel/Eloquence/releases), or build it
    locally with `tools/package.sh`.
 2. Drag it into the project's **Upload File** form and pick the game version
-   matching the TOC's `## Interface` line (`120100` → `12.1.0`).
+   matching each entry on the TOC's `## Interface` line (`120100` → `12.1.0`,
+   `16001` → `1.60.1`). CurseForge may not list a beta client; skip that one.
 3. Mark it the **main file**, so the project page's Install button serves it.
 4. Write a **changelog**. Eloquence changes what chat looks like, so "single
    parentheses are now treated as out-of-character" is exactly what a returning
@@ -707,8 +713,9 @@ CurseForge-side integration is also publishing, or each release lands twice.
 
 `tools/curseforge-upload.sh` does the upload, and handles the one fiddly part —
 CurseForge wants its own numeric game-version ID rather than an interface number,
-so `120007` is converted to `12.0.7` and looked up. Two ways to exercise it
-without uploading anything:
+so each entry (`120100` → `12.1.0`) is converted and looked up. A version
+CurseForge does not list is skipped with a warning; the upload fails only if none
+resolve. Two ways to exercise it without uploading anything:
 
 ```
 CF_SELFTEST=1 tools/curseforge-upload.sh                      # tests the conversion
@@ -726,10 +733,15 @@ Wago.io and WoWInterface are other options; both take the same zip.
 
 ### Keeping up with patches
 
-`.github/workflows/interface-check.yml` runs daily at 17:00 UTC, compares the
-TOC's interface number against the live retail client, and opens an issue when a
-patch has moved past it. `tools/check-interface.sh` does the work and can be run
-by hand.
+`.github/workflows/interface-check.yml` runs daily at 17:00 UTC and compares
+each live client against its own entry on the TOC's `## Interface` line: retail
+(`wow`) against the entry with major 12, the Forever beta (`wow_classic_beta`)
+against the entry with major 1. It opens one issue per client whose patch has
+moved past its entry, or that has no entry at all. A client whose version feed
+cannot be read is reported as not compared, which is not a failure.
+`tools/check-interface.sh` does the work and can be run by hand; `CHECK_PRODUCTS`
+overrides which clients it asks about. The Forever product name is the beta's
+and must be replaced when Forever launches.
 
 Both the frequency and the hour were corrected by being wrong in practice.
 Weekly came first, and weekly has a bad failure mode: an unreachable version
@@ -741,8 +753,8 @@ detection slipped to the following day anyway. 17:00 UTC is after the US window
 and still the same evening in Europe.
 
 **It deliberately does not bump the TOC**, and should not be changed to. The
-interface number is a compatibility claim — `## Interface: 120100` asserts that a
-human tested this addon against 12.1.0. A script setting it asserts only that a
+interface number is a compatibility claim — `## Interface: 120100, 16001` asserts
+that a human tested this addon against retail 12.1.0 and the Forever beta 1.60.1. A script setting it asserts only that a
 number changed on a website.
 
 A major patch is exactly when this addon is most likely to break. Patch 12.0

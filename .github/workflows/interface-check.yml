@@ -79,65 +79,80 @@ jobs:
       # Blizzard, the issue step skipped for want of a drift flag, and the run
       # was green. Only reading the log showed it.
       #
-      # So every outcome now says what it concluded, on the run's own summary.
+      # So every outcome now says what it concluded, on the run's own summary --
+      # one row per game, since the TOC declares more than one (retail and the
+      # WoW: Forever beta) and one being current says nothing about the other.
       - name: Report the conclusion
         if: always()
         env:
           SKIPPED: ${{ steps.check.outputs.skipped }}
-          DRIFT: ${{ steps.check.outputs.drift }}
-          LIVE_PATCH: ${{ steps.check.outputs.live_patch }}
-          LIVE_INTERFACE: ${{ steps.check.outputs.live_interface }}
-          TOC_INTERFACE: ${{ steps.check.outputs.toc_interface }}
+          RESULTS: ${{ steps.check.outputs.results }}
+          TOC_INTERFACES: ${{ steps.check.outputs.toc_interfaces }}
         run: |
           if [ "$SKIPPED" = "true" ]; then
             echo "### Nothing compared" >> "$GITHUB_STEP_SUMMARY"
-            echo "No version source could be reached this run. This is not a" >> "$GITHUB_STEP_SUMMARY"
-            echo "statement that the TOC is current -- the check did not happen." >> "$GITHUB_STEP_SUMMARY"
-          elif [ "$DRIFT" = "true" ]; then
-            echo "### Patch drift" >> "$GITHUB_STEP_SUMMARY"
-            echo "Live client is **$LIVE_PATCH** (\`$LIVE_INTERFACE\`); the TOC declares \`$TOC_INTERFACE\`." >> "$GITHUB_STEP_SUMMARY"
-            echo "An issue has been opened. The TOC is not bumped automatically." >> "$GITHUB_STEP_SUMMARY"
-          elif [ "$DRIFT" = "false" ]; then
-            echo "### Up to date" >> "$GITHUB_STEP_SUMMARY"
-            echo "TOC \`$TOC_INTERFACE\` matches live **$LIVE_PATCH**." >> "$GITHUB_STEP_SUMMARY"
-          else
+            echo "No version source could be reached for any game this run. This is" >> "$GITHUB_STEP_SUMMARY"
+            echo "not a statement that the TOC is current -- the check did not happen." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ -z "$RESULTS" ]; then
             echo "### Inconclusive" >> "$GITHUB_STEP_SUMMARY"
             echo "The check produced no verdict, which should not happen." >> "$GITHUB_STEP_SUMMARY"
             echo "The endpoint format has most likely changed. Read the log." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
+          {
+            echo "### Interface check"
+            echo "TOC declares \`$TOC_INTERFACES\`."
+            echo
+            echo "| Game | Product | Verdict | Live | TOC entry |"
+            echo "|---|---|---|---|---|"
+            printf '%s\n' "$RESULTS" | while IFS='|' read -r label product verdict patch live entry; do
+              [ -n "$label" ] || continue
+              echo "| $label | \`$product\` | **$verdict** | ${patch:-?} (\`${live:-?}\`) | \`${entry:-none}\` |"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Open an issue when the patch has moved on
+      - name: Open an issue per game whose patch has moved on
         if: steps.check.outputs.skipped != 'true' && steps.check.outputs.drift == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          LIVE_PATCH: ${{ steps.check.outputs.live_patch }}
-          LIVE_INTERFACE: ${{ steps.check.outputs.live_interface }}
-          TOC_INTERFACE: ${{ steps.check.outputs.toc_interface }}
+          RESULTS: ${{ steps.check.outputs.results }}
         run: |
-          title="WoW $LIVE_PATCH is live -- TOC still targets $TOC_INTERFACE"
-
-          # One issue per patch, not one per week. Match on the interface number
-          # so a later patch opens a fresh issue rather than reusing a stale one.
-          existing="$(gh issue list --state open --search "$LIVE_INTERFACE in:title" \
-            --json number --jq '.[0].number // empty')"
-          if [ -n "$existing" ]; then
-            echo "::notice::Issue #$existing already tracks $LIVE_PATCH."
-            exit 0
-          fi
-
           gh label create interface-drift \
             --color 0e8a16 \
             --description "The live client has moved past the TOC's interface number" \
             2>/dev/null || true
 
-          gh issue create \
-            --title "$title" \
-            --label interface-drift \
-            --body "$(cat <<EOF
-          The retail client is now **$LIVE_PATCH** (interface \`$LIVE_INTERFACE\`).
-          \`Eloquence/Eloquence.toc\` still declares \`## Interface: $TOC_INTERFACE\`,
-          so the addon shows as out of date and will not load unless the player
-          ticks the box.
+          printf '%s\n' "$RESULTS" | while IFS='|' read -r label product verdict patch live entry; do
+            case "$verdict" in drift|not-declared) ;; *) continue ;; esac
+
+            # One issue per game per patch, not one per day. Match on the live
+            # interface number so a later patch opens a fresh issue rather than
+            # reusing a stale one, and two games never share an issue.
+            existing="$(gh issue list --state open --search "$live in:title" \
+              --json number --jq '.[0].number // empty')"
+            if [ -n "$existing" ]; then
+              echo "::notice::Issue #$existing already tracks $label $patch."
+              continue
+            fi
+
+            if [ "$verdict" = "drift" ]; then
+              title="WoW $label $patch is live -- TOC entry $entry is behind ($live)"
+              what="\`Eloquence/Eloquence.toc\` still declares \`$entry\` for this game, so the addon shows as out of date there and will not load unless the player ticks the box."
+              fix="Then replace \`$entry\` with \`$live\` in the \`## Interface:\` line (keep the other games' entries), bump the version, and cut a release."
+            else
+              title="WoW $label $patch is live -- the TOC has no entry for it ($live)"
+              what="\`Eloquence/Eloquence.toc\` declares no interface number for this game at all."
+              fix="If it should be supported, add \`$live\` to the \`## Interface:\` line after testing. If not, remove \`$product\` from PRODUCTS in \`tools/check-interface.sh\`."
+            fi
+
+            gh issue create \
+              --title "$title" \
+              --label interface-drift \
+              --body "$(cat <<EOF
+          The **$label** client (\`$product\`) is now **$patch** (interface \`$live\`).
+          $what
 
           **This is not a bump-and-ship.** The interface number says a human tested
           the addon against this patch, so test before changing it. Patch 12.0
@@ -152,10 +167,10 @@ jobs:
           - [ ] Outgoing still rewrites what is actually sent, with \`/elo outgoing on\`
           - [ ] The options panel opens on \`/elo\`
 
-          Then set \`## Interface: $LIVE_INTERFACE\` in the TOC, bump the version,
-          and cut a release.
+          $fix
 
           ---
           _Opened automatically by [.github/workflows/interface-check.yml](../blob/main/.github/workflows/interface-check.yml)._
           EOF
           )"
+          done

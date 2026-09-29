@@ -21,13 +21,58 @@ if [[ ! -f "$ADDON/$ADDON.toc" ]]; then
 fi
 
 VERSION="$(sed -n 's/^## Version:[[:space:]]*//p' "$ADDON/$ADDON.toc" | tr -d '\r')"
-INTERFACE="$(sed -n 's/^## Interface:[[:space:]]*//p' "$ADDON/$ADDON.toc" | tr -d '\r')"
 if [[ -z "$VERSION" ]]; then
 	echo "error: no '## Version:' line in the TOC." >&2
 	exit 1
 fi
 
-echo "Eloquence $VERSION  (Interface $INTERFACE)"
+# The '## Interface:' line lists one number per game the addon has been tested
+# on, comma-separated ("120100, 16001"). Each is reported with the client it
+# belongs to, so the summary and the install hint name the right folder.
+mapfile -t INTERFACES < <(sed -n 's/^## Interface:[[:space:]]*//p' "$ADDON/$ADDON.toc" \
+	| tr -d '\r' | head -1 | tr ',' '\n' | tr -d '[:blank:]' | sed '/^$/d')
+if (( ${#INTERFACES[@]} == 0 )); then
+	echo "error: no '## Interface:' line in the TOC." >&2
+	exit 1
+fi
+for n in "${INTERFACES[@]}"; do
+	if [[ ! "$n" =~ ^[0-9]+$ ]]; then
+		echo "error: '## Interface:' entry '$n' is not a number." >&2
+		exit 1
+	fi
+done
+
+# Interface numbers are packed as MMmmpp: 120100 -> 12.1.0, 16001 -> 1.60.1.
+interface_to_name() {
+	local n="$1"
+	printf '%d.%d.%d' $(( n / 10000 )) $(( (n / 100) % 100 )) $(( n % 100 ))
+}
+
+# Which client an interface number belongs to, as "label|install folder".
+# The major separates the games; within major 1, Classic Era (1.15) and the
+# Forever beta (1.60) are told apart by the minor. Only labels the output --
+# an unrecognised number is still packaged. The Forever folder is the beta's;
+# update it here when Forever launches (November) if the live client differs.
+client_for_interface() {
+	local n="$1" major=$(( $1 / 10000 )) minor=$(( ($1 / 100) % 100 ))
+	if (( major >= 12 )); then echo "Retail|_retail_"
+	elif (( major == 1 && minor >= 60 )); then echo "Forever beta|_classic_beta_"
+	elif (( major == 1 )); then echo "Classic Era|_classic_era_"
+	else echo "unrecognised client|"
+	fi
+}
+
+echo "Eloquence $VERSION"
+INSTALL_LINES=()
+for n in "${INTERFACES[@]}"; do
+	IFS='|' read -r label folder <<<"$(client_for_interface "$n")"
+	printf '  interface %-6s = %-7s %s\n' "$n" "$(interface_to_name "$n")" "$label"
+	if [[ -n "$folder" ]]; then
+		INSTALL_LINES+=("$label $(interface_to_name "$n"): World of Warcraft/$folder/Interface/AddOns/")
+	else
+		INSTALL_LINES+=("interface $n ($(interface_to_name "$n")): the matching World of Warcraft/<client>/Interface/AddOns/")
+	fi
+done
 
 # --- Validate before packaging -------------------------------------------------
 #
@@ -92,4 +137,16 @@ echo "Contents:"
 unzip -l "$ZIP" | sed -n '4,8p'
 echo "  ..."
 echo
-echo "Install: unzip into World of Warcraft/_retail_/Interface/AddOns/"
+echo "Install: unzip into the AddOns folder of the client you play:"
+for line in "${INSTALL_LINES[@]}"; do echo "  $line"; done
+
+# In CI, hand the release step the same list as Markdown bullets.
+if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+	{
+		echo "install_md<<INSTALL_EOF"
+		for line in "${INSTALL_LINES[@]}"; do
+			echo "- ${line%%: *}: \`${line#*: }\`"
+		done
+		echo "INSTALL_EOF"
+	} >> "$GITHUB_OUTPUT"
+fi
