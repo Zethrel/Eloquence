@@ -98,11 +98,22 @@ local function MakeFilter(settingKey)
 			return false
 		end
 
-		if not db.incoming[settingKey] then
+		-- Which channel list decides. Your own copy under "Only me" is governed by
+		-- the list printed under "My own chat" -- db.outgoing, the same one
+		-- "Everyone" uses -- because that is where the panel puts it. Reading
+		-- db.incoming here made "Only me" silently depend on the "Filter which
+		-- incoming chat" boxes: switch off Say for other people and your own Say
+		-- stopped being dialected too, with "My own chat -> Say" still ticked.
+		-- Reported from the Forever beta, where incoming chat was off throughout.
+		local own = guid and guid ~= "" and guid == UnitGUID("player")
+		local channels = own and db.outgoing or db.incoming
+		if not channels[settingKey] then
 			Chat.stats.skippedOff = Chat.stats.skippedOff + 1
 			Record({
 				event = event, sender = sender, guid = guid, language = language,
-				verdict = "the " .. settingKey .. " channel is switched off, so nothing was looked up",
+				verdict = own
+					and ("your own " .. settingKey .. " chat is not ticked under \"My own chat\", so nothing was looked up")
+					or ("the " .. settingKey .. " channel is switched off, so nothing was looked up"),
 			})
 			return false
 		end

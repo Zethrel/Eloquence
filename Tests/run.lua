@@ -2597,6 +2597,60 @@ do
 	E.SetSelfMode(savedMode)
 end
 
+do
+	-- "Only me" follows the "My own chat" channel list, not the incoming one.
+	--
+	-- Reported from the Forever beta: incoming chat was switched off throughout,
+	-- "Show my chat in dialect to" was "Only me", "My own chat -> Say" was
+	-- ticked -- and your own /s came back untouched, with the spy blaming "the
+	-- say channel". The panel lists Say under "My own chat" as the channel that
+	-- setting applies to, so that is the list that has to decide.
+	local savedOut = E.db.outgoing.enabled
+	local savedInSay, savedOutSay = E.db.incoming.say, E.db.outgoing.say
+	local savedMode = E.GetSelfMode()
+	local savedSelfRace, savedDwarf = E.db.dialect.selfRace, E.db.dialect.races.Dwarf
+	-- Pinned, so the verdict cannot depend on what earlier sections left the
+	-- stub's player race as. "don't know" is in the base Dwarf table.
+	E.db.dialect.selfRace, E.db.dialect.races.Dwarf = "Dwarf", nil
+
+	local function fire(guid)
+		local args = { "Hello, I don't know", "Testchar-ArgentDawn", "Common",
+			"", "", "", 0, 0, "", "", 237, guid, nil, false, false, false, false }
+		E.Chat.lastSeen = nil
+		for _, fn in ipairs(_G._filters["CHAT_MSG_SAY"]) do
+			fn(nil, "CHAT_MSG_SAY", table.unpack(args, 1, 17))
+			if E.Chat.lastSeen then break end
+		end
+		return E.Chat.lastSeen
+	end
+
+	E.SetSelfMode(2)                                   -- Only me
+	E.db.incoming.say, E.db.outgoing.say = false, true -- the reported state
+
+	local own = fire(UnitGUID("player"))
+	check("Only me dialects your own Say with incoming Say switched off",
+		own and own.verdict == "rewritten", own and own.verdict)
+
+	local other = fire("Player-1-OTHER")
+	contains("while someone else's Say on that switched-off channel is left alone",
+		other and other.verdict or "", "channel is switched off")
+
+	E.db.outgoing.say = false
+	local unticked = fire(UnitGUID("player"))
+	contains("with Say unticked under My own chat, your own line is left alone",
+		unticked and unticked.verdict or "", "not ticked under \"My own chat\"")
+
+	E.db.incoming.say, E.db.outgoing.say = true, false
+	local incomingOnly = fire(UnitGUID("player"))
+	contains("and ticking incoming Say does not bring it back",
+		incomingOnly and incomingOnly.verdict or "", "not ticked under \"My own chat\"")
+
+	E.db.outgoing.enabled = savedOut
+	E.db.incoming.say, E.db.outgoing.say = savedInSay, savedOutSay
+	E.db.dialect.selfRace, E.db.dialect.races.Dwarf = savedSelfRace, savedDwarf
+	E.SetSelfMode(savedMode)
+end
+
 --------------------------------------------------------------------------------
 section("Slash commands")
 --------------------------------------------------------------------------------
